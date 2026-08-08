@@ -29,9 +29,15 @@ Sincronização remota fica como evolução futura.
 ## D-005 — Hierarquia principal
 **Status:** decidido conceitualmente
 
-`Propriedade -> Talhão -> Parcela -> Árvore`
+Cadastro permanente:
 
-Essa hierarquia deve orientar navegação e modelagem do banco.
+`Propriedade -> Talhão`
+
+Coleta:
+
+`Propriedade -> Levantamento/Contagem -> Talhão -> Parcela -> Árvore`
+
+Essa hierarquia deve orientar navegação e modelagem do banco. A entidade Levantamento/Contagem separa o cadastro permanente da propriedade dos dados medidos em uma coleta específica.
 
 ## D-006 — Escopo florestal inicial
 **Status:** decidido
@@ -47,8 +53,10 @@ Modelos considerados inicialmente:
 
 As fórmulas e coeficientes exatos usados no software precisam ser confirmados a partir das fontes técnicas antes de codificar.
 
+Além desses modelos, o sistema deverá permitir fórmulas personalizadas cadastradas pelo usuário, desde que sejam avaliadas por mecanismo seguro de expressão matemática e não por execução de código arbitrário.
+
 ## D-008 — Coeficientes configuráveis
-**Status:** intenção funcional discutida
+**Status:** decidido para o desenho inicial
 
 A aplicação deve evitar coeficientes rígidos/universais e ser estruturada para permitir configuração de parâmetros por espécie/região/modelo.
 
@@ -91,12 +99,12 @@ Ainda não foi definido se o acesso ao SQLite será feito com `sqflite`, Drift o
 
 Não escolher sem avaliar complexidade e necessidade real.
 
-## D-015 — Múltiplos inventários no tempo
-**Status:** aberto e importante
+## D-015 — Múltiplos levantamentos no tempo
+**Status:** decidido
 
-É necessário decidir se uma mesma propriedade/talhão poderá possuir vários inventários realizados em datas diferentes.
+Uma mesma propriedade poderá possuir vários levantamentos/contagens realizados em datas diferentes.
 
-Se sim, criar entidade `Inventory`/`InventoryRun` separando a estrutura física da propriedade dos dados de cada levantamento.
+Criar entidade `InventoryRun`/`Levantamento` separando a estrutura física da propriedade dos dados de cada coleta. Um levantamento deve possuir status e datas de início/atualização/conclusão.
 
 ## D-016 — Método de amostragem
 **Status:** pendente de validação técnica
@@ -112,3 +120,66 @@ Não há requisito atual de login/conta online.
 **Status:** parcialmente definido
 
 Flutter permite multiplataforma, mas a primeira execução/teste será orientada ao ambiente mobile Android. Confirmar necessidade de iOS antes de assumir suporte de produção.
+
+## D-019 — Navegação principal
+**Status:** decidido para o desenho inicial
+
+A interface principal deve usar barra inferior com cinco abas:
+- Início;
+- Levantamentos;
+- Propriedades;
+- Resultados;
+- Ajustes.
+
+## D-020 — Tela inicial operacional
+**Status:** decidido para o desenho inicial
+
+A tela Início deve funcionar como painel de retomada rápida, permitindo criar novo levantamento, continuar o levantamento em andamento mais recente e visualizar resumo do último levantamento concluído.
+
+## D-021 — Status dos levantamentos
+**Status:** decidido para o MVP
+
+Estados iniciais:
+- `em andamento`;
+- `concluído`.
+
+O usuário pode manter mais de um levantamento em andamento ao mesmo tempo.
+
+## D-022 — Área em hectares
+**Status:** decidido
+
+Áreas de propriedades e talhões devem ser armazenadas/exibidas em hectares (`ha`).
+
+## D-023 — Tela de propriedades
+**Status:** decidido para o desenho inicial
+
+A listagem de propriedades deve exibir nome, município/UF, área total em hectares e quantidade de talhões. Deve permitir busca por nome e filtros por município, faixa de área e faixa de quantidade de talhões.
+
+Tocar na propriedade abre seus detalhes. Editar e excluir ficam em menu de ações, por exemplo ícone de três pontos.
+
+## D-024 — Espécies/categorias iniciais
+**Status:** decidido para o cadastro base
+
+O sistema deve iniciar com Pinus e Eucalyptus/Eucalipto como cadastros base. Se o TCC exigir espécies botânicas específicas, isso será refinado antes da implementação final.
+
+## D-025 — Fórmulas personalizadas
+**Status:** decidido como requisito do produto
+
+O usuário deve poder cadastrar fórmulas novas, não apenas selecionar Spurr e Schumacher-Hall.
+
+Cada fórmula deve possuir nome único, expressão validada e coeficientes/variáveis necessários. A biblioteca definitiva para avaliação matemática ainda será escolhida.
+
+## D-026 — Geolocalização de parcelas
+**Status:** desejada para o fluxo de levantamento
+
+Durante a criação/coleta de uma parcela, o usuário poderá capturar pontos de localização com o dispositivo, por exemplo os quatro cantos da parcela. Esses pontos servem para documentação e apoio visual, não como medição topográfica precisa sem validação técnica.
+
+## D-027 — Exportação para Google Earth
+**Status:** desejada
+
+O sistema deve ser preparado para exportar pontos/polígonos de parcelas em KML/KMZ, permitindo abertura no Google Earth e uso na documentação do inventário.
+
+## D-028 — Resultados como dashboard
+**Status:** decidido para o desenho inicial
+
+A aba Resultados deve funcionar como dashboard analítico, inicialmente orientado à seleção de uma propriedade para visualizar levantamentos e resultados consolidados. Resultados detalhados também devem estar disponíveis dentro de cada levantamento.

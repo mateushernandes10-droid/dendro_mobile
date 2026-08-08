@@ -2,8 +2,11 @@
 
 ## BR-001 — Hierarquia dos dados
 Uma propriedade pode possuir vários talhões.
-Um talhão pertence a uma propriedade e pode possuir várias parcelas.
-Uma parcela pertence a um talhão e pode possuir várias árvores.
+Uma propriedade pode possuir vários levantamentos/contagens ao longo do tempo.
+Um levantamento pertence a uma propriedade e pode envolver um ou mais talhões.
+Um talhão pertence a uma propriedade e pode participar de vários levantamentos.
+Uma parcela pertence ao contexto de um levantamento e deve estar vinculada a um talhão.
+Uma parcela pode possuir várias árvores.
 Uma árvore pertence a uma parcela.
 
 ## BR-002 — Coleta por árvore
@@ -14,10 +17,14 @@ As unidades exatas devem ser padronizadas e documentadas antes da implementaçã
 
 Não converter silenciosamente unidades sem regra explícita.
 
+Áreas de propriedades e talhões devem ser tratadas em hectares (`ha`).
+
 ## BR-004 — Modelos volumétricos
 O sistema deve suportar inicialmente os modelos estudados no TCC:
 - Spurr;
 - Schumacher-Hall.
+
+Além dos modelos inicialmente estudados, o sistema deve permitir cadastrar fórmulas volumétricas personalizadas de forma controlada.
 
 ## BR-005 — Coeficientes não são universais
 Coeficientes de modelos volumétricos dependem de contexto técnico, incluindo espécie e região, podendo também depender de idade, manejo e condições do povoamento.
@@ -36,6 +43,8 @@ A primeira validação do projeto é voltada ao Rio Grande do Sul. A estrutura d
 O cálculo de volume deve usar exatamente o modelo selecionado, seus coeficientes e as medições necessárias.
 
 As equações definitivas devem ser transcritas de fonte validada antes da implementação. Não usar fórmulas inferidas a partir de texto truncado ou extração automática do documento.
+
+Para fórmulas personalizadas, a expressão deve ser validada antes de ser salva ou utilizada. A avaliação deve aceitar apenas variáveis e funções matemáticas permitidas pelo sistema.
 
 ## BR-009 — Método de amostragem
 O método de amostragem impacta a consolidação/extrapolação dos resultados. A implementação dessa parte deve aguardar a definição técnica final do método utilizado no TCC.
@@ -56,8 +65,11 @@ O sistema deve reduzir erros de digitação com validações, mas não pode gara
 - DAP não pode ser negativo.
 - Altura não pode ser negativa.
 - Preço por m³ não pode ser negativo.
+- Área em hectares não pode ser negativa.
 - Campos requeridos para o modelo selecionado devem estar preenchidos antes do cálculo.
 - Coeficientes obrigatórios para o modelo selecionado devem estar disponíveis antes do cálculo.
+- Nome de fórmula/modelo não pode ser duplicado.
+- Fórmula personalizada não pode ser salva se possuir expressão inválida ou variável não reconhecida.
 
 Se zero deve ou não ser permitido em cada campo, confirmar tecnicamente antes de bloquear.
 
@@ -80,3 +92,34 @@ Recomendação: nunca apagar dados relacionados silenciosamente. Solicitar confi
 
 ## BR-018 — Exportação
 Quando implementada, a exportação deve refletir os dados armazenados e os resultados calculados sem recalcular utilizando regras diferentes.
+
+## BR-019 — Status dos levantamentos
+Um levantamento deve possuir status para organizar a coleta.
+
+Estados iniciais:
+- `em andamento`;
+- `concluído`.
+
+O usuário pode manter mais de um levantamento em andamento ao mesmo tempo. A tela inicial deve sugerir a retomada do levantamento em andamento atualizado mais recentemente, sem impedir a criação de novo levantamento.
+
+## BR-020 — Relação entre espécie e fórmula/modelo
+Uma espécie pode possuir uma ou mais fórmulas/modelos associados.
+
+Uma fórmula/modelo pode ser marcada como padrão para uma espécie. Ao criar um levantamento, o sistema pode sugerir a fórmula padrão da espécie selecionada, mas o usuário deve poder alterar a fórmula/modelo do levantamento quando existirem outras opções associadas.
+
+## BR-021 — Fórmulas personalizadas
+Fórmulas personalizadas devem ter nome único e expressão matemática validada.
+
+O sistema deve identificar ou exigir os coeficientes necessários para a fórmula e impedir o cálculo quando algum coeficiente obrigatório estiver ausente.
+
+O cadastro de uma fórmula não garante validade técnica/científica. A responsabilidade pela origem e adequação da fórmula/coeficientes é do usuário responsável ou da fonte técnica adotada no TCC.
+
+## BR-022 — Geolocalização de parcelas
+Pontos de geolocalização capturados em campo devem ser armazenados com latitude, longitude, precisão informada pelo dispositivo, ordem do ponto e data/hora de captura.
+
+A marcação geográfica da parcela serve como documentação e apoio visual. Não deve ser apresentada como medição topográfica precisa sem validação técnica.
+
+O contorno completo do talhão não é obrigatório no fluxo de campo. A primeira versão pode priorizar o georreferenciamento das parcelas amostrais.
+
+## BR-023 — Exportação geográfica
+Quando implementada, a exportação KML/KMZ deve refletir os pontos/polígonos armazenados, preservando a relação com propriedade, levantamento, talhão e parcela.
