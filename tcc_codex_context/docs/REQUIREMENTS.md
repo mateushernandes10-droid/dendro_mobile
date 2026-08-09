@@ -169,6 +169,9 @@ Fórmulas cadastradas pelo usuário devem ser avaliadas por mecanismo controlado
 ### RNF-010 — Localização e permissões
 O uso de localização deve solicitar permissão ao usuário somente quando necessário e deve tratar recusa, indisponibilidade do GPS e baixa precisão de forma clara.
 
+### RNF-011 — Identidade visual
+A interface deve utilizar o nome **DENDRO Mobile** e seguir a identidade visual derivada da logo fornecida, mantendo legibilidade, simplicidade e adequação ao uso em campo.
+
 ## Fora do escopo atual
 - backend obrigatório;
 - autenticação online;

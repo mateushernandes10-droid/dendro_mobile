@@ -3,6 +3,12 @@
 ## Visão geral
 Este projeto é o desenvolvimento prático de um Trabalho de Conclusão de Curso em Ciência da Computação.
 
+### Nome do aplicativo
+**DENDRO Mobile**
+
+### Nome completo
+**DENDRO Mobile - Sistema para Inventário Florestal**
+
 ### Tema
 **Sistema Mobile para Coleta e Análise de Dados de Inventário Florestal em Florestas Plantadas de Pinus e Eucalyptus no Rio Grande do Sul.**
 

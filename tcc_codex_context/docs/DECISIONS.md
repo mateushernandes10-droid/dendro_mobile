@@ -183,3 +183,18 @@ O sistema deve ser preparado para exportar pontos/polígonos de parcelas em KML/
 **Status:** decidido para o desenho inicial
 
 A aba Resultados deve funcionar como dashboard analítico, inicialmente orientado à seleção de uma propriedade para visualizar levantamentos e resultados consolidados. Resultados detalhados também devem estar disponíveis dentro de cada levantamento.
+
+## D-029 — Nome e identidade do aplicativo
+**Status:** decidido
+
+Nome oficial: **DENDRO Mobile**.
+
+Nome completo/subtítulo: **DENDRO Mobile - Sistema para Inventário Florestal**.
+
+Logo-base salva em:
+
+```text
+tcc_codex_context/assets/branding/dendro_mobile_logo.png
+```
+
+A identidade visual deve partir da logo fornecida, com predominância de verde escuro e verde claro.

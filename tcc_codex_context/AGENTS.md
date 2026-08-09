@@ -10,9 +10,13 @@ Antes de alterar código, leia nesta ordem:
 4. `docs/ARCHITECTURE.md`
 5. `docs/DECISIONS.md`
 6. `docs/ENGINEERING_MODELS.md`
+7. `docs/BRANDING.md`
 
 ## Diretrizes para o Codex
 - O aplicativo é **mobile e offline-first**.
+- Nome oficial do aplicativo: **DENDRO Mobile**.
+- Nome completo/subtítulo: **DENDRO Mobile - Sistema para Inventário Florestal**.
+- Logo-base: `tcc_codex_context/assets/branding/dendro_mobile_logo.png`.
 - Stack definida: **Dart + Flutter + SQLite**.
 - A primeira versão **não possui backend nem servidor externo**.
 - Não introduzir Firebase, Supabase, MySQL, PostgreSQL, APIs remotas ou autenticação online sem solicitação explícita.
