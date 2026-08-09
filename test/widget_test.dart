@@ -1,9 +1,21 @@
 import 'package:dendro_mobile/app/dendro_app.dart';
+import 'package:dendro_mobile/core/database/dendro_database.dart';
+import 'package:dendro_mobile/core/providers/database_providers.dart';
+import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('abre a tela inicial do DENDRO Mobile', (tester) async {
-    await tester.pumpWidget(const DendroApp());
+    final database = DendroDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dendroDatabaseProvider.overrideWithValue(database)],
+        child: const DendroApp(),
+      ),
+    );
 
     expect(find.text('DENDRO'), findsOneWidget);
 
