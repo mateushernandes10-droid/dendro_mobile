@@ -16,6 +16,12 @@ Arquivo-base salvo no projeto:
 tcc_codex_context/assets/branding/dendro_mobile_logo.png
 ```
 
+Asset disponível para uso no aplicativo Flutter:
+
+```text
+assets/branding/dendro_mobile_logo.png
+```
+
 Características do arquivo atual:
 - formato: PNG;
 - tamanho: 2048x2048 px;
