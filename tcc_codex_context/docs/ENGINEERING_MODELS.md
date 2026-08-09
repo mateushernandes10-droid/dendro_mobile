@@ -102,9 +102,10 @@ flowchart LR
 1. O usuário escolhe criar novo levantamento.
 2. O sistema solicita a propriedade.
 3. O usuário seleciona propriedade cadastrada ou cadastra uma nova, quando disponível.
-4. O usuário seleciona ou cria o talhão envolvido.
-5. O usuário seleciona espécie e fórmula/modelo sugerido.
+4. O usuário seleciona ou cria um ou mais talhões envolvidos.
+5. O usuário confirma espécie e fórmula/modelo para cada talhão selecionado.
 6. O sistema cria o levantamento com status `em andamento`.
+7. O sistema cria um vínculo `talhaolevantamento` para cada talhão incluído na coleta.
 
 **Regras relacionadas:** RF-017, RF-018, BR-019, BR-020, D-015, D-021.
 
@@ -124,15 +125,15 @@ flowchart LR
 ### UC-005 — Registrar parcela
 **Ator principal:** Usuário de campo.
 
-**Objetivo:** Cadastrar uma parcela amostral dentro do levantamento.
+**Objetivo:** Cadastrar uma parcela amostral dentro de um talhão selecionado no levantamento.
 
 **Fluxo principal:**
 1. O usuário abre um levantamento em andamento.
-2. O usuário seleciona o talhão.
+2. O usuário seleciona o talhão dentro do levantamento.
 3. O usuário cria uma nova parcela.
-4. O sistema solicita identificação da parcela.
+4. O sistema sugere a identificação da parcela, por exemplo `P01`.
 5. O usuário pode capturar pontos de geolocalização.
-6. O sistema salva a parcela vinculada ao levantamento e talhão.
+6. O sistema salva a parcela vinculada ao `talhaolevantamento`.
 
 **Regras relacionadas:** RF-003, RF-020, BR-022.
 
@@ -161,10 +162,25 @@ flowchart LR
 
 **Fluxo principal:**
 1. O usuário abre uma parcela.
-2. O sistema permite adicionar árvore.
-3. O usuário informa DAP, altura e demais campos definidos.
-4. O sistema valida os valores informados.
-5. O sistema salva a árvore/medição.
+2. O sistema exibe a lista de árvores já medidas.
+3. O usuário toca em **Nova árvore**.
+4. O sistema abre o painel deslizante de cadastro.
+5. O sistema sugere a identificação sequencial da árvore, por exemplo `Árvore 20`.
+6. O usuário informa DAP, altura e demais campos definidos.
+7. O usuário pode capturar coordenada opcional da árvore.
+8. O sistema valida os valores informados.
+9. O usuário escolhe **Salvar** ou **Próxima**.
+10. O sistema salva a árvore/medição e atualiza a lista.
+
+**Fluxos alternativos:**
+- Em **Salvar**, o sistema recolhe o painel e retorna à lista.
+- Em **Próxima**, o sistema mantém o painel aberto e limpo para outra árvore.
+- Ao editar, o sistema abre o painel preenchido com dados da árvore selecionada.
+- Ao excluir, o sistema deve solicitar confirmação quando houver risco de perda de dados.
+- Se a captura de coordenada for recusada ou indisponível, o sistema permite continuar a coleta sem coordenada.
+
+**Pós-condição:**
+Salvar árvores não encerra automaticamente a parcela. A parcela só muda para `coletada` quando o usuário aciona a opção de finalizar parcela.
 
 **Regras relacionadas:** RF-004, RF-005, BR-002, BR-011, BR-012.
 
@@ -190,13 +206,17 @@ flowchart LR
 **Fluxo principal:**
 1. O usuário acessa Ajustes.
 2. O usuário abre Fórmulas/Modelos.
-3. O usuário informa nome, descrição, expressão matemática e coeficientes.
-4. O sistema valida nome único e expressão.
-5. O sistema salva a fórmula.
+3. O sistema exibe fórmulas/modelos em cards recolhíveis.
+4. O usuário abre um card para visualizar/alterar coeficientes ou usa o menu de três pontos para editar/excluir.
+5. O usuário informa nome, descrição, expressão matemática, variáveis/símbolos e coeficientes quando estiver criando/editando.
+6. O sistema valida nome único, expressão e variáveis declaradas.
+7. O sistema salva a fórmula.
 
 **Fluxos alternativos:**
 - Se o nome já existir, o sistema impede o cadastro.
-- Se a expressão for inválida ou possuir variável não permitida, o sistema impede o cadastro.
+- Se a expressão for inválida ou possuir símbolo/variável não declarado, o sistema impede o cadastro.
+- Se houver alterações não salvas ao recolher/sair, o sistema pergunta se o usuário deseja salvar ou descartar.
+- Se o usuário excluir uma fórmula associada a espécie ou levantamento, o sistema deve informar o impacto e solicitar confirmação.
 
 **Regras relacionadas:** RF-007, RF-008, RNF-009, BR-004, BR-008, BR-021, D-025.
 
@@ -222,15 +242,21 @@ flowchart LR
 ### UC-011 — Consultar resultados
 **Ator principal:** Usuário de campo ou responsável técnico.
 
-**Objetivo:** Visualizar resultados por levantamento e por propriedade.
+**Objetivo:** Visualizar resultados consolidados por propriedade, com filtros opcionais.
 
 **Fluxo principal:**
 1. O usuário acessa a aba Resultados.
 2. O sistema solicita ou permite selecionar uma propriedade.
-3. O sistema exibe levantamentos e resultados consolidados disponíveis.
-4. O usuário abre detalhes de um levantamento ou talhão.
+3. O usuário pode selecionar filtros opcionais, como um ou mais talhões e espécie.
+4. O sistema recalcula/atualiza os indicadores usando apenas os dados compatíveis com os filtros ativos.
+5. O usuário pode abrir detalhes de um levantamento, talhão ou indicador.
 
-**Regras relacionadas:** RF-010, RF-021, D-028.
+**Fluxos alternativos:**
+- A tela pode ser aberta a partir de uma propriedade, já com a propriedade selecionada.
+- A tela pode ser aberta a partir de um talhão, já com propriedade e talhão selecionados.
+- Se nenhum filtro opcional for aplicado, o sistema considera todos os dados da propriedade selecionada.
+
+**Regras relacionadas:** RF-010, RF-021, BR-024, D-028.
 
 ### UC-012 — Exportar dados/resultados
 **Ator principal:** Usuário de campo ou responsável técnico.
@@ -239,9 +265,18 @@ flowchart LR
 
 **Fluxo principal:**
 1. O usuário seleciona levantamento ou propriedade.
-2. O usuário solicita exportação.
-3. O sistema gera arquivo no formato disponível.
-4. O sistema disponibiliza o arquivo ao usuário.
+2. O usuário solicita exportação pela tela da propriedade, resultados ou detalhe do levantamento.
+3. O sistema abre a tela de exportação com os talhões/áreas selecionados por padrão conforme o contexto.
+4. O usuário escolhe formato de arquivo.
+5. O usuário mantém ou altera a seleção de talhões/áreas incluídos.
+6. O sistema gera arquivo no formato selecionado.
+7. O sistema disponibiliza o arquivo ao usuário.
+
+**Formatos desejados:**
+- PDF;
+- CSV;
+- XLS/XLSX;
+- KML/KMZ.
 
 **Regras relacionadas:** RF-016, BR-018, D-011.
 
@@ -277,7 +312,12 @@ classDiagram
         +String id
         +String propriedadeId
         +String identificacao
+        +String especieId
         +double areaHa
+        +int anoPlantio
+        +String espacamento
+        +String regimeManejo
+        +String observacao
         +DateTime criadoEm
         +DateTime atualizadoEm
     }
@@ -293,13 +333,28 @@ classDiagram
         +reabrir()
     }
 
-    class Parcela {
+    class TalhaoLevantamento {
         +String id
         +String levantamentoId
         +String talhaoId
-        +String identificacao
+        +String especieId
+        +String formulaId
+        +double areaPadraoParcelaHa
         +DateTime criadoEm
         +DateTime atualizadoEm
+    }
+
+    class Parcela {
+        +String id
+        +String talhaoLevantamentoId
+        +String identificacao
+        +StatusParcela status
+        +double areaHa
+        +String posicaoReferencia
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+        +marcarEmAndamento()
+        +finalizar()
     }
 
     class PontoGeografico {
@@ -318,6 +373,10 @@ classDiagram
         +int numero
         +double dap
         +double altura
+        +double latitude
+        +double longitude
+        +double precisaoMetros
+        +DateTime coordenadaCapturadaEm
         +DateTime criadoEm
         +DateTime atualizadoEm
     }
@@ -336,6 +395,15 @@ classDiagram
         +String expressao
         +bool ativa
         +validarExpressao()
+    }
+
+    class FormulaVariavel {
+        +String id
+        +String formulaId
+        +String simbolo
+        +String variavel
+        +String unidade
+        +String origemValor
     }
 
     class Coeficiente {
@@ -358,9 +426,18 @@ classDiagram
         +DateTime calculadoEm
     }
 
+    class FiltroResultados {
+        +String propriedadeId
+        +List~String~ talhaoIds
+        +String especieId
+        +DateTime periodoInicio
+        +DateTime periodoFim
+    }
+
     class CalculadoraVolume {
         +calcularVolumeArvore(arvore, formula, coeficientes)
         +calcularResumoParcela(parcela)
+        +calcularResumoTalhaoLevantamento(talhaoLevantamento)
         +calcularResumoLevantamento(levantamento)
     }
 
@@ -370,16 +447,30 @@ classDiagram
         concluido
     }
 
+    class StatusParcela {
+        <<enumeration>>
+        pendente
+        emAndamento
+        coletada
+    }
+
     Propriedade "1" --> "0..*" Talhao
     Propriedade "1" --> "0..*" Levantamento
-    Levantamento "1" --> "0..*" Parcela
-    Talhao "1" --> "0..*" Parcela
+    Levantamento "1" --> "0..*" TalhaoLevantamento
+    Talhao "1" --> "0..*" TalhaoLevantamento
+    TalhaoLevantamento "1" --> "0..*" Parcela
     Parcela "1" --> "0..*" Arvore
     Parcela "1" --> "0..*" PontoGeografico
     Especie "1" --> "0..*" EspecieFormula
     FormulaVolumetrica "1" --> "0..*" EspecieFormula
+    FormulaVolumetrica "1" --> "0..*" FormulaVariavel
     FormulaVolumetrica "1" --> "0..*" Coeficiente
+    Especie "1" --> "0..*" TalhaoLevantamento
+    FormulaVolumetrica "1" --> "0..*" TalhaoLevantamento
     Levantamento "1" --> "0..1" ResultadoInventario
+    FiltroResultados ..> Propriedade
+    FiltroResultados ..> Talhao
+    FiltroResultados ..> Especie
     CalculadoraVolume ..> Arvore
     CalculadoraVolume ..> FormulaVolumetrica
     CalculadoraVolume ..> Coeficiente
@@ -391,13 +482,15 @@ classDiagram
 erDiagram
     PROPERTIES ||--o{ STANDS : possui
     PROPERTIES ||--o{ INVENTORY_RUNS : possui
-    INVENTORY_RUNS ||--o{ PLOTS : contem
-    STANDS ||--o{ PLOTS : vincula
+    INVENTORY_RUNS ||--o{ TALHAO_LEVANTAMENTOS : contem
+    STANDS ||--o{ TALHAO_LEVANTAMENTOS : participa
+    TALHAO_LEVANTAMENTOS ||--o{ PLOTS : contem
     PLOTS ||--o{ TREES : possui
     PLOTS ||--o{ PLOT_GEO_POINTS : possui
     SPECIES ||--o{ SPECIES_FORMULAS : associa
     FORMULAS ||--o{ SPECIES_FORMULAS : associa
     FORMULAS ||--o{ FORMULA_COEFFICIENTS : possui
+    FORMULAS ||--o{ FORMULA_VARIABLES : possui
 
     PROPERTIES {
         text id PK
@@ -413,7 +506,12 @@ erDiagram
         text id PK
         text property_id FK
         text identification
+        text species_id FK
         real area_ha
+        integer planting_year
+        text spacing
+        text management_regime
+        text notes
         text created_at
         text updated_at
     }
@@ -427,11 +525,24 @@ erDiagram
         text completed_at
     }
 
-    PLOTS {
+    TALHAO_LEVANTAMENTOS {
         text id PK
         text inventory_run_id FK
         text stand_id FK
+        text species_id FK
+        text formula_id FK
+        real default_plot_area_ha
+        text created_at
+        text updated_at
+    }
+
+    PLOTS {
+        text id PK
+        text talhao_levantamento_id FK
         text identification
+        text status
+        real area_ha
+        text reference_position
         text created_at
         text updated_at
     }
@@ -442,6 +553,10 @@ erDiagram
         integer number
         real dap
         real height
+        real latitude
+        real longitude
+        real accuracy_meters
+        text location_captured_at
         text created_at
         text updated_at
     }
@@ -482,6 +597,15 @@ erDiagram
         text formula_id FK
         text name
         real value
+    }
+
+    FORMULA_VARIABLES {
+        text id PK
+        text formula_id FK
+        text symbol
+        text variable_key
+        text unit
+        text value_source
     }
 ```
 
@@ -551,7 +675,8 @@ flowchart TD
     START([Início])
     CREATE["Criar ou continuar levantamento"]
     SELECT_PROP["Selecionar/cadastrar propriedade"]
-    SELECT_STAND["Selecionar/cadastrar talhão"]
+    SELECT_STAND["Selecionar/cadastrar talhões"]
+    CONFIRM_MODEL["Confirmar espécie/modelo por talhão"]
     CREATE_PLOT["Criar parcela"]
     GEO_DECISION{"Capturar geolocalização?"}
     CAPTURE_POINTS["Capturar pontos da parcela"]
@@ -567,7 +692,8 @@ flowchart TD
     START --> CREATE
     CREATE --> SELECT_PROP
     SELECT_PROP --> SELECT_STAND
-    SELECT_STAND --> CREATE_PLOT
+    SELECT_STAND --> CONFIRM_MODEL
+    CONFIRM_MODEL --> CREATE_PLOT
     CREATE_PLOT --> GEO_DECISION
     GEO_DECISION -- Sim --> CAPTURE_POINTS
     GEO_DECISION -- Não --> ADD_TREE
@@ -596,7 +722,7 @@ sequenceDiagram
 
     Usuario->>Tela: Solicita visualizar/calcular resultados
     Tela->>Servico: calcularResultado(levantamentoId)
-    Servico->>Repo: buscar levantamento, parcelas, árvores, fórmula e coeficientes
+    Servico->>Repo: buscar levantamento, talhaolevantamentos, parcelas, árvores, fórmula, variáveis e coeficientes
     Repo-->>Servico: dados do levantamento
     Servico->>Calc: calcular volumes por árvore
     Calc-->>Servico: volumes calculados
@@ -638,13 +764,14 @@ sequenceDiagram
     participant Parser as ExpressionParser
     participant Repo as FormulaRepository
 
-    Usuario->>Tela: Informa nome, expressão e coeficientes
+    Usuario->>Tela: Informa nome, expressão, variáveis/símbolos e coeficientes
     Tela->>Service: salvarFormula(dados)
     Service->>Repo: verificar nome único
     Repo-->>Service: nome disponível
     Service->>Parser: validar expressão
     Parser-->>Service: expressão válida e variáveis identificadas
-    Service->>Repo: salvar fórmula e coeficientes
+    Service->>Service: verificar se símbolos possuem variáveis reconhecidas
+    Service->>Repo: salvar fórmula, variáveis e coeficientes
     Repo-->>Service: fórmula salva
     Service-->>Tela: sucesso
     Tela-->>Usuario: Exibe fórmula cadastrada
@@ -663,10 +790,7 @@ stateDiagram-v2
 
 ## 13. Observações e Pendências dos Modelos
 
-- Confirmar se um levantamento poderá envolver vários talhões ou se o MVP limitará cada levantamento a um talhão principal.
-- Confirmar campos finais de talhão e parcela.
-- Confirmar unidades oficiais de DAP, altura, volume e produtividade.
-- Confirmar método de amostragem e regra de extrapolação de parcela para talhão.
-- Escolher biblioteca definitiva para avaliação de expressões matemáticas em Dart/Flutter.
+- Confirmar unidade oficial de produtividade.
+- Validar tecnicamente a implementação operacional da extrapolação para amostragem sistemática com parcelas de área fixa.
 - Definir quais exportações entram no MVP e quais ficam como evolução.
 - Definir se o contorno do talhão será cadastrado, desenhado ou importado futuramente.

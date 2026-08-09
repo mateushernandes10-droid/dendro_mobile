@@ -7,6 +7,8 @@ O TCC define a stack e o funcionamento autônomo/offline, mas não fixa um padr�
 - Flutter
 - Dart
 - SQLite
+- Drift
+- Riverpod
 - Git/GitHub
 - Sem backend na primeira versão
 
@@ -38,6 +40,7 @@ Contém entidades e regras de negócio independentes da interface:
 - Property / Propriedade;
 - Stand / Talhão;
 - InventoryRun / Levantamento ou Contagem;
+- TalhaoLevantamento / talhaolevantamento;
 - Plot / Parcela;
 - Tree / Árvore;
 - Species / Espécie;
@@ -98,17 +101,19 @@ Dentro de cada feature, manter separação simples entre `data`, `domain` e `pre
 ```text
 Propriedade 1 ---- N Talhão
 Propriedade 1 ---- N Levantamento
-Levantamento N ---- N Talhão
-Talhão      1 ---- N Parcela (no contexto do levantamento)
+Levantamento 1 ---- N talhaolevantamento
+Talhão      1 ---- N talhaolevantamento
+talhaolevantamento 1 ---- N Parcela
 Parcela     1 ---- N Árvore
 
-Levantamento/Talhão ---- Espécie
-Levantamento/Talhão ---- Fórmula/Modelo Volumétrico
+talhaolevantamento ---- Espécie
+talhaolevantamento ---- Fórmula/Modelo Volumétrico
 Fórmula/Modelo Volumétrico ---- Coeficientes
 Parcela ---- Pontos de geolocalização
+Árvore ---- Coordenada opcional
 ```
 
-A localização exata de espécie/modelo/coeficientes no esquema deve ser confirmada durante a modelagem. Evitar duplicação desnecessária.
+`talhaolevantamento` é a associação entre um levantamento e um talhão. Essa entidade guarda o contexto da coleta daquele talhão naquele levantamento, incluindo espécie/modelo/fórmula escolhidos, área padrão de parcela quando existir e informações necessárias para manter histórico de recontagens.
 
 Como uma propriedade pode possuir vários levantamentos, a entidade `InventoryRun`/`Levantamento` deve separar o cadastro permanente da propriedade/talhão dos dados medidos em uma coleta específica.
 
@@ -117,17 +122,18 @@ Tabelas candidatas:
 - `properties`
 - `stands`
 - `inventory_runs`
-- `inventory_run_stands` ou equivalente, caso um levantamento possa envolver vários talhões
+- `talhao_levantamentos`
 - `plots`
 - `trees`
 - `species`
 - `volume_models`
 - `formulas`
 - `model_coefficients`
+- `formula_variables`
 - `species_formulas`
 - `plot_geo_points`
 
-**Importante:** múltiplos levantamentos por propriedade são requisito do projeto. Antes de fechar o schema, confirmar se um levantamento poderá envolver vários talhões ou se cada levantamento ficará limitado a um talhão principal.
+**Importante:** múltiplos levantamentos por propriedade são requisito do projeto. Um levantamento pode envolver vários talhões, portanto a modelagem deve prever associação entre levantamento e talhões por meio de `talhao_levantamentos`.
 
 Campos candidatos para `properties`:
 - `id`
@@ -146,6 +152,39 @@ Campos candidatos para `inventory_runs`:
 - `updated_at`
 - `completed_at`
 
+Campos candidatos para `talhao_levantamentos`:
+- `id`
+- `inventory_run_id`
+- `stand_id`
+- `species_id`
+- `volume_model_id` ou `formula_id`
+- `default_plot_area_ha` opcional
+- `created_at`
+- `updated_at`
+
+Campos candidatos para `stands`:
+- `id`
+- `property_id`
+- `identification`
+- `species_id`
+- `area_ha`
+- `planting_year` opcional
+- `spacing` opcional
+- `management_regime` opcional
+- `notes` opcional
+- `created_at`
+- `updated_at`
+
+Campos candidatos para `plots`:
+- `id`
+- `talhao_levantamento_id`
+- `identification`
+- `status`
+- `area_ha` opcional
+- `reference_position` opcional
+- `created_at`
+- `updated_at`
+
 Campos candidatos para `plot_geo_points`:
 - `id`
 - `plot_id`
@@ -155,16 +194,33 @@ Campos candidatos para `plot_geo_points`:
 - `accuracy_meters`
 - `captured_at`
 
+Campos opcionais candidatos para `trees`:
+- `latitude`
+- `longitude`
+- `accuracy_meters`
+- `location_captured_at`
+
 ## Cálculos
 Criar funções/serviços puros, por exemplo:
 ```text
 calculateTreeVolume(...)
 calculatePlotSummary(...)
 calculateStandSummary(...)
+calculateVolumePerHectare(...)
+calculateStandExtrapolatedVolume(...)
 calculateGrossEconomicEstimate(...)
 ```
 
 Não misturar cálculo com persistência ou widgets.
+
+Para amostragem sistemática com parcelas de área fixa, a consolidação deve considerar:
+- volume total medido nas parcelas;
+- área total amostrada;
+- volume por hectare;
+- área do talhão;
+- volume extrapolado do talhão.
+
+Sem área amostrada disponível, não calcular indicadores por hectare ou extrapolados.
 
 ## Estratégia para modelos matemáticos
 Criar uma abstração que permita mais de um modelo, por exemplo:
@@ -177,7 +233,9 @@ VolumeModelCalculator
 
 Os coeficientes devem ser fornecidos ao cálculo, não embutidos como constantes universais.
 
-Para fórmulas personalizadas, usar uma biblioteca/serviço de avaliação de expressões matemáticas em Dart. A implementação deve validar a expressão, limitar variáveis/funções permitidas e tratar erros de avaliação, como variável ausente, divisão por zero ou resultado não numérico.
+Para fórmulas personalizadas, usar `math_expressions`. A implementação deve validar a expressão, limitar variáveis/funções permitidas e tratar erros de avaliação, como variável ausente, divisão por zero ou resultado não numérico.
+
+Cada fórmula deve declarar os símbolos/letras usados na expressão. Esses símbolos devem apontar para variáveis reconhecidas pelo domínio, inicialmente DAP, altura, idade e área basal. Exemplo conceitual: uma fórmula pode usar `D` para DAP, `H` para altura, `I` para idade e `G` para área basal, desde que esses vínculos estejam salvos junto da fórmula.
 
 Não executar código arbitrário informado pelo usuário.
 
@@ -194,14 +252,26 @@ A aba Ajustes deve concentrar cadastros auxiliares, como espécies e fórmulas/m
 A aba Resultados deve funcionar como dashboard analítico, inicialmente orientado à seleção de uma propriedade e aos levantamentos vinculados.
 
 ## Estado e gerenciamento de dependências
-Ainda não há decisão formal no TCC sobre Provider, Riverpod, Bloc etc.
 
-Para o início, escolher a solução mais simples compatível com o tamanho do aplicativo. Registrar a escolha em `DECISIONS.md` antes de espalhá-la pelo projeto.
+Usar Riverpod para estado e injeção de dependências da aplicação.
+
+Usar Drift para acesso ao SQLite local e migrações.
+
+Bibliotecas previstas:
+- `drift`;
+- `flutter_riverpod`;
+- `math_expressions`;
+- `geolocator`;
+- `fl_chart`;
+- `pdf`;
+- `printing`;
+- `csv`;
+- `excel`.
 
 ## Exportação
 A exportação deve consumir dados de domínio/repositórios e gerar arquivos sem alterar as regras de cálculo.
 
-Exportação KML/KMZ deve consumir pontos de geolocalização armazenados e gerar representação compatível com Google Earth para parcelas e, futuramente, outros elementos geográficos.
+Exportação KML/KMZ deve consumir pontos de geolocalização armazenados e gerar representação compatível com Google Earth para parcelas, árvores com coordenada capturada e, futuramente, outros elementos geográficos.
 
 ## Testes
 Prioridade alta para:

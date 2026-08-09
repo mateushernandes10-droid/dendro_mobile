@@ -59,6 +59,7 @@ flutter:
 
   assets:
     - assets/branding/dendro_mobile_logo.png
+    - assets/backgrounds/managed_pine_forest.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

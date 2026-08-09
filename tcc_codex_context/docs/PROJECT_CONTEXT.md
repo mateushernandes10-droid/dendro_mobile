@@ -53,8 +53,11 @@ Unidade de manejo dentro de uma propriedade. Um mesmo projeto pode possuir vári
 ### Levantamento / Contagem
 Evento de coleta realizado em uma propriedade, podendo envolver um ou mais talhões e suas parcelas medidas. Uma mesma propriedade pode possuir vários levantamentos ao longo do tempo, e mais de um levantamento pode permanecer em andamento ao mesmo tempo.
 
+### talhaolevantamento
+Entidade intermediária que representa um talhão dentro de um levantamento específico. Ela guarda o contexto da coleta daquele talhão naquele levantamento, permitindo histórico de recontagens e mantendo no cadastro do talhão apenas a estrutura permanente e a última informação coletada.
+
 ### Parcela
-Unidade amostral pertencente a um talhão, utilizada para realizar as medições do inventário.
+Unidade amostral pertencente ao contexto de um `talhaolevantamento`, utilizada para realizar as medições do inventário.
 
 ### Árvore
 Indivíduo medido dentro de uma parcela.
@@ -66,21 +69,22 @@ Diâmetro à altura do peito, variável dendrométrica utilizada nos cálculos d
 Altura da árvore utilizada, juntamente com outras variáveis e coeficientes, nos modelos volumétricos.
 
 ## Organização conceitual do aplicativo
-`Propriedade -> Levantamento/Contagem -> Talhão -> Parcela -> Árvore -> Medições -> Cálculos -> Resultados`
+`Propriedade -> Levantamento/Contagem -> talhaolevantamento -> Parcela -> Árvore -> Medições -> Cálculos -> Resultados`
 
-A propriedade é um cadastro mais permanente. O levantamento representa uma coleta específica, com data, status e dados medidos naquele evento. O talhão pode existir como cadastro da propriedade e também deve ser selecionado ou criado durante o levantamento.
+A propriedade e seus talhões são cadastros mais permanentes. O levantamento representa uma coleta específica, com data, status e dados medidos naquele evento. Quando um talhão participa de um levantamento, o sistema cria um `talhaolevantamento`, permitindo que o mesmo talhão seja recontado em datas diferentes.
 
 Exemplo de coleta:
 1. selecionar/cadastrar propriedade;
 2. criar um novo levantamento ou continuar um levantamento em andamento;
-3. selecionar/cadastrar talhão;
-4. selecionar/cadastrar parcela;
-5. opcionalmente capturar pontos de geolocalização da parcela;
-6. registrar árvores da parcela;
-7. informar DAP e altura das árvores;
-8. aplicar a fórmula/modelo volumétrico configurado;
-9. consolidar os resultados;
-10. apresentar volume/produtividade e estimativa econômica.
+3. selecionar um ou mais talhões;
+4. confirmar espécie e fórmula/modelo para cada talhão selecionado;
+5. selecionar/cadastrar parcela;
+6. opcionalmente capturar pontos de geolocalização da parcela;
+7. registrar árvores da parcela;
+8. informar DAP e altura das árvores;
+9. aplicar a fórmula/modelo volumétrico configurado;
+10. consolidar os resultados;
+11. apresentar volume/produtividade e estimativa econômica.
 
 ## Navegação principal prevista
 A interface mobile deve ser organizada por uma barra inferior com cinco áreas principais:
@@ -99,7 +103,7 @@ Os coeficientes não são universais. Eles são obtidos em estudos por ajuste es
 
 A intenção discutida para o software é permitir que modelos, fórmulas e coeficientes possam ser configurados, possibilitando futura utilização em outras regiões quando o usuário possuir parâmetros tecnicamente adequados.
 
-Além de fórmulas/modelos pré-cadastrados, o sistema deve ser estruturado para permitir fórmulas personalizadas cadastradas pelo usuário. Essas fórmulas devem possuir nome único, expressão matemática validada, variáveis permitidas e coeficientes necessários. A aplicação deve avaliar expressões matemáticas de forma controlada, sem executar código arbitrário.
+Além de fórmulas/modelos pré-cadastrados, o sistema deve ser estruturado para permitir fórmulas personalizadas cadastradas pelo usuário. Essas fórmulas devem possuir nome único, expressão matemática validada, variáveis declaradas e coeficientes necessários. Cada variável usada na expressão deve ter um símbolo/letra e ser vinculada a uma referência reconhecida pelo sistema, inicialmente DAP, altura, idade ou área basal. A aplicação deve avaliar expressões matemáticas de forma controlada, sem executar código arbitrário.
 
 ## Tecnologia definida
 - Linguagem: Dart.

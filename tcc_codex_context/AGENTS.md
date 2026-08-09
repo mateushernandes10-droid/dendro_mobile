@@ -11,6 +11,7 @@ Antes de alterar código, leia nesta ordem:
 5. `docs/DECISIONS.md`
 6. `docs/ENGINEERING_MODELS.md`
 7. `docs/BRANDING.md`
+8. `docs/UI_REFERENCE.md`
 
 ## Diretrizes para o Codex
 - O aplicativo é **mobile e offline-first**.
@@ -18,10 +19,13 @@ Antes de alterar código, leia nesta ordem:
 - Nome completo/subtítulo: **DENDRO Mobile - Sistema para Inventário Florestal**.
 - Logo-base: `tcc_codex_context/assets/branding/dendro_mobile_logo.png`.
 - Stack definida: **Dart + Flutter + SQLite**.
+- Camada SQLite definida: **Drift**.
+- Gerenciamento de estado definido: **Riverpod**.
+- Fórmulas personalizadas: usar **math_expressions** com validação e variáveis/funções permitidas.
 - A primeira versão **não possui backend nem servidor externo**.
 - Não introduzir Firebase, Supabase, MySQL, PostgreSQL, APIs remotas ou autenticação online sem solicitação explícita.
 - A estrutura permanente do cadastro parte de **Propriedade -> Talhão**.
-- A coleta deve ser organizada por **Levantamento/Contagem**, vinculado a uma propriedade e contendo os talhões, parcelas e árvores medidos naquele evento.
+- A coleta deve ser organizada por **Levantamento/Contagem**, vinculado a uma propriedade e podendo conter um ou mais talhões, parcelas e árvores medidos naquele evento.
 - Uma propriedade pode possuir vários levantamentos ao longo do tempo, inclusive levantamentos em áreas/talhões diferentes.
 - O usuário pode ter mais de um levantamento em andamento ao mesmo tempo; o aplicativo deve sugerir retomar o levantamento em aberto mais recente na tela inicial.
 - Preservar a separação entre interface, regras de negócio/cálculo e persistência.
@@ -33,8 +37,13 @@ Antes de alterar código, leia nesta ordem:
 - Fórmulas personalizadas devem ser avaliadas por biblioteca/serviço seguro de expressão matemática; não executar código arbitrário informado pelo usuário.
 - As espécies/categorias iniciais previstas para cadastro base são **Pinus** e **Eucalyptus**.
 - Áreas de propriedades e talhões devem ser tratadas em **hectares (ha)**.
+- Unidades oficiais iniciais: DAP em **cm**, altura em **m**, volume em **m³** e área em **ha**.
+- Método de amostragem definido: **amostragem sistemática com parcelas de área fixa**, preferencialmente retangulares.
+- Extrapolação parcela -> talhão deve usar volume por unidade de área amostrada, extrapolado para hectare/talhão, exigindo área amostrada disponível.
 - Parcelas podem receber pontos de geolocalização capturados pelo dispositivo durante o levantamento. Esses pontos servem para documentação/georreferenciamento e não devem ser usados como medição topográfica precisa sem validação técnica.
+- Árvores devem possuir identificação sequencial automática dentro da parcela e podem receber coordenada opcional capturada pelo dispositivo.
 - Exportação geográfica em **KML/KMZ** para uso no Google Earth é funcionalidade desejada, especialmente para representar parcelas medidas.
+- Relatórios/exportações futuras devem considerar como referência o inventário técnico salvo em `tcc_codex_context/assets/references/inventario_referencia_engenheiro_outubro_2025.png`.
 - Se uma fórmula, coeficiente, unidade, método de amostragem ou regra florestal não estiver documentada, **não inventar**. Marcar como pendência e solicitar definição.
 - Toda rotina matemática relevante deve ter testes automatizados com entradas e saídas conhecidas.
 - Validar entradas numéricas e impedir valores claramente inválidos (negativos, zero onde não fizer sentido etc.). Limites agronômicos/florestais específicos só devem ser aplicados quando houver regra validada.
