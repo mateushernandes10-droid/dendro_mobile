@@ -1,6 +1,9 @@
 import 'package:dendro_mobile/core/database/dendro_database.dart';
+import 'package:dendro_mobile/features/inventory_runs/data/inventory_runs_repository.dart';
+import 'package:dendro_mobile/features/plots/data/plots_repository.dart';
 import 'package:dendro_mobile/features/properties/data/properties_repository.dart';
 import 'package:dendro_mobile/features/stands/data/stands_repository.dart';
+import 'package:dendro_mobile/features/tree_collection/data/trees_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -97,6 +100,201 @@ void main() {
       expect(stands.single.stand.areaHa, 45.2);
       expect(stands.single.stand.plantingYear, 2012);
       expect(stands.single.species.name, 'Pinus');
+      expect(stands.single.hasActiveInventory, isFalse);
     },
   );
+
+  test('repositorio cria parcela planejada e inicia levantamento', () async {
+    final propertiesRepository = PropertiesRepository(database);
+    final standsRepository = StandsRepository(database);
+    final plotsRepository = PlotsRepository(database);
+    final inventoryRunsRepository = InventoryRunsRepository(database);
+
+    final propertyId = await propertiesRepository.create(
+      name: 'Fazenda Teste',
+      municipality: 'Vacaria',
+      totalAreaHa: 80,
+    );
+    final species = await standsRepository.watchActiveSpecies().first;
+    final pinus = species.firstWhere((item) => item.name == 'Pinus');
+
+    final standId = await standsRepository.create(
+      propertyId: propertyId,
+      identification: 'T-01',
+      speciesId: pinus.id,
+      areaHa: 12.5,
+    );
+
+    final initialState = await plotsRepository.watchStandPlots(standId).first;
+    expect(initialState.plots, isEmpty);
+    expect(initialState.stand.identification, 'T-01');
+    expect(await database.select(database.inventoryRuns).get(), isEmpty);
+
+    await plotsRepository.createPlannedPlot(standId: standId, areaHa: 0.04);
+
+    final updatedState = await plotsRepository
+        .watchStandPlots(standId)
+        .firstWhere((state) => state.plots.isNotEmpty);
+
+    expect(updatedState.plots.single.plot.identification, 'P01');
+    expect(updatedState.plots.single.plot.status, PlotStatus.pending);
+    expect(updatedState.plots.single.plot.areaHa, 0.04);
+    expect(
+      updatedState.plots.single.inventoryRun.status,
+      InventoryRunStatus.planning,
+    );
+
+    await plotsRepository.startNewInventoryForStand(standId);
+
+    final runs = await database.select(database.inventoryRuns).get();
+    final talhaoLevantamentos = await database
+        .select(database.talhaoLevantamentos)
+        .get();
+
+    expect(runs, hasLength(1));
+    expect(runs.single.status, InventoryRunStatus.inProgress);
+    expect(talhaoLevantamentos, hasLength(1));
+
+    final activeStandState = await plotsRepository
+        .watchStandPlots(standId)
+        .firstWhere((state) => state.activeTalhaoLevantamento != null);
+
+    expect(
+      activeStandState.activeTalhaoLevantamento!.inventoryRunId,
+      runs.single.id,
+    );
+
+    final propertyStands = await standsRepository
+        .watchByProperty(propertyId)
+        .firstWhere((items) => items.any((item) => item.hasActiveInventory));
+
+    expect(propertyStands.single.hasActiveInventory, isTrue);
+
+    final activeRun = await inventoryRunsRepository.watchLatestActive().first;
+
+    expect(activeRun, isNotNull);
+    expect(activeRun!.property.name, 'Fazenda Teste');
+    expect(activeRun.standLabel, 'T-01');
+    expect(activeRun.plotCount, 1);
+    expect(activeStandState.nextPlotIdentification, 'P02');
+
+    expect(
+      () => plotsRepository.startNewInventoryForStand(standId),
+      throwsA(isA<ActiveInventoryForStandException>()),
+    );
+
+    await plotsRepository.createPlannedPlot(standId: standId, areaHa: 0.04);
+
+    final stateWithNewPlannedPlot = await plotsRepository
+        .watchStandPlots(standId)
+        .firstWhere((state) => state.plots.length == 2);
+    final identifications = stateWithNewPlannedPlot.plots
+        .map((summary) => summary.plot.identification)
+        .toSet();
+
+    expect(identifications, containsAll(['P01', 'P02']));
+    expect(stateWithNewPlannedPlot.nextPlotIdentification, 'P03');
+
+    final secondStandId = await standsRepository.create(
+      propertyId: propertyId,
+      identification: 'T-02',
+      speciesId: pinus.id,
+      areaHa: 8,
+    );
+    await plotsRepository.startNewInventoryForStand(secondStandId);
+
+    final secondStandState = await plotsRepository
+        .watchStandPlots(secondStandId)
+        .firstWhere((state) => state.activeTalhaoLevantamento != null);
+
+    final activeRuns = await inventoryRunsRepository.watchActive().first;
+
+    expect(secondStandState.plots, isEmpty);
+    expect(activeRuns, hasLength(2));
+  });
+
+  test('repositorio coleta arvore e encerra parcela', () async {
+    final propertiesRepository = PropertiesRepository(database);
+    final standsRepository = StandsRepository(database);
+    final plotsRepository = PlotsRepository(database);
+    final treesRepository = TreesRepository(database);
+
+    final propertyId = await propertiesRepository.create(
+      name: 'Fazenda Coleta',
+      municipality: 'Vacaria',
+      totalAreaHa: 80,
+    );
+    final species = await standsRepository.watchActiveSpecies().first;
+    final pinus = species.firstWhere((item) => item.name == 'Pinus');
+
+    final standId = await standsRepository.create(
+      propertyId: propertyId,
+      identification: 'T-02',
+      speciesId: pinus.id,
+      areaHa: 10,
+    );
+
+    final talhaoLevantamento = await plotsRepository.startNewInventoryForStand(
+      standId,
+    );
+    final plotId = await plotsRepository.createPlotForTalhaoLevantamento(
+      talhaoLevantamentoId: talhaoLevantamento.id,
+      areaHa: 0.04,
+    );
+
+    final firstTreeId = await treesRepository.createTree(
+      plotId: plotId,
+      draft: TreeDraft(
+        dapCm: 31.5,
+        heightM: 22.7,
+        hasTortuousStem: false,
+        latitude: -28.5123,
+        longitude: -50.9123,
+        accuracyMeters: 4.5,
+        locationCapturedAt: DateTime(2026, 8, 15, 10),
+        plotReferencePosition: PlotReferencePosition.p1,
+      ),
+    );
+
+    var state = await treesRepository.watchCollection(plotId).first;
+
+    expect(state.trees, hasLength(1));
+    expect(state.trees.single.number, 1);
+    expect(state.trees.single.dapCm, 31.5);
+    expect(state.plot.status, PlotStatus.inProgress);
+    expect(state.geoPoints, hasLength(1));
+    expect(state.geoPoints.single.referencePosition, PlotReferencePosition.p1);
+
+    final replacementTreeId = await treesRepository.createTree(
+      plotId: plotId,
+      draft: TreeDraft(
+        dapCm: 29.2,
+        heightM: 21.1,
+        hasTortuousStem: false,
+        latitude: -28.6123,
+        longitude: -50.8123,
+        accuracyMeters: 3.8,
+        locationCapturedAt: DateTime(2026, 8, 15, 11),
+        plotReferencePosition: PlotReferencePosition.p1,
+      ),
+    );
+
+    state = await treesRepository.watchCollection(plotId).first;
+    final firstTree = state.trees.firstWhere((tree) => tree.id == firstTreeId);
+    final replacementTree = state.trees.firstWhere(
+      (tree) => tree.id == replacementTreeId,
+    );
+
+    expect(state.trees, hasLength(2));
+    expect(firstTree.plotReferencePosition, isNull);
+    expect(replacementTree.plotReferencePosition, PlotReferencePosition.p1);
+    expect(state.geoPoints, hasLength(1));
+    expect(state.geoPoints.single.latitude, closeTo(-28.6123, 0.00001));
+    expect(state.geoPoints.single.longitude, closeTo(-50.8123, 0.00001));
+
+    await treesRepository.markPlotCollected(plotId);
+    state = await treesRepository.watchCollection(plotId).first;
+
+    expect(state.plot.status, PlotStatus.collected);
+  });
 }

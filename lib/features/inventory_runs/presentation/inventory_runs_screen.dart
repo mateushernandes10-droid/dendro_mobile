@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/dendro_theme.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
+import 'inventory_run_detail_screen.dart';
+import 'new_inventory_screen.dart';
 
 class InventoryRunsScreen extends StatelessWidget {
   const InventoryRunsScreen({super.key});
@@ -13,7 +15,7 @@ class InventoryRunsScreen extends StatelessWidget {
       icon: Icons.assignment,
       actions: [
         IconButton.filled(
-          onPressed: () {},
+          onPressed: () => _openNewInventory(context),
           icon: const Icon(Icons.add),
           tooltip: 'Novo levantamento',
         ),
@@ -47,6 +49,22 @@ class InventoryRunsScreen extends StatelessWidget {
           area: '12,7 ha medidos',
         ),
       ],
+    );
+  }
+
+  Future<void> _openNewInventory(BuildContext context) async {
+    final runId = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (context) => const NewInventoryScreen(),
+      ),
+    );
+
+    if (runId == null || !context.mounted) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => InventoryRunDetailScreen(runId: runId),
+      ),
     );
   }
 }

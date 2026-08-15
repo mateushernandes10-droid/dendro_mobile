@@ -7,6 +7,7 @@ import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
 import '../data/properties_repository.dart';
 import '../../stands/data/stands_repository.dart';
+import '../../plots/presentation/stand_plots_screen.dart';
 
 class PropertyDetailScreen extends ConsumerWidget {
   const PropertyDetailScreen({required this.property, super.key});
@@ -60,7 +61,7 @@ class PropertyDetailScreen extends ConsumerWidget {
                     for (final item in items)
                       _StandItem(
                         summary: item,
-                        onOpen: () => _showComingSoon(context, 'Parcelas'),
+                        onOpen: () => _openStandPlots(context, item),
                         onEdit: () =>
                             _openStandForm(context, property.id, summary: item),
                         onDelete: () => _confirmDeleteStand(context, ref, item),
@@ -95,6 +96,14 @@ class PropertyDetailScreen extends ConsumerWidget {
       useSafeArea: true,
       builder: (context) =>
           _StandFormSheet(propertyId: propertyId, summary: summary),
+    );
+  }
+
+  Future<void> _openStandPlots(BuildContext context, StandSummary summary) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => StandPlotsScreen(standId: summary.stand.id),
+      ),
     );
   }
 
@@ -222,14 +231,24 @@ class _StandItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      stand.identification,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            stand.identification,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        if (summary.hasActiveInventory) ...[
+                          const SizedBox(width: 8),
+                          const StatusPill(label: 'Em coleta'),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Wrap(

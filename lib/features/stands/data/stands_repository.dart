@@ -20,18 +20,76 @@ final propertyStandsProvider = StreamProvider.autoDispose
       return ref.watch(standsRepositoryProvider).watchByProperty(propertyId);
     });
 
+final inventoryStartOptionsProvider =
+    StreamProvider.autoDispose<List<InventoryStartPropertyOption>>((ref) {
+      return ref.watch(standsRepositoryProvider).watchInventoryStartOptions();
+    });
+
+class InventoryStartPropertyOption {
+  const InventoryStartPropertyOption({
+    required this.property,
+    required this.stands,
+  });
+
+  final PropertyRecord property;
+  final List<StandSummary> stands;
+
+  InventoryStartPropertyOption copyWith({List<StandSummary>? stands}) {
+    return InventoryStartPropertyOption(
+      property: property,
+      stands: stands ?? this.stands,
+    );
+  }
+}
+
 class StandSummary {
   const StandSummary({
     required this.stand,
     required this.species,
     required this.talhaoLevantamentoCount,
+    required this.hasActiveInventory,
   });
 
   final StandRecord stand;
   final SpeciesRecord species;
   final int talhaoLevantamentoCount;
+  final bool hasActiveInventory;
 
   bool get hasChildren => talhaoLevantamentoCount > 0;
+}
+
+class _StandSummaryAccumulator {
+  _StandSummaryAccumulator({required this.stand, required this.species});
+
+  final StandRecord stand;
+  final SpeciesRecord species;
+  int talhaoLevantamentoCount = 0;
+  bool hasActiveInventory = false;
+
+  StandSummary toSummary() {
+    return StandSummary(
+      stand: stand,
+      species: species,
+      talhaoLevantamentoCount: talhaoLevantamentoCount,
+      hasActiveInventory: hasActiveInventory,
+    );
+  }
+}
+
+class _InventoryStartPropertyAccumulator {
+  _InventoryStartPropertyAccumulator(this.property);
+
+  final PropertyRecord property;
+  final Map<String, _StandSummaryAccumulator> standsById = {};
+
+  InventoryStartPropertyOption toOption() {
+    final stands =
+        standsById.values.map((summary) => summary.toSummary()).toList()..sort(
+          (a, b) => a.stand.identification.compareTo(b.stand.identification),
+        );
+
+    return InventoryStartPropertyOption(property: property, stands: stands);
+  }
 }
 
 class StandsRepository {
@@ -54,25 +112,115 @@ class StandsRepository {
               _database.species,
               _database.species.id.equalsExp(_database.stands.speciesId),
             ),
+            leftOuterJoin(
+              _database.talhaoLevantamentos,
+              _database.talhaoLevantamentos.standId.equalsExp(
+                _database.stands.id,
+              ),
+            ),
+            leftOuterJoin(
+              _database.inventoryRuns,
+              _database.inventoryRuns.id.equalsExp(
+                _database.talhaoLevantamentos.inventoryRunId,
+              ),
+            ),
           ])
           ..where(_database.stands.propertyId.equals(propertyId))
           ..orderBy([OrderingTerm.asc(_database.stands.identification)]);
 
-    return query.watch().asyncMap((rows) async {
-      final summaries = <StandSummary>[];
+    return query.watch().map((rows) {
+      final summariesByStand = <String, _StandSummaryAccumulator>{};
 
       for (final row in rows) {
         final stand = row.readTable(_database.stands);
-        summaries.add(
-          StandSummary(
+        final summary = summariesByStand.putIfAbsent(
+          stand.id,
+          () => _StandSummaryAccumulator(
             stand: stand,
             species: row.readTable(_database.species),
-            talhaoLevantamentoCount: await _countTalhaoLevantamentos(stand.id),
           ),
         );
+
+        final talhaoLevantamento = row.readTableOrNull(
+          _database.talhaoLevantamentos,
+        );
+        if (talhaoLevantamento == null) continue;
+
+        summary.talhaoLevantamentoCount++;
+        final inventoryRun = row.readTableOrNull(_database.inventoryRuns);
+        if (inventoryRun?.status == InventoryRunStatus.inProgress) {
+          summary.hasActiveInventory = true;
+        }
       }
 
-      return summaries;
+      return summariesByStand.values
+          .map((summary) => summary.toSummary())
+          .toList();
+    });
+  }
+
+  Stream<List<InventoryStartPropertyOption>> watchInventoryStartOptions() {
+    final query =
+        _database.select(_database.properties).join([
+          leftOuterJoin(
+            _database.stands,
+            _database.stands.propertyId.equalsExp(_database.properties.id),
+          ),
+          leftOuterJoin(
+            _database.species,
+            _database.species.id.equalsExp(_database.stands.speciesId),
+          ),
+          leftOuterJoin(
+            _database.talhaoLevantamentos,
+            _database.talhaoLevantamentos.standId.equalsExp(
+              _database.stands.id,
+            ),
+          ),
+          leftOuterJoin(
+            _database.inventoryRuns,
+            _database.inventoryRuns.id.equalsExp(
+              _database.talhaoLevantamentos.inventoryRunId,
+            ),
+          ),
+        ])..orderBy([
+          OrderingTerm.asc(_database.properties.name),
+          OrderingTerm.asc(_database.stands.identification),
+        ]);
+
+    return query.watch().map((rows) {
+      final propertiesById = <String, _InventoryStartPropertyAccumulator>{};
+
+      for (final row in rows) {
+        final property = row.readTable(_database.properties);
+        final propertySummary = propertiesById.putIfAbsent(
+          property.id,
+          () => _InventoryStartPropertyAccumulator(property),
+        );
+
+        final stand = row.readTableOrNull(_database.stands);
+        final species = row.readTableOrNull(_database.species);
+        if (stand == null || species == null) continue;
+
+        final standSummary = propertySummary.standsById.putIfAbsent(
+          stand.id,
+          () => _StandSummaryAccumulator(stand: stand, species: species),
+        );
+
+        final talhaoLevantamento = row.readTableOrNull(
+          _database.talhaoLevantamentos,
+        );
+        if (talhaoLevantamento == null) continue;
+
+        standSummary.talhaoLevantamentoCount++;
+        final inventoryRun = row.readTableOrNull(_database.inventoryRuns);
+        if (inventoryRun?.status == InventoryRunStatus.inProgress) {
+          standSummary.hasActiveInventory = true;
+        }
+      }
+
+      return propertiesById.values
+          .map((summary) => summary.toOption())
+          .toList();
     });
   }
 
@@ -158,6 +306,7 @@ class StandsRepository {
       stand: stand,
       species: row.readTable(_database.species),
       talhaoLevantamentoCount: await _countTalhaoLevantamentos(stand.id),
+      hasActiveInventory: await _hasActiveInventory(stand.id),
     );
   }
 
@@ -171,6 +320,27 @@ class StandsRepository {
             .getSingle();
 
     return row.read(count) ?? 0;
+  }
+
+  Future<bool> _hasActiveInventory(String standId) async {
+    final query =
+        _database.select(_database.talhaoLevantamentos).join([
+            innerJoin(
+              _database.inventoryRuns,
+              _database.inventoryRuns.id.equalsExp(
+                _database.talhaoLevantamentos.inventoryRunId,
+              ),
+            ),
+          ])
+          ..where(
+            _database.talhaoLevantamentos.standId.equals(standId) &
+                _database.inventoryRuns.status.equalsValue(
+                  InventoryRunStatus.inProgress,
+                ),
+          )
+          ..limit(1);
+
+    return await query.getSingleOrNull() != null;
   }
 }
 

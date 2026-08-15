@@ -76,3 +76,7 @@ macos/Pods/
 # Symbols / obfuscation
 app.*.symbols
 app.*.map.json
+
+# Local APK sharing/build artifacts
+/apk_server/
+*.apk

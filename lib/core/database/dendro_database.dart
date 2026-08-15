@@ -3,7 +3,7 @@ import 'package:drift_flutter/drift_flutter.dart';
 
 part 'dendro_database.g.dart';
 
-enum InventoryRunStatus { inProgress, completed }
+enum InventoryRunStatus { planning, inProgress, completed }
 
 enum PlotStatus { pending, inProgress, collected }
 
