@@ -19,12 +19,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   bool _hasError = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void initState() {
+    super.initState();
     if (_started) return;
-
     _started = true;
-    unawaited(_prepareAndOpenApp());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_prepareAndOpenApp());
+    });
   }
 
   Future<void> _prepareAndOpenApp() async {
@@ -135,7 +137,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                     ),
                   ),
                   const Text(
-                    'MOBILE',
+                    'Mobile',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Color(0xFFC1ECD4),
