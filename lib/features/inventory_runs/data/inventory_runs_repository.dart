@@ -20,6 +20,11 @@ final activeInventoryRunsProvider =
       return ref.watch(inventoryRunsRepositoryProvider).watchActive();
     });
 
+final inventoryRunsProvider =
+    StreamProvider.autoDispose<List<InventoryRunSummary>>((ref) {
+      return ref.watch(inventoryRunsRepositoryProvider).watchAll();
+    });
+
 final inventoryRunDetailProvider = StreamProvider.autoDispose
     .family<InventoryRunSummary?, String>((ref, runId) {
       return ref.watch(inventoryRunsRepositoryProvider).watchById(runId);
@@ -98,6 +103,28 @@ class InventoryRunsRepository {
       for (final run in runs) {
         summaries.add(await _summaryForRun(run));
       }
+      return summaries;
+    });
+  }
+
+  Stream<List<InventoryRunSummary>> watchAll() {
+    final query = _database.select(_database.inventoryRuns)
+      ..orderBy([(table) => OrderingTerm.desc(table.updatedAt)]);
+
+    return query.watch().asyncMap((runs) async {
+      final summaries = <InventoryRunSummary>[];
+      for (final run in runs) {
+        summaries.add(await _summaryForRun(run));
+      }
+
+      summaries.sort((a, b) {
+        final statusComparison = _statusPriority(
+          a.run.status,
+        ).compareTo(_statusPriority(b.run.status));
+        if (statusComparison != 0) return statusComparison;
+        return b.run.updatedAt.compareTo(a.run.updatedAt);
+      });
+
       return summaries;
     });
   }
@@ -243,5 +270,16 @@ class InventoryRunsRepository {
             .getSingle();
 
     return row.read(area) ?? 0;
+  }
+}
+
+int _statusPriority(InventoryRunStatus status) {
+  switch (status) {
+    case InventoryRunStatus.inProgress:
+      return 0;
+    case InventoryRunStatus.completed:
+      return 1;
+    case InventoryRunStatus.planning:
+      return 2;
   }
 }

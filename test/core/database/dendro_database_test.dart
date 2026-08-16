@@ -2,6 +2,7 @@ import 'package:dendro_mobile/core/database/dendro_database.dart';
 import 'package:dendro_mobile/features/inventory_runs/data/inventory_runs_repository.dart';
 import 'package:dendro_mobile/features/plots/data/plots_repository.dart';
 import 'package:dendro_mobile/features/properties/data/properties_repository.dart';
+import 'package:dendro_mobile/features/results/data/results_repository.dart';
 import 'package:dendro_mobile/features/stands/data/stands_repository.dart';
 import 'package:dendro_mobile/features/tree_collection/data/trees_repository.dart';
 import 'package:drift/native.dart';
@@ -211,6 +212,22 @@ void main() {
 
     expect(secondStandState.plots, isEmpty);
     expect(activeRuns, hasLength(2));
+
+    final allRuns = await inventoryRunsRepository.watchAll().first;
+
+    expect(allRuns, hasLength(3));
+    expect(
+      allRuns.where(
+        (summary) => summary.run.status == InventoryRunStatus.inProgress,
+      ),
+      hasLength(2),
+    );
+    expect(
+      allRuns.where(
+        (summary) => summary.run.status == InventoryRunStatus.planning,
+      ),
+      hasLength(1),
+    );
   });
 
   test('repositorio coleta arvore e encerra parcela', () async {
@@ -318,5 +335,109 @@ void main() {
       ),
       hasLength(1),
     );
+  });
+
+  test('repositorio de resultados calcula dashboard com filtros', () async {
+    final propertiesRepository = PropertiesRepository(database);
+    final standsRepository = StandsRepository(database);
+    final plotsRepository = PlotsRepository(database);
+    final treesRepository = TreesRepository(database);
+    final resultsRepository = ResultsRepository(database);
+
+    final propertyId = await propertiesRepository.create(
+      name: 'Fazenda Resultado',
+      municipality: 'Vacaria',
+      totalAreaHa: 100,
+    );
+    final species = await standsRepository.watchActiveSpecies().first;
+    final pinus = species.firstWhere((item) => item.name == 'Pinus');
+    final eucalyptus = species.firstWhere((item) => item.name == 'Eucalyptus');
+
+    final pinusStandId = await standsRepository.create(
+      propertyId: propertyId,
+      identification: 'P-01',
+      speciesId: pinus.id,
+      areaHa: 10,
+    );
+    final eucalyptusStandId = await standsRepository.create(
+      propertyId: propertyId,
+      identification: 'E-01',
+      speciesId: eucalyptus.id,
+      areaHa: 12,
+    );
+
+    final pinusTalhao = await plotsRepository.startNewInventoryForStand(
+      pinusStandId,
+    );
+    final pinusPlotId = await plotsRepository.createPlotForTalhaoLevantamento(
+      talhaoLevantamentoId: pinusTalhao.id,
+      areaHa: 0.04,
+    );
+    await treesRepository.createTree(
+      plotId: pinusPlotId,
+      draft: const TreeDraft(dapCm: 20, heightM: 10, hasTortuousStem: false),
+    );
+    await treesRepository.createTree(
+      plotId: pinusPlotId,
+      draft: const TreeDraft(dapCm: 25, heightM: 14, hasTortuousStem: false),
+    );
+    await treesRepository.markPlotCollected(pinusPlotId);
+
+    final eucalyptusTalhao = await plotsRepository.startNewInventoryForStand(
+      eucalyptusStandId,
+    );
+    final eucalyptusPlotId = await plotsRepository
+        .createPlotForTalhaoLevantamento(
+          talhaoLevantamentoId: eucalyptusTalhao.id,
+          areaHa: 0.05,
+        );
+    await treesRepository.createTree(
+      plotId: eucalyptusPlotId,
+      draft: const TreeDraft(dapCm: 30, heightM: 18, hasTortuousStem: false),
+    );
+
+    final options = await resultsRepository.watchFilterOptions().first;
+    expect(options.properties.single.name, 'Fazenda Resultado');
+    expect(options.stands, hasLength(2));
+    expect(
+      options.species.map((item) => item.name),
+      containsAll(['Pinus', 'Eucalyptus']),
+    );
+
+    final dashboard = await resultsRepository
+        .watchDashboard(
+          ResultsFilters(
+            propertyId: propertyId,
+            standIds: const {},
+            speciesId: null,
+          ),
+        )
+        .first;
+
+    expect(dashboard.treeCount, 3);
+    expect(dashboard.plotCount, 2);
+    expect(dashboard.collectedPlotCount, 1);
+    expect(dashboard.measuredPlotCount, 2);
+    expect(dashboard.measuredAreaHa, closeTo(0.09, 0.0001));
+    expect(dashboard.averageDapCm, closeTo(25, 0.0001));
+    expect(dashboard.averageHeightM, closeTo(14, 0.0001));
+    expect(
+      dashboard.diameterClasses.map((item) => item.label),
+      containsAll(['20-24', '25-29', '30-34']),
+    );
+
+    final pinusOnly = await resultsRepository
+        .watchDashboard(
+          ResultsFilters(
+            propertyId: propertyId,
+            standIds: {pinusStandId},
+            speciesId: null,
+          ),
+        )
+        .first;
+
+    expect(pinusOnly.treeCount, 2);
+    expect(pinusOnly.stands.single.stand.identification, 'P-01');
+    expect(pinusOnly.averageDapCm, closeTo(22.5, 0.0001));
   });
 }
