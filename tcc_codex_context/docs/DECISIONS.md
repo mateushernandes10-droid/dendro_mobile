@@ -361,4 +361,6 @@ A barra inferior de navegação deve permanecer fixa durante o uso do aplicativo
 
 Nas telas principais, a barra exibe ícones e nomes. Em telas internas, a barra passa para modo compacto, exibindo apenas os ícones para ocupar menos espaço vertical.
 
+Os rótulos da barra inferior devem ser responsivos: em celulares, usar abreviações planejadas para evitar cortes automáticos; em telas largas/tablets, usar nomes completos.
+
 Cada aba mantém sua própria pilha de navegação. Ao tocar novamente na aba atual enquanto estiver em uma tela interna, o app deve voltar para a tela principal daquela aba.

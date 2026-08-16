@@ -178,6 +178,12 @@ void main() {
   ) async {
     final database = DendroDatabase(NativeDatabase.memory());
     addTearDown(database.close);
+    tester.view.physicalSize = const Size(360, 780);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
     await tester.runAsync(() async {
       final propertiesRepository = PropertiesRepository(database);
@@ -196,6 +202,15 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
+    var navigationLabels = _navigationLabels(tester);
+    expect(navigationLabels, [
+      'Início',
+      'Levant.',
+      'Propr.',
+      'Result.',
+      'Ajustes',
+    ]);
 
     await tester.tap(find.text('Propr.'));
     await tester.pumpAndSettle();
@@ -218,14 +233,64 @@ void main() {
     await tester.pumpAndSettle();
 
     navigationBar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    navigationLabels = _navigationLabels(tester);
     expect(
       navigationBar.labelBehavior,
       NavigationDestinationLabelBehavior.alwaysShow,
     );
     expect(navigationBar.height, isNull);
+    expect(navigationLabels, [
+      'Início',
+      'Levant.',
+      'Propr.',
+      'Result.',
+      'Ajustes',
+    ]);
     expect(find.text('Buscar propriedade'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));
   });
+
+  testWidgets('barra inferior usa nomes completos em telas largas', (
+    tester,
+  ) async {
+    final database = DendroDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    tester.view.physicalSize = const Size(900, 780);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dendroDatabaseProvider.overrideWithValue(database)],
+        child: MaterialApp(theme: DendroTheme.light, home: const DendroShell()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_navigationLabels(tester), [
+      'Início',
+      'Levantamentos',
+      'Propriedades',
+      'Resultados',
+      'Ajustes',
+    ]);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
+}
+
+List<String> _navigationLabels(WidgetTester tester) {
+  final navigationBar = tester.widget<NavigationBar>(
+    find.byType(NavigationBar),
+  );
+  return [
+    for (final destination in navigationBar.destinations)
+      (destination as NavigationDestination).label,
+  ];
 }
