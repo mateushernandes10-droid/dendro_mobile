@@ -18,6 +18,8 @@ Este material deve ser usado como norte visual, não como cópia direta. O fluxo
 - Tipografia forte para títulos e aparência monoespaçada para números, medições e coordenadas.
 - Cards de status para levantamentos, parcelas, progresso, volume e produtividade.
 - Listas com altura confortável para toque em celular.
+- A lateral direita do topo deve manter a logo do DENDRO Mobile. Ações de adicionar/cadastrar devem usar botão flutuante no canto inferior direito, como o `+` da tela de parcelas.
+- A barra inferior deve ficar fixa em todo o app. Em telas principais, exibir ícones e nomes; em telas internas, exibir apenas ícones para reduzir a altura ocupada.
 
 ## O que adaptar
 

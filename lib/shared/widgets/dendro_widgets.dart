@@ -8,24 +8,35 @@ class DendroScreen extends StatelessWidget {
     required this.title,
     required this.icon,
     required this.children,
-    this.actions = const [],
+    this.floatingActionButton,
     super.key,
   });
 
   final String title;
   final IconData icon;
-  final List<Widget> actions;
   final List<Widget> children;
+  final Widget? floatingActionButton;
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+      child: Stack(
         children: [
-          DendroHeader(title: title, icon: icon, actions: actions),
-          const SizedBox(height: 20),
-          ...children,
+          ListView(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              14,
+              16,
+              floatingActionButton == null ? 24 : 96,
+            ),
+            children: [
+              DendroHeader(title: title, icon: icon),
+              const SizedBox(height: 20),
+              ...children,
+            ],
+          ),
+          if (floatingActionButton != null)
+            Positioned(right: 16, bottom: 16, child: floatingActionButton!),
         ],
       ),
     );
@@ -33,16 +44,10 @@ class DendroScreen extends StatelessWidget {
 }
 
 class DendroHeader extends StatelessWidget {
-  const DendroHeader({
-    required this.title,
-    required this.icon,
-    this.actions = const [],
-    super.key,
-  });
+  const DendroHeader({required this.title, required this.icon, super.key});
 
   final String title;
   final IconData icon;
-  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +75,8 @@ class DendroHeader extends StatelessWidget {
             ),
           ),
         ),
-        ...actions,
+        const SizedBox(width: 10),
+        const DendroLogoMark(),
       ],
     );
   }

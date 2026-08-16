@@ -344,3 +344,21 @@ Escolhas iniciais:
 - CSV: csv;
 - XLS/XLSX: excel;
 - KML: geração própria via XML.
+
+## D-039 — Padrão de ações no topo e cadastro
+**Status:** decidido para a interface
+
+Em telas com cabeçalho próprio, a lateral direita do topo deve exibir a logo do DENDRO Mobile como padrão visual consistente.
+
+Ações principais de criação/cadastro, como novo levantamento, nova propriedade, novo talhão e nova parcela, devem usar botão flutuante no canto inferior direito, seguindo o padrão do botão `+` da tela de parcelas.
+
+Ações contextuais que não são cadastro, como resultados e exportação dentro de uma propriedade, devem ficar dentro do bloco/card de contexto correspondente, e não substituir a logo no topo.
+
+## D-040 — Barra inferior sempre disponível
+**Status:** decidido para a interface
+
+A barra inferior de navegação deve permanecer fixa durante o uso do aplicativo, inclusive em telas internas como detalhe de propriedade, levantamento, parcelas e coleta.
+
+Nas telas principais, a barra exibe ícones e nomes. Em telas internas, a barra passa para modo compacto, exibindo apenas os ícones para ocupar menos espaço vertical.
+
+Cada aba mantém sua própria pilha de navegação. Ao tocar novamente na aba atual enquanto estiver em uma tela interna, o app deve voltar para a tela principal daquela aba.

@@ -45,6 +45,8 @@ class InventoryRunSummary {
   int get collectedPlotCount =>
       stands.fold(0, (total, stand) => total + stand.collectedPlotCount);
 
+  int get openPlotCount => plotCount - collectedPlotCount;
+
   double get measuredAreaHa =>
       stands.fold(0, (total, stand) => total + stand.measuredAreaHa);
 
@@ -109,6 +111,20 @@ class InventoryRunsRepository {
       if (runs.isEmpty) return null;
       return _summaryForRun(runs.single);
     });
+  }
+
+  Future<void> completeRun(String runId) async {
+    final now = DateTime.now();
+
+    await (_database.update(
+      _database.inventoryRuns,
+    )..where((table) => table.id.equals(runId))).write(
+      InventoryRunsCompanion(
+        status: const Value(InventoryRunStatus.completed),
+        updatedAt: Value(now),
+        completedAt: Value(now),
+      ),
+    );
   }
 
   Future<InventoryRunSummary> _summaryForRun(InventoryRunRecord run) async {

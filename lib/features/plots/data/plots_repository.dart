@@ -28,6 +28,8 @@ class StandPlotsState {
     required this.plots,
     required this.nextPlotIdentification,
     this.activeTalhaoLevantamento,
+    this.currentTalhaoLevantamento,
+    this.currentInventoryRun,
   });
 
   final StandRecord stand;
@@ -35,6 +37,8 @@ class StandPlotsState {
   final List<PlotSummary> plots;
   final String nextPlotIdentification;
   final TalhaoLevantamentoRecord? activeTalhaoLevantamento;
+  final TalhaoLevantamentoRecord? currentTalhaoLevantamento;
+  final InventoryRunRecord? currentInventoryRun;
 
   int get totalPlots => plots.length;
 
@@ -47,6 +51,8 @@ class StandPlotsState {
         (summary) => summary.inventoryRun.status == InventoryRunStatus.planning,
       )
       .length;
+
+  int get openPlots => totalPlots - collectedPlots;
 
   double get measuredAreaHa => plots.fold<double>(
     0,
@@ -84,11 +90,13 @@ class _StandContext {
 class _TalhaoContext {
   const _TalhaoContext({
     required this.talhaoLevantamento,
+    required this.inventoryRun,
     required this.stand,
     required this.species,
   });
 
   final TalhaoLevantamentoRecord talhaoLevantamento;
+  final InventoryRunRecord inventoryRun;
   final StandRecord stand;
   final SpeciesRecord species;
 }
@@ -211,6 +219,8 @@ class PlotsRepository {
           context.stand.id,
           InventoryRunStatus.inProgress,
         ),
+        currentTalhaoLevantamento: context.talhaoLevantamento,
+        currentInventoryRun: context.inventoryRun,
       );
     });
   }
@@ -404,6 +414,12 @@ class PlotsRepository {
     final row =
         await (_database.select(_database.talhaoLevantamentos).join([
               innerJoin(
+                _database.inventoryRuns,
+                _database.inventoryRuns.id.equalsExp(
+                  _database.talhaoLevantamentos.inventoryRunId,
+                ),
+              ),
+              innerJoin(
                 _database.stands,
                 _database.stands.id.equalsExp(
                   _database.talhaoLevantamentos.standId,
@@ -422,6 +438,7 @@ class PlotsRepository {
 
     return _TalhaoContext(
       talhaoLevantamento: row.readTable(_database.talhaoLevantamentos),
+      inventoryRun: row.readTable(_database.inventoryRuns),
       stand: row.readTable(_database.stands),
       species: row.readTable(_database.species),
     );

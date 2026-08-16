@@ -51,14 +51,10 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Coleta da parcela'),
-        actions: [
-          collection.maybeWhen(
-            data: (state) => TextButton.icon(
-              onPressed: _saving ? null : () => _finishPlot(state),
-              icon: const Icon(Icons.check_circle_outline),
-              label: const Text('Encerrar'),
-            ),
-            orElse: () => const SizedBox.shrink(),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: Center(child: DendroLogoMark(size: 32)),
           ),
         ],
       ),
@@ -79,7 +75,10 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        _ParcelHeader(state: state),
+        _ParcelHeader(
+          state: state,
+          onFinish: _saving ? null : () => _finishPlot(state),
+        ),
         const SizedBox(height: 14),
         if (!_formOpen)
           SizedBox(
@@ -439,9 +438,10 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
 }
 
 class _ParcelHeader extends StatelessWidget {
-  const _ParcelHeader({required this.state});
+  const _ParcelHeader({required this.state, required this.onFinish});
 
   final TreeCollectionState state;
+  final VoidCallback? onFinish;
 
   @override
   Widget build(BuildContext context) {
@@ -465,7 +465,15 @@ class _ParcelHeader extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
               StatusPill(label: _plotStatusLabel(state.plot.status)),
+              const SizedBox(width: 6),
+              IconButton.filledTonal(
+                onPressed: onFinish,
+                icon: const Icon(Icons.check_circle_outline),
+                tooltip: 'Encerrar parcela',
+                visualDensity: VisualDensity.compact,
+              ),
             ],
           ),
           const SizedBox(height: 5),

@@ -218,6 +218,7 @@ void main() {
     final standsRepository = StandsRepository(database);
     final plotsRepository = PlotsRepository(database);
     final treesRepository = TreesRepository(database);
+    final inventoryRunsRepository = InventoryRunsRepository(database);
 
     final propertyId = await propertiesRepository.create(
       name: 'Fazenda Coleta',
@@ -296,5 +297,26 @@ void main() {
     state = await treesRepository.watchCollection(plotId).first;
 
     expect(state.plot.status, PlotStatus.collected);
+
+    await inventoryRunsRepository.completeRun(
+      talhaoLevantamento.inventoryRunId,
+    );
+
+    final completedRuns = await database.select(database.inventoryRuns).get();
+    expect(completedRuns.single.status, InventoryRunStatus.completed);
+    expect(completedRuns.single.completedAt, isNotNull);
+    expect(await inventoryRunsRepository.watchActive().first, isEmpty);
+
+    await plotsRepository.startNewInventoryForStand(standId);
+    final runsAfterRestart = await database
+        .select(database.inventoryRuns)
+        .get();
+    expect(runsAfterRestart, hasLength(2));
+    expect(
+      runsAfterRestart.where(
+        (run) => run.status == InventoryRunStatus.inProgress,
+      ),
+      hasLength(1),
+    );
   });
 }

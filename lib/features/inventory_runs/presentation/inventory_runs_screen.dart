@@ -13,13 +13,12 @@ class InventoryRunsScreen extends StatelessWidget {
     return DendroScreen(
       title: 'Levantamentos',
       icon: Icons.assignment,
-      actions: [
-        IconButton.filled(
-          onPressed: () => _openNewInventory(context),
-          icon: const Icon(Icons.add),
-          tooltip: 'Novo levantamento',
-        ),
-      ],
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'inventory_runs_new_inventory',
+        onPressed: () => _openNewInventory(context),
+        tooltip: 'Novo levantamento',
+        child: const Icon(Icons.add),
+      ),
       children: const [
         _RunCard(
           date: '09/08/2026',

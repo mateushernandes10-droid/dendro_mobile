@@ -43,6 +43,7 @@ class StandPlotsScreen extends ConsumerWidget {
       ),
       floatingActionButton: state.maybeWhen(
         data: (data) => FloatingActionButton(
+          heroTag: 'stand_plots_new_plot_${talhaoLevantamentoId ?? standId}',
           onPressed: () => _openPlotForm(context, ref, data),
           tooltip: 'Nova parcela',
           child: const Icon(Icons.add),
@@ -56,6 +57,8 @@ class StandPlotsScreen extends ConsumerWidget {
             showStartInventoryAction: showStartInventoryAction,
             onAdd: () => _openPlotForm(context, ref, data),
             onStartInventory: () => _startInventory(context, ref, data),
+            onCompleteInventory: () =>
+                _confirmCompleteInventory(context, ref, data),
             onOpenPlot: (summary) => _openPlot(context, ref, summary),
             onEditPlot: (summary) =>
                 _openPlotForm(context, ref, data, summary: summary),
@@ -68,6 +71,69 @@ class StandPlotsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmCompleteInventory(
+    BuildContext context,
+    WidgetRef ref,
+    StandPlotsState state,
+  ) async {
+    final run = state.currentInventoryRun;
+    if (run == null || run.status != InventoryRunStatus.inProgress) return;
+
+    final hasOpenPlots = state.openPlots > 0 || state.totalPlots == 0;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          hasOpenPlots
+              ? Icons.warning_amber_rounded
+              : Icons.check_circle_outline,
+          color: hasOpenPlots ? Colors.red.shade700 : DendroColors.primary,
+        ),
+        title: const Text('Encerrar contagem'),
+        content: Text(_completeInventoryMessage(state)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: hasOpenPlots
+                  ? Colors.red.shade700
+                  : DendroColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Encerrar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref.read(inventoryRunsRepositoryProvider).completeRun(run.id);
+      ref.invalidate(activeInventoryRunsProvider);
+      ref.invalidate(activeInventoryRunProvider);
+      ref.invalidate(inventoryRunDetailProvider(run.id));
+      _invalidatePlots(ref);
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Contagem encerrada.')));
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red.shade700,
+          content: const Text('Não foi possível encerrar a contagem.'),
+        ),
+      );
+    }
   }
 
   Future<void> _startInventory(
@@ -234,6 +300,7 @@ class _PlotsBody extends StatelessWidget {
     required this.showStartInventoryAction,
     required this.onAdd,
     required this.onStartInventory,
+    required this.onCompleteInventory,
     required this.onOpenPlot,
     required this.onEditPlot,
     required this.onDeletePlot,
@@ -243,6 +310,7 @@ class _PlotsBody extends StatelessWidget {
   final bool showStartInventoryAction;
   final VoidCallback onAdd;
   final VoidCallback onStartInventory;
+  final VoidCallback onCompleteInventory;
   final ValueChanged<PlotSummary> onOpenPlot;
   final ValueChanged<PlotSummary> onEditPlot;
   final ValueChanged<PlotSummary> onDeletePlot;
@@ -254,7 +322,13 @@ class _PlotsBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
       children: [
-        _StandSummaryCard(state: state),
+        _StandSummaryCard(
+          state: state,
+          onCompleteInventory:
+              state.currentInventoryRun?.status == InventoryRunStatus.inProgress
+              ? onCompleteInventory
+              : null,
+        ),
         if (showStartInventoryAction) ...[
           const SizedBox(height: 12),
           SizedBox(
@@ -273,10 +347,7 @@ class _PlotsBody extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 18),
-        SectionTitle(
-          title: 'Parcelas',
-          trailing: StatusPill(label: '${state.totalPlots} total'),
-        ),
+        const SectionTitle(title: 'Parcelas'),
         if (state.plots.isEmpty)
           _EmptyPlotsCard(onAdd: onAdd)
         else
@@ -293,9 +364,10 @@ class _PlotsBody extends StatelessWidget {
 }
 
 class _StandSummaryCard extends StatelessWidget {
-  const _StandSummaryCard({required this.state});
+  const _StandSummaryCard({required this.state, this.onCompleteInventory});
 
   final StandPlotsState state;
+  final VoidCallback? onCompleteInventory;
 
   @override
   Widget build(BuildContext context) {
@@ -322,10 +394,22 @@ class _StandSummaryCard extends StatelessWidget {
                   ),
                 ),
               ),
-              _ProgressRing(
-                collected: state.collectedPlots,
-                total: state.totalPlots,
-              ),
+              if (onCompleteInventory != null) ...[
+                const SizedBox(width: 10),
+                Tooltip(
+                  message: 'Encerrar contagem',
+                  child: FilledButton.icon(
+                    onPressed: onCompleteInventory,
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                    label: const Text('Encerrar'),
+                    style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      minimumSize: const Size(0, 36),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 12),
@@ -422,43 +506,6 @@ class _SummaryChip extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ProgressRing extends StatelessWidget {
-  const _ProgressRing({required this.collected, required this.total});
-
-  final int collected;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    final progress = total == 0 ? 0.0 : collected / total;
-
-    return SizedBox.square(
-      dimension: 46,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          CircularProgressIndicator(
-            value: progress,
-            strokeWidth: 4,
-            backgroundColor: Colors.white.withValues(alpha: 0.72),
-            color: DendroColors.primary,
-          ),
-          Center(
-            child: Text(
-              '$collected/$total',
-              style: const TextStyle(
-                color: DendroColors.primary,
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1190,6 +1237,23 @@ String _statusLabel(PlotStatus status, InventoryRunStatus inventoryStatus) {
     case PlotStatus.pending:
       return 'Pendente';
   }
+}
+
+String _completeInventoryMessage(StandPlotsState state) {
+  if (state.totalPlots == 0) {
+    return 'Essa contagem ainda não possui parcelas cadastradas. Deseja encerrar mesmo assim?';
+  }
+
+  if (state.openPlots > 0) {
+    return 'Existem ${state.openPlots} ${_plural(state.openPlots, 'parcela')} ainda não ${_plural(state.openPlots, 'coletada')}. Se confirmar, a contagem será encerrada e deixará de aparecer em andamento.';
+  }
+
+  return 'Encerrar a contagem com ${state.collectedPlots} ${_plural(state.collectedPlots, 'parcela')} ${_plural(state.collectedPlots, 'coletada')}?';
+}
+
+String _plural(int count, String singular) {
+  if (count == 1) return singular;
+  return '${singular}s';
 }
 
 String _formatCoordinate(PlotGeoPointRecord point) {

@@ -21,33 +21,30 @@ class PropertyDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(property.name),
-        actions: [
-          IconButton(
-            onPressed: () => _showComingSoon(context, 'Resultados'),
-            icon: const Icon(Icons.bar_chart),
-            tooltip: 'Resultados',
-          ),
-          IconButton(
-            onPressed: () => _showComingSoon(context, 'Exportação'),
-            icon: const Icon(Icons.ios_share),
-            tooltip: 'Exportar',
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: Center(child: DendroLogoMark(size: 32)),
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'property_detail_new_stand_${property.id}',
+        onPressed: () => _openStandForm(context, property.id),
+        tooltip: 'Novo talhão',
+        child: const Icon(Icons.add),
+      ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
           children: [
-            _PropertySummaryCard(property: property),
-            const SizedBox(height: 18),
-            SectionTitle(
-              title: 'Talhões',
-              trailing: FilledButton.icon(
-                onPressed: () => _openStandForm(context, property.id),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Novo'),
-              ),
+            _PropertySummaryCard(
+              property: property,
+              onOpenResults: () => _showComingSoon(context, 'Resultados'),
+              onExport: () => _showComingSoon(context, 'Exportação'),
             ),
+            const SizedBox(height: 18),
+            const SectionTitle(title: 'Talhões'),
             stands.when(
               data: (items) {
                 if (items.isEmpty) {
@@ -150,9 +147,15 @@ class PropertyDetailScreen extends ConsumerWidget {
 }
 
 class _PropertySummaryCard extends StatelessWidget {
-  const _PropertySummaryCard({required this.property});
+  const _PropertySummaryCard({
+    required this.property,
+    required this.onOpenResults,
+    required this.onExport,
+  });
 
   final PropertyRecord property;
+  final VoidCallback onOpenResults;
+  final VoidCallback onExport;
 
   @override
   Widget build(BuildContext context) {
@@ -162,13 +165,35 @@ class _PropertySummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            property.name,
-            style: const TextStyle(
-              color: DendroColors.primary,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  property.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: DendroColors.primary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconButton.filledTonal(
+                onPressed: onOpenResults,
+                icon: const Icon(Icons.bar_chart),
+                tooltip: 'Resultados',
+                visualDensity: VisualDensity.compact,
+              ),
+              const SizedBox(width: 6),
+              IconButton.filledTonal(
+                onPressed: onExport,
+                icon: const Icon(Icons.ios_share),
+                tooltip: 'Exportar',
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           Wrap(

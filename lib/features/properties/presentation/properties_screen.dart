@@ -37,13 +37,12 @@ class _PropertiesScreenState extends ConsumerState<PropertiesScreen> {
     return DendroScreen(
       title: 'Propriedades',
       icon: Icons.map,
-      actions: [
-        IconButton.filled(
-          onPressed: () => _openPropertyForm(context),
-          icon: const Icon(Icons.add_home_work),
-          tooltip: 'Nova propriedade',
-        ),
-      ],
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'properties_new_property',
+        onPressed: () => _openPropertyForm(context),
+        tooltip: 'Nova propriedade',
+        child: const Icon(Icons.add_home_work),
+      ),
       children: [
         _PropertyFilters(
           controller: _searchController,

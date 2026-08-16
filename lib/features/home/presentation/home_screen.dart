@@ -47,7 +47,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return DendroScreen(
       title: 'Início',
       icon: Icons.home,
-      actions: const [DendroLogoMark()],
       children: [
         ElevatedButton.icon(
           onPressed: () => _openNewInventorySheet(context),

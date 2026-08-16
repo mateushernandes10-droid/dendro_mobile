@@ -11,13 +11,12 @@ class ResultsScreen extends StatelessWidget {
     return DendroScreen(
       title: 'Resultados',
       icon: Icons.bar_chart,
-      actions: [
-        IconButton.outlined(
-          onPressed: () {},
-          icon: const Icon(Icons.ios_share),
-          tooltip: 'Exportar',
-        ),
-      ],
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'results_export',
+        onPressed: () {},
+        tooltip: 'Exportar',
+        child: const Icon(Icons.ios_share),
+      ),
       children: const [
         _FilterCard(),
         SizedBox(height: 14),

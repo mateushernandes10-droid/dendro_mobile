@@ -33,7 +33,10 @@ class InventoryRunDetailScreen extends ConsumerWidget {
               return const _MissingRun();
             }
 
-            return _InventoryRunBody(summary: summary);
+            return _InventoryRunBody(
+              summary: summary,
+              onCompleteRun: () => _confirmCompleteRun(context, ref, summary),
+            );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) => _LoadError(
@@ -43,12 +46,74 @@ class InventoryRunDetailScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _confirmCompleteRun(
+    BuildContext context,
+    WidgetRef ref,
+    InventoryRunSummary summary,
+  ) async {
+    final hasOpenPlots = summary.openPlotCount > 0 || summary.plotCount == 0;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          hasOpenPlots
+              ? Icons.warning_amber_rounded
+              : Icons.check_circle_outline,
+          color: hasOpenPlots ? Colors.red.shade700 : DendroColors.primary,
+        ),
+        title: const Text('Encerrar levantamento'),
+        content: Text(_completeRunMessage(summary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: hasOpenPlots
+                  ? Colors.red.shade700
+                  : DendroColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Encerrar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref
+          .read(inventoryRunsRepositoryProvider)
+          .completeRun(summary.run.id);
+      ref.invalidate(inventoryRunDetailProvider(summary.run.id));
+      ref.invalidate(activeInventoryRunsProvider);
+      ref.invalidate(activeInventoryRunProvider);
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Levantamento encerrado.')));
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red.shade700,
+          content: const Text('Não foi possível encerrar o levantamento.'),
+        ),
+      );
+    }
+  }
 }
 
 class _InventoryRunBody extends StatelessWidget {
-  const _InventoryRunBody({required this.summary});
+  const _InventoryRunBody({required this.summary, required this.onCompleteRun});
 
   final InventoryRunSummary summary;
+  final VoidCallback onCompleteRun;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +121,17 @@ class _InventoryRunBody extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         _RunSummaryCard(summary: summary),
+        if (summary.run.status == InventoryRunStatus.inProgress) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onCompleteRun,
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Encerrar levantamento'),
+            ),
+          ),
+        ],
         const SizedBox(height: 18),
         Row(
           children: [
@@ -354,6 +430,23 @@ String _statusLabel(InventoryRunStatus status) {
     case InventoryRunStatus.completed:
       return 'Concluído';
   }
+}
+
+String _completeRunMessage(InventoryRunSummary summary) {
+  if (summary.plotCount == 0) {
+    return 'Esse levantamento ainda não possui parcelas cadastradas. Deseja encerrar mesmo assim?';
+  }
+
+  if (summary.openPlotCount > 0) {
+    return 'Existem ${summary.openPlotCount} ${_plural(summary.openPlotCount, 'parcela')} ainda não ${_plural(summary.openPlotCount, 'coletada')}. Se confirmar, o levantamento será encerrado e deixará de aparecer em andamento.';
+  }
+
+  return 'Encerrar o levantamento com ${summary.collectedPlotCount} ${_plural(summary.collectedPlotCount, 'parcela')} ${_plural(summary.collectedPlotCount, 'coletada')}?';
+}
+
+String _plural(int count, String singular) {
+  if (count == 1) return singular;
+  return '${singular}s';
 }
 
 String _formatArea(double value) {

@@ -5,6 +5,7 @@ import 'package:dendro_mobile/core/providers/database_providers.dart';
 import 'package:dendro_mobile/features/home/presentation/home_screen.dart';
 import 'package:dendro_mobile/features/plots/data/plots_repository.dart';
 import 'package:dendro_mobile/features/properties/data/properties_repository.dart';
+import 'package:dendro_mobile/features/shell/presentation/dendro_shell.dart';
 import 'package:dendro_mobile/features/stands/data/stands_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -167,6 +168,62 @@ void main() {
 
     expect(find.text('Levantamento'), findsOneWidget);
     expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
+
+  testWidgets('barra inferior permanece fixa em telas internas', (
+    tester,
+  ) async {
+    final database = DendroDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.runAsync(() async {
+      final propertiesRepository = PropertiesRepository(database);
+
+      await propertiesRepository.create(
+        name: 'Fazenda Navegação',
+        municipality: 'Vacaria',
+        totalAreaHa: 42,
+      );
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dendroDatabaseProvider.overrideWithValue(database)],
+        child: MaterialApp(theme: DendroTheme.light, home: const DendroShell()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Propr.'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Fazenda Navegação'));
+    await tester.pumpAndSettle();
+
+    var navigationBar = tester.widget<NavigationBar>(
+      find.byType(NavigationBar),
+    );
+    expect(
+      navigationBar.labelBehavior,
+      NavigationDestinationLabelBehavior.alwaysHide,
+    );
+    expect(navigationBar.height, 62);
+    expect(find.text('Talhões'), findsOneWidget);
+    expect(find.text('Buscar propriedade'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.map));
+    await tester.pumpAndSettle();
+
+    navigationBar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    expect(
+      navigationBar.labelBehavior,
+      NavigationDestinationLabelBehavior.alwaysShow,
+    );
+    expect(navigationBar.height, isNull);
+    expect(find.text('Buscar propriedade'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));
