@@ -41,6 +41,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final activeRuns = ref.watch(activeInventoryRunsProvider);
     final selectedSummary = _selectedSummary(activeRuns.asData?.value ?? []);
+    final now = DateTime.now();
+    final recentActivities = _recentActivities(now);
 
     return DendroScreen(
       title: 'Início',
@@ -90,36 +92,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         const SizedBox(height: 20),
         SectionTitle(
-          title: 'Atividade recente',
+          title: 'Atividades recentes',
           trailing: TextButton(
             onPressed: () {},
             child: const Text('Ver todas'),
           ),
         ),
-        const _ActivityItem(
-          icon: Icons.check_circle,
-          title: 'Parcela P-12 coletada',
-          subtitle: 'Talhão 42-B - Pinus taeda',
-          time: '14:30',
-        ),
-        const _ActivityItem(
-          icon: Icons.add_location_alt,
-          title: 'Nova parcela iniciada',
-          subtitle: 'P-13 com ponto P1 salvo',
-          time: '13:48',
-        ),
-        const _ActivityItem(
-          icon: Icons.ios_share,
-          title: 'Exportação realizada',
-          subtitle: 'Relatório PDF - Fazenda Esperança',
-          time: 'Ontem',
-        ),
-        const _ActivityItem(
-          icon: Icons.home_work,
-          title: 'Propriedade cadastrada',
-          subtitle: 'Fazenda Boa Vista',
-          time: 'Ontem',
-        ),
+        for (final activity in recentActivities)
+          _ActivityItem(
+            activity: activity,
+            displayTime: _formatActivityDate(activity.occurredAt, now),
+          ),
       ],
     );
   }
@@ -1124,18 +1107,25 @@ class _InlineMetric extends StatelessWidget {
   }
 }
 
-class _ActivityItem extends StatelessWidget {
-  const _ActivityItem({
+class _RecentActivity {
+  const _RecentActivity({
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.time,
+    required this.occurredAt,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
-  final String time;
+  final DateTime occurredAt;
+}
+
+class _ActivityItem extends StatelessWidget {
+  const _ActivityItem({required this.activity, required this.displayTime});
+
+  final _RecentActivity activity;
+  final String displayTime;
 
   @override
   Widget build(BuildContext context) {
@@ -1152,7 +1142,7 @@ class _ActivityItem extends StatelessWidget {
                 color: DendroColors.primarySoft,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, size: 18, color: DendroColors.primary),
+              child: Icon(activity.icon, size: 18, color: DendroColors.primary),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -1160,7 +1150,7 @@ class _ActivityItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    activity.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -1169,7 +1159,7 @@ class _ActivityItem extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    subtitle,
+                    activity.subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -1183,7 +1173,7 @@ class _ActivityItem extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              time,
+              displayTime,
               style: const TextStyle(
                 color: DendroColors.textMuted,
                 fontSize: 12,
@@ -1199,6 +1189,59 @@ class _ActivityItem extends StatelessWidget {
 
 String _formatArea(double value) {
   return '${value.toStringAsFixed(2).replaceAll('.', ',')} ha';
+}
+
+List<_RecentActivity> _recentActivities(DateTime now) {
+  final today = DateTime(now.year, now.month, now.day);
+
+  return [
+    _RecentActivity(
+      icon: Icons.check_circle,
+      title: 'Parcela P-12 coletada',
+      subtitle: 'Talhão 42-B - Pinus taeda',
+      occurredAt: today.add(const Duration(hours: 14, minutes: 30)),
+    ),
+    _RecentActivity(
+      icon: Icons.add_location_alt,
+      title: 'Nova parcela iniciada',
+      subtitle: 'P-13 com ponto P1 salvo',
+      occurredAt: today.add(const Duration(hours: 13, minutes: 48)),
+    ),
+    _RecentActivity(
+      icon: Icons.ios_share,
+      title: 'Exportação realizada',
+      subtitle: 'Relatório PDF - Fazenda Esperança',
+      occurredAt: today
+          .subtract(const Duration(days: 1))
+          .add(const Duration(hours: 9, minutes: 15)),
+    ),
+    _RecentActivity(
+      icon: Icons.home_work,
+      title: 'Propriedade cadastrada',
+      subtitle: 'Fazenda Boa Vista',
+      occurredAt: today
+          .subtract(const Duration(days: 3))
+          .add(const Duration(hours: 16, minutes: 45)),
+    ),
+  ];
+}
+
+String _formatActivityDate(DateTime occurredAt, DateTime now) {
+  final eventDate = DateTime(occurredAt.year, occurredAt.month, occurredAt.day);
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = today.subtract(const Duration(days: 1));
+
+  if (eventDate == today) {
+    return '${_twoDigits(occurredAt.hour)}:${_twoDigits(occurredAt.minute)}';
+  }
+
+  if (eventDate == yesterday) return 'Ontem';
+
+  return '${_twoDigits(occurredAt.day)}/${_twoDigits(occurredAt.month)}/${occurredAt.year}';
+}
+
+String _twoDigits(int value) {
+  return value.toString().padLeft(2, '0');
 }
 
 double? _parseArea(String value) {
