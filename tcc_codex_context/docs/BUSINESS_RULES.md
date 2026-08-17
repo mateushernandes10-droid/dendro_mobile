@@ -2,7 +2,7 @@
 
 ## BR-001 — Hierarquia dos dados
 Uma propriedade pode possuir vários talhões.
-Uma propriedade pode possuir vários levantamentos/contagens ao longo do tempo.
+Uma propriedade pode possuir vários levantamentos ao longo do tempo.
 Um levantamento pertence a uma propriedade e pode envolver um ou mais talhões.
 Um talhão pertence a uma propriedade e pode participar de vários levantamentos.
 Cada talhão incluído em um levantamento deve ser representado pela entidade intermediária `talhaolevantamento`.
@@ -172,7 +172,7 @@ Atalhos a partir da tela de propriedade ou talhão podem abrir a aba Resultados 
 Parcelas podem ser cadastradas antes da medição de campo.
 
 Estados iniciais:
-- `pendente`: parcela cadastrada, mas ainda sem contagem registrada;
+- `pendente`: parcela cadastrada, mas ainda sem coleta registrada;
 - `em andamento`: parcela com coleta iniciada, mas ainda não finalizada;
 - `coletada`: parcela com coleta finalizada.
 

@@ -50,11 +50,11 @@ A delimitação regional é importante porque os coeficientes utilizados em equa
 ### Talhão
 Unidade de manejo dentro de uma propriedade. Um mesmo projeto pode possuir vários talhões.
 
-### Levantamento / Contagem
-Evento de coleta realizado em uma propriedade, podendo envolver um ou mais talhões e suas parcelas medidas. Uma mesma propriedade pode possuir vários levantamentos ao longo do tempo, e mais de um levantamento pode permanecer em andamento ao mesmo tempo.
+### Levantamento / Coleta
+Levantamento é o registro/serviço realizado em uma propriedade, podendo envolver um ou mais talhões. Coleta é a operação de campo feita dentro desse levantamento, com parcelas e árvores medidas. Uma mesma propriedade pode possuir vários levantamentos ao longo do tempo, e mais de um levantamento pode permanecer em andamento ao mesmo tempo.
 
 ### talhaolevantamento
-Entidade intermediária que representa um talhão dentro de um levantamento específico. Ela guarda o contexto da coleta daquele talhão naquele levantamento, permitindo histórico de recontagens e mantendo no cadastro do talhão apenas a estrutura permanente e a última informação coletada.
+Entidade intermediária que representa um talhão dentro de um levantamento específico. Ela guarda o contexto da coleta daquele talhão naquele levantamento, permitindo histórico de novas coletas e mantendo no cadastro do talhão apenas a estrutura permanente e a última informação coletada.
 
 ### Parcela
 Unidade amostral pertencente ao contexto de um `talhaolevantamento`, utilizada para realizar as medições do inventário.
@@ -69,9 +69,9 @@ Diâmetro à altura do peito, variável dendrométrica utilizada nos cálculos d
 Altura da árvore utilizada, juntamente com outras variáveis e coeficientes, nos modelos volumétricos.
 
 ## Organização conceitual do aplicativo
-`Propriedade -> Levantamento/Contagem -> talhaolevantamento -> Parcela -> Árvore -> Medições -> Cálculos -> Resultados`
+`Propriedade -> Levantamento/Coleta -> talhaolevantamento -> Parcela -> Árvore -> Medições -> Cálculos -> Resultados`
 
-A propriedade e seus talhões são cadastros mais permanentes. O levantamento representa uma coleta específica, com data, status e dados medidos naquele evento. Quando um talhão participa de um levantamento, o sistema cria um `talhaolevantamento`, permitindo que o mesmo talhão seja recontado em datas diferentes.
+A propriedade e seus talhões são cadastros mais permanentes. O levantamento representa uma coleta específica, com data, status e dados medidos naquele evento. Quando um talhão participa de um levantamento, o sistema cria um `talhaolevantamento`, permitindo que o mesmo talhão seja coletado novamente em datas diferentes.
 
 Exemplo de coleta:
 1. selecionar/cadastrar propriedade;

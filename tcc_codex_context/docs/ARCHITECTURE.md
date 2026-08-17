@@ -39,7 +39,7 @@ Orquestra casos de uso, por exemplo:
 Contém entidades e regras de negócio independentes da interface:
 - Property / Propriedade;
 - Stand / Talhão;
-- InventoryRun / Levantamento ou Contagem;
+- InventoryRun / Levantamento;
 - TalhaoLevantamento / talhaolevantamento;
 - Plot / Parcela;
 - Tree / Árvore;
@@ -113,7 +113,7 @@ Parcela ---- Pontos de geolocalização
 Árvore ---- Coordenada opcional
 ```
 
-`talhaolevantamento` é a associação entre um levantamento e um talhão. Essa entidade guarda o contexto da coleta daquele talhão naquele levantamento, incluindo espécie/modelo/fórmula escolhidos, área padrão de parcela quando existir e informações necessárias para manter histórico de recontagens.
+`talhaolevantamento` é a associação entre um levantamento e um talhão. Essa entidade guarda o contexto da coleta daquele talhão naquele levantamento, incluindo espécie/modelo/fórmula escolhidos, área padrão de parcela quando existir e informações necessárias para manter histórico de novas coletas.
 
 Como uma propriedade pode possuir vários levantamentos, a entidade `InventoryRun`/`Levantamento` deve separar o cadastro permanente da propriedade/talhão dos dados medidos em uma coleta específica.
 

@@ -2,6 +2,12 @@
 
 Notas objetivas das decisoes feitas durante a implementacao.
 
+## Terminologia
+
+- Usar `levantamento` para o registro/servico como um todo.
+- Usar `coleta` para a operacao de campo dentro de um levantamento.
+- Evitar `contagem` na interface, nos avisos e nos documentos de regra.
+
 ## Novo levantamento
 
 - O fluxo de novo levantamento deve abrir uma tela dedicada, nao um bottom sheet pequeno.

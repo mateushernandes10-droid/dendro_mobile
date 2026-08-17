@@ -177,7 +177,7 @@ Formatos inicialmente desejados:
 
 O usuário deve poder selecionar o formato do arquivo e o conjunto de talhões/áreas incluídos na exportação.
 
-### RF-017 — Gerenciar levantamentos/contagens
+### RF-017 — Gerenciar levantamentos e coletas
 O usuário deve poder criar, visualizar, editar, continuar e concluir levantamentos vinculados a uma propriedade.
 
 Uma propriedade pode possuir vários levantamentos ao longo do tempo. O sistema deve permitir mais de um levantamento em andamento simultaneamente.
@@ -191,7 +191,7 @@ Cada levantamento deve possuir, no mínimo:
 - data/hora de conclusão, quando aplicável;
 - espécie e fórmula/modelo utilizados, conforme a estrutura final definida.
 
-Ao iniciar uma nova contagem, o usuário deve selecionar uma propriedade já cadastrada ou cadastrar uma propriedade no momento do fluxo, quando viável.
+Ao iniciar um novo levantamento, o usuário deve selecionar uma propriedade já cadastrada ou cadastrar uma propriedade no momento do fluxo, quando viável.
 
 O fluxo inicial previsto para novo levantamento é:
 1. selecionar ou cadastrar a propriedade;
@@ -200,7 +200,7 @@ O fluxo inicial previsto para novo levantamento é:
 4. criar ou reutilizar parcelas no contexto daquele levantamento;
 5. registrar as árvores e finalizar parcelas quando a coleta for encerrada.
 
-Internamente, cada talhão selecionado em um levantamento deve gerar um vínculo `talhaolevantamento`, que guarda o contexto daquela coleta para permitir histórico e recontagem futura do mesmo talhão.
+Internamente, cada talhão selecionado em um levantamento deve gerar um vínculo `talhaolevantamento`, que guarda o contexto daquela coleta para permitir histórico e nova coleta futura do mesmo talhão.
 
 ### RF-018 — Tela inicial e retomada rápida
 A tela inicial deve funcionar como dashboard operacional.

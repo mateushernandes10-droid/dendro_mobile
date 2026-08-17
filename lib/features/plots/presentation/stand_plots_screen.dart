@@ -91,7 +91,7 @@ class StandPlotsScreen extends ConsumerWidget {
               : Icons.check_circle_outline,
           color: hasOpenPlots ? Colors.red.shade700 : DendroColors.primary,
         ),
-        title: const Text('Encerrar contagem'),
+        title: const Text('Encerrar levantamento'),
         content: Text(_completeInventoryMessage(state)),
         actions: [
           TextButton(
@@ -124,13 +124,13 @@ class StandPlotsScreen extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Contagem encerrada.')));
+      ).showSnackBar(const SnackBar(content: Text('Levantamento encerrado.')));
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red.shade700,
-          content: const Text('Não foi possível encerrar a contagem.'),
+          content: const Text('Não foi possível encerrar o levantamento.'),
         ),
       );
     }
@@ -397,7 +397,7 @@ class _StandSummaryCard extends StatelessWidget {
               if (onCompleteInventory != null) ...[
                 const SizedBox(width: 10),
                 Tooltip(
-                  message: 'Encerrar contagem',
+                  message: 'Encerrar levantamento',
                   child: FilledButton.icon(
                     onPressed: onCompleteInventory,
                     icon: const Icon(Icons.check_circle_outline, size: 18),
@@ -1241,14 +1241,14 @@ String _statusLabel(PlotStatus status, InventoryRunStatus inventoryStatus) {
 
 String _completeInventoryMessage(StandPlotsState state) {
   if (state.totalPlots == 0) {
-    return 'Essa contagem ainda não possui parcelas cadastradas. Deseja encerrar mesmo assim?';
+    return 'Esse levantamento ainda não possui parcelas cadastradas. Deseja encerrar mesmo assim?';
   }
 
   if (state.openPlots > 0) {
-    return 'Existem ${state.openPlots} ${_plural(state.openPlots, 'parcela')} ainda não ${_plural(state.openPlots, 'coletada')}. Se confirmar, a contagem será encerrada e deixará de aparecer em andamento.';
+    return 'Existem ${state.openPlots} ${_plural(state.openPlots, 'parcela')} ainda não ${_plural(state.openPlots, 'coletada')}. Se confirmar, o levantamento será encerrado e deixará de aparecer em andamento.';
   }
 
-  return 'Encerrar a contagem com ${state.collectedPlots} ${_plural(state.collectedPlots, 'parcela')} ${_plural(state.collectedPlots, 'coletada')}?';
+  return 'Encerrar o levantamento com ${state.collectedPlots} ${_plural(state.collectedPlots, 'parcela')} ${_plural(state.collectedPlots, 'coletada')}?';
 }
 
 String _plural(int count, String singular) {

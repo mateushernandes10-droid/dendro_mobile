@@ -74,17 +74,17 @@ O print enviado pelo usuário em 2026-08-09 mostra a intenção geral, mas a par
 A tela Início deve priorizar ações na seguinte hierarquia visual:
 
 1. **Novo Levantamento +** como ação principal.
-2. Card de levantamento/contagem em andamento, quando existir.
+2. Card de levantamento em andamento, quando existir.
 3. Resumos e atividades recentes.
 
 Direção desejada:
 
-- O botão **Novo Levantamento +** deve ficar acima do card de contagem em andamento.
+- O botão **Novo Levantamento +** deve ficar acima do card de levantamento em andamento.
 - O botão deve ser retangular horizontal, ocupar praticamente toda a largura útil da tela e ter altura confortável, sem ficar exageradamente alto.
 - O botão principal deve usar verde forte/primário para chamar mais atenção.
-- O card de contagem em andamento deve aparecer logo abaixo, usando verde mais fraco ou superfície esverdeada, sem ser branco puro.
-- O card de contagem em andamento deve permitir continuar o levantamento, mostrando propriedade/talhão, total de árvores medidas, área medida e data/última atualização quando disponível.
-- O card de contagem em andamento não precisa exibir porcentagem de progresso como informação principal, pois esse valor pode ser artificial enquanto o método/plano de amostragem não estiver fechado.
+- O card de levantamento em andamento deve aparecer logo abaixo, usando verde mais fraco ou superfície esverdeada, sem ser branco puro.
+- O card de levantamento em andamento deve permitir continuar a coleta, mostrando propriedade/talhão, total de árvores medidas, área medida e data/última atualização quando disponível.
+- O card de levantamento em andamento não precisa exibir porcentagem de progresso como informação principal, pois esse valor pode ser artificial enquanto o método/plano de amostragem não estiver fechado.
 - O restante da tela pode exibir informações secundárias, como total de árvores medidas, área medida, último levantamento concluído e atividade recente.
 - A seção **Atividade recente** deve mostrar um resumo das últimas ações feitas no app, limitada inicialmente às 4 atividades mais recentes.
 - Exemplos de atividades recentes: parcela coletada, nova parcela iniciada, exportação realizada, novo cadastro de propriedade, levantamento concluído, fórmula/modelo alterado.
@@ -94,7 +94,7 @@ O objetivo é deixar clara a prioridade:
 
 ```text
 Novo levantamento = foco principal
-Continuar levantamento em andamento = foco secundário
+Continuar coleta de um levantamento em andamento = foco secundário
 Resumo/atividade = informação de apoio
 ```
 
@@ -115,7 +115,7 @@ Informações de topo desejadas:
 Comportamento esperado:
 
 - permitir cadastrar nova parcela com botão `+`;
-- permitir cadastrar todas as parcelas antes de iniciar a contagem;
+- permitir cadastrar todas as parcelas antes de iniciar a coleta;
 - parcelas ainda não medidas devem aparecer como `pendente`;
 - parcelas com coleta iniciada e não finalizada devem aparecer como `em andamento`;
 - parcelas já medidas devem aparecer como `coletada`;

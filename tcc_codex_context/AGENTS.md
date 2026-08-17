@@ -25,7 +25,7 @@ Antes de alterar código, leia nesta ordem:
 - A primeira versão **não possui backend nem servidor externo**.
 - Não introduzir Firebase, Supabase, MySQL, PostgreSQL, APIs remotas ou autenticação online sem solicitação explícita.
 - A estrutura permanente do cadastro parte de **Propriedade -> Talhão**.
-- A coleta deve ser organizada por **Levantamento/Contagem**, vinculado a uma propriedade e podendo conter um ou mais talhões, parcelas e árvores medidos naquele evento.
+- A coleta deve ser organizada por **Levantamento**, vinculado a uma propriedade e podendo conter um ou mais talhões, parcelas e árvores medidos naquele evento.
 - Uma propriedade pode possuir vários levantamentos ao longo do tempo, inclusive levantamentos em áreas/talhões diferentes.
 - O usuário pode ter mais de um levantamento em andamento ao mesmo tempo; o aplicativo deve sugerir retomar o levantamento em aberto mais recente na tela inicial.
 - Preservar a separação entre interface, regras de negócio/cálculo e persistência.

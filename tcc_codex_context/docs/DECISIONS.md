@@ -35,11 +35,11 @@ Cadastro permanente:
 
 Coleta:
 
-`Propriedade -> Levantamento/Contagem -> talhaolevantamento -> Parcela -> Árvore`
+`Propriedade -> Levantamento/Coleta -> talhaolevantamento -> Parcela -> Árvore`
 
-Essa hierarquia deve orientar navegação e modelagem do banco. A entidade Levantamento/Contagem separa o cadastro permanente da propriedade dos dados medidos em uma coleta específica.
+Essa hierarquia deve orientar navegação e modelagem do banco. A entidade Levantamento separa o cadastro permanente da propriedade dos dados medidos em uma coleta específica.
 
-`talhaolevantamento` é a entidade intermediária oficial que representa um talhão dentro de um levantamento específico. Ela permite que o mesmo talhão seja recontado em datas diferentes, mantendo histórico nos levantamentos e exibindo no cadastro do talhão a última informação coletada.
+`talhaolevantamento` é a entidade intermediária oficial que representa um talhão dentro de um levantamento específico. Ela permite que o mesmo talhão seja coletado novamente em datas diferentes, mantendo histórico nos levantamentos e exibindo no cadastro do talhão a última informação coletada.
 
 ## D-006 — Escopo florestal inicial
 **Status:** decidido
@@ -118,7 +118,7 @@ Motivo: o projeto terá várias tabelas relacionadas, consultas filtradas, migra
 ## D-015 — Múltiplos levantamentos no tempo
 **Status:** decidido
 
-Uma mesma propriedade poderá possuir vários levantamentos/contagens realizados em datas diferentes.
+Uma mesma propriedade poderá possuir vários levantamentos realizados em datas diferentes.
 
 Criar entidade `InventoryRun`/`Levantamento` separando a estrutura física da propriedade dos dados de cada coleta. Um levantamento deve possuir status e datas de início/atualização/conclusão.
 

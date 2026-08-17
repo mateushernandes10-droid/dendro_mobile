@@ -96,7 +96,7 @@ flowchart LR
 ### UC-003 — Criar levantamento
 **Ator principal:** Usuário de campo.
 
-**Objetivo:** Iniciar uma nova contagem/inventário de campo.
+**Objetivo:** Iniciar um novo levantamento/inventário de campo.
 
 **Fluxo principal:**
 1. O usuário escolhe criar novo levantamento.
@@ -112,7 +112,7 @@ flowchart LR
 ### UC-004 — Continuar levantamento
 **Ator principal:** Usuário de campo.
 
-**Objetivo:** Retomar uma contagem aberta anteriormente.
+**Objetivo:** Retomar um levantamento aberto anteriormente.
 
 **Fluxo principal:**
 1. O usuário acessa a tela inicial ou a aba Levantamentos.
