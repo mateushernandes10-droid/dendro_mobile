@@ -551,6 +551,13 @@ class _InventoryStandCard extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: onOpen,
                 icon: const Icon(Icons.grid_view),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: DendroColors.primary,
+                  side: const BorderSide(color: DendroColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 label: const Text('Abrir parcelas'),
               ),
             ),
@@ -969,6 +976,18 @@ class _InventoryFormulaAdjustmentCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: onPressed,
               icon: const Icon(Icons.functions),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: DendroColors.primary,
+                disabledForegroundColor: DendroColors.textMuted,
+                side: BorderSide(
+                  color: onPressed == null
+                      ? DendroColors.outline
+                      : DendroColors.primary,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               label: const Text('Ajustar modelo matemático'),
             ),
           ),

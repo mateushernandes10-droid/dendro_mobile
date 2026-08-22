@@ -10,6 +10,11 @@ abstract final class DendroColors {
   static const text = Color(0xFF191C1C);
   static const textMuted = Color(0xFF56605A);
   static const warning = Color(0xFF806500);
+  static const darkReadableCard = Color(0xFFA9CBB4);
+  static const darkReadableCardHighlight = Color(0xFFB8D6C0);
+  static const darkReadableField = Color(0xFFDDEBDD);
+  static const darkReadableBorder = Color(0xFF73957C);
+  static const darkAction = Color(0xFF01452D);
 }
 
 abstract final class DendroTheme {
@@ -67,6 +72,10 @@ abstract final class DendroTheme {
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
       ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: DendroColors.primary,
+        foregroundColor: Colors.white,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
@@ -89,7 +98,6 @@ abstract final class DendroTheme {
   static ThemeData get dark {
     const darkSurface = Color(0xFF071611);
     const darkPanel = Color(0xFF0F241A);
-    const lightCard = Color(0xFFF6FAF5);
     const darkPrimary = Color(0xFF9ED9B5);
 
     final colorScheme = ColorScheme.fromSeed(
@@ -104,7 +112,7 @@ abstract final class DendroTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: darkSurface,
-      cardColor: lightCard,
+      cardColor: DendroColors.darkReadableCard,
       fontFamily: 'Roboto',
       appBarTheme: const AppBarTheme(
         backgroundColor: darkSurface,
@@ -132,12 +140,12 @@ abstract final class DendroTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       cardTheme: CardThemeData(
-        color: lightCard,
+        color: DendroColors.darkReadableCard,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: Color(0xFF476052)),
+          side: const BorderSide(color: DendroColors.darkReadableBorder),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -163,8 +171,8 @@ abstract final class DendroTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: darkPrimary,
-          foregroundColor: DendroColors.primary,
+          backgroundColor: DendroColors.darkAction,
+          foregroundColor: Colors.white,
           elevation: 0,
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -208,8 +216,8 @@ abstract final class DendroTheme {
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: darkPrimary,
-        foregroundColor: DendroColors.primary,
+        backgroundColor: DendroColors.darkAction,
+        foregroundColor: Colors.white,
       ),
     );
   }

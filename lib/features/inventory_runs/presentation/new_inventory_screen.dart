@@ -302,6 +302,9 @@ class _InventoryStartFilters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? DendroColors.darkReadableField : Colors.white;
+
     return DendroCard(
       backgroundColor: const Color(0xFFEAF7EF),
       borderColor: const Color(0xFFA4D1B4),
@@ -311,9 +314,18 @@ class _InventoryStartFilters extends StatelessWidget {
           TextField(
             controller: searchController,
             textInputAction: TextInputAction.search,
-            decoration: const InputDecoration(
+            style: const TextStyle(
+              color: DendroColors.text,
+              fontWeight: FontWeight.w700,
+            ),
+            decoration: InputDecoration(
               labelText: 'Buscar propriedade',
-              prefixIcon: Icon(Icons.search),
+              labelStyle: const TextStyle(
+                color: DendroColors.textMuted,
+                fontWeight: FontWeight.w700,
+              ),
+              prefixIcon: const Icon(Icons.search, color: DendroColors.primary),
+              fillColor: fieldColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -324,9 +336,23 @@ class _InventoryStartFilters extends StatelessWidget {
             isExpanded: true,
             initialValue:
                 selectedCity ?? _NewInventoryScreenState._allFilterValue,
-            decoration: const InputDecoration(
+            style: const TextStyle(
+              color: DendroColors.text,
+              fontWeight: FontWeight.w700,
+            ),
+            dropdownColor: fieldColor,
+            iconEnabledColor: DendroColors.primary,
+            decoration: InputDecoration(
               labelText: 'Município',
-              prefixIcon: Icon(Icons.location_city_outlined),
+              labelStyle: const TextStyle(
+                color: DendroColors.textMuted,
+                fontWeight: FontWeight.w700,
+              ),
+              prefixIcon: const Icon(
+                Icons.location_city_outlined,
+                color: DendroColors.primary,
+              ),
+              fillColor: fieldColor,
             ),
             items: [
               const DropdownMenuItem(
@@ -350,9 +376,23 @@ class _InventoryStartFilters extends StatelessWidget {
               isExpanded: true,
               initialValue:
                   selectedSpeciesId ?? _NewInventoryScreenState._allFilterValue,
-              decoration: const InputDecoration(
+              style: const TextStyle(
+                color: DendroColors.text,
+                fontWeight: FontWeight.w700,
+              ),
+              dropdownColor: fieldColor,
+              iconEnabledColor: DendroColors.primary,
+              decoration: InputDecoration(
                 labelText: 'Espécie',
-                prefixIcon: Icon(Icons.eco_outlined),
+                labelStyle: const TextStyle(
+                  color: DendroColors.textMuted,
+                  fontWeight: FontWeight.w700,
+                ),
+                prefixIcon: const Icon(
+                  Icons.eco_outlined,
+                  color: DendroColors.primary,
+                ),
+                fillColor: fieldColor,
               ),
               items: [
                 const DropdownMenuItem(
@@ -474,6 +514,8 @@ class _PropertyGroupHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -498,16 +540,15 @@ class _PropertyGroupHeader extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w900,
-                  color: DendroColors.text,
-                ),
+                ).copyWith(color: colorScheme.onSurface),
               ),
               const SizedBox(height: 2),
               Text(
                 _cityLabel(property),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: DendroColors.textMuted,
+                style: TextStyle(
+                  color: colorScheme.onSurface.withValues(alpha: 0.72),
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -595,6 +636,12 @@ class _StartStandCard extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: disabled || saving ? null : onStart,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: DendroColors.darkAction,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: DendroColors.darkReadableField,
+                disabledForegroundColor: DendroColors.textMuted,
+              ),
               icon: saving
                   ? const SizedBox.square(
                       dimension: 18,
@@ -656,6 +703,16 @@ class _FormulaAdjustmentButton extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: Icon(selection == null ? Icons.functions : Icons.tune),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: DendroColors.primary,
+        disabledForegroundColor: DendroColors.textMuted,
+        side: BorderSide(
+          color: onPressed == null
+              ? DendroColors.outline
+              : DendroColors.primary,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
       label: Text(
         selection == null
             ? 'Ajustar modelo matemático'
@@ -1122,6 +1179,18 @@ class _FormulaAdjustmentCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: onPressed,
               icon: const Icon(Icons.functions),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: DendroColors.primary,
+                disabledForegroundColor: DendroColors.textMuted,
+                side: BorderSide(
+                  color: onPressed == null
+                      ? DendroColors.outline
+                      : DendroColors.primary,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               label: const Text('Ajustar modelo matemático'),
             ),
           ),

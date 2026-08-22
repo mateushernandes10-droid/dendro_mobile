@@ -601,17 +601,30 @@ class _SpeciesFormulaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = _isDefault
+        ? (isDark
+              ? DendroColors.darkReadableField
+              : DendroColors.primarySoft.withValues(alpha: 0.55))
+        : _linked
+        ? (isDark ? const Color(0xFFD3E4D7) : const Color(0xFFF3F4F3))
+        : (isDark ? const Color(0xFFC2D3C7) : const Color(0xFFF3F4F3));
+    final borderColor = _isDefault
+        ? DendroColors.primary
+        : _linked
+        ? (isDark ? const Color(0xFF7D9B86) : DendroColors.outline)
+        : (isDark ? const Color(0xFF91A99A) : DendroColors.outline);
+    final checkboxBorderColor = _linked
+        ? DendroColors.primary
+        : DendroColors.textMuted;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: _isDefault
-              ? DendroColors.primarySoft.withValues(alpha: 0.55)
-              : const Color(0xFFF3F4F3),
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: _isDefault ? DendroColors.primary : DendroColors.outline,
-          ),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
@@ -619,6 +632,8 @@ class _SpeciesFormulaRow extends StatelessWidget {
               value: _linked,
               onChanged: (value) => onLinkedChanged(value ?? false),
               activeColor: DendroColors.primary,
+              checkColor: Colors.white,
+              side: BorderSide(color: checkboxBorderColor, width: 1.5),
             ),
             Expanded(
               child: Padding(
@@ -631,6 +646,7 @@ class _SpeciesFormulaRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
+                        color: DendroColors.text,
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
                       ),
@@ -653,6 +669,11 @@ class _SpeciesFormulaRow extends StatelessWidget {
             IconButton(
               onPressed: onSetDefault,
               tooltip: _isDefault ? 'Fórmula padrão' : 'Definir como padrão',
+              style: IconButton.styleFrom(
+                foregroundColor: _isDefault
+                    ? DendroColors.warning
+                    : DendroColors.textMuted,
+              ),
               icon: Icon(
                 _isDefault ? Icons.star : Icons.star_border,
                 color: _isDefault

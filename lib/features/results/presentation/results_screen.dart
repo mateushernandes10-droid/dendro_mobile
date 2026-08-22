@@ -6,9 +6,6 @@ import '../../../shared/widgets/dendro_widgets.dart';
 import '../data/results_repository.dart';
 
 const _allFilterValue = '__all__';
-const _darkFilterCardColor = Color(0xFFA9CBB4);
-const _darkFilterFieldColor = Color(0xFFDDEBDD);
-const _darkFilterBorderColor = Color(0xFF73957C);
 
 class ResultsScreen extends ConsumerWidget {
   const ResultsScreen({super.key});
@@ -61,7 +58,9 @@ class _FilterCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final fieldColor = isDarkMode ? _darkFilterFieldColor : Colors.white;
+    final fieldColor = isDarkMode
+        ? DendroColors.darkReadableField
+        : Colors.white;
     final propertyId = ref.watch(resultsPropertyFilterProvider);
     final speciesId = ref.watch(resultsSpeciesFilterProvider);
     final selectedStands = ref.watch(resultsStandFilterProvider);
@@ -72,9 +71,9 @@ class _FilterCard extends ConsumerWidget {
 
     return DendroCard(
       backgroundColor: isDarkMode
-          ? _darkFilterCardColor
+          ? DendroColors.darkReadableCard
           : const Color(0xFFF3F4F3),
-      borderColor: isDarkMode ? _darkFilterBorderColor : null,
+      borderColor: isDarkMode ? DendroColors.darkReadableBorder : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -222,7 +221,7 @@ class _FilterCard extends ConsumerWidget {
                     side: BorderSide(
                       color: selectedStands.contains(option.stand.id)
                           ? DendroColors.primary
-                          : _darkFilterBorderColor,
+                          : DendroColors.darkReadableBorder,
                     ),
                     labelStyle: TextStyle(
                       color: selectedStands.contains(option.stand.id)

@@ -470,11 +470,19 @@ class _SummaryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark
+        ? DendroColors.darkReadableField
+        : Colors.white.withValues(alpha: 0.78);
+    final borderColor = isDark
+        ? DendroColors.darkReadableBorder
+        : Colors.white.withValues(alpha: 0.72);
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
+        border: Border.all(color: borderColor),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -711,6 +719,13 @@ class _EmptyPlotsCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: DendroColors.primary,
+                side: const BorderSide(color: DendroColors.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               label: const Text('Cadastrar parcela'),
             ),
           ),

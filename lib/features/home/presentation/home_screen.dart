@@ -312,6 +312,10 @@ class _ActiveCollectionDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dotColor = Theme.of(context).brightness == Brightness.dark
+        ? Theme.of(context).colorScheme.primary
+        : DendroColors.primary;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -322,11 +326,9 @@ class _ActiveCollectionDots extends StatelessWidget {
             height: 9,
             margin: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
-              color: index == selectedIndex
-                  ? DendroColors.primary
-                  : Colors.transparent,
+              color: index == selectedIndex ? dotColor : Colors.transparent,
               shape: BoxShape.circle,
-              border: Border.all(color: DendroColors.primary, width: 1.5),
+              border: Border.all(color: dotColor, width: 1.5),
             ),
           ),
       ],
@@ -1215,6 +1217,18 @@ class _FormulaAdjustmentCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: onPressed,
               icon: const Icon(Icons.functions),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: DendroColors.primary,
+                disabledForegroundColor: DendroColors.textMuted,
+                side: BorderSide(
+                  color: onPressed == null
+                      ? DendroColors.outline
+                      : DendroColors.primary,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               label: const Text('Ajustar modelo matemático'),
             ),
           ),

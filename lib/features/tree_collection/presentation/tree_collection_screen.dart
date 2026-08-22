@@ -524,9 +524,13 @@ class _HeaderMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = Theme.of(context).brightness == Brightness.dark
+        ? DendroColors.darkReadableField
+        : Colors.white.withValues(alpha: 0.78);
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
@@ -630,6 +634,12 @@ class _TreeFormCard extends StatelessWidget {
                 IconButton.filledTonal(
                   onPressed: capturingLocation ? null : onCaptureLocation,
                   tooltip: 'Capturar coordenada',
+                  style: IconButton.styleFrom(
+                    backgroundColor: DendroColors.primarySoft,
+                    foregroundColor: DendroColors.primary,
+                    disabledBackgroundColor: DendroColors.darkReadableField,
+                    disabledForegroundColor: DendroColors.textMuted,
+                  ),
                   icon: capturingLocation
                       ? const SizedBox.square(
                           dimension: 18,
@@ -693,6 +703,18 @@ class _TreeFormCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: saving ? null : onSave,
                     icon: const Icon(Icons.save_outlined),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: DendroColors.primary,
+                      disabledForegroundColor: DendroColors.textMuted,
+                      side: BorderSide(
+                        color: saving
+                            ? DendroColors.outline
+                            : DendroColors.primary,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                     label: const Text('Salvar'),
                   ),
                 ),
@@ -733,6 +755,10 @@ class _MeasureField extends StatelessWidget {
       children: [
         IconButton.filledTonal(
           onPressed: () => _step(-0.1),
+          style: IconButton.styleFrom(
+            backgroundColor: DendroColors.primarySoft,
+            foregroundColor: DendroColors.primary,
+          ),
           icon: const Icon(Icons.remove),
         ),
         const SizedBox(width: 8),
@@ -740,17 +766,37 @@ class _MeasureField extends StatelessWidget {
           child: TextFormField(
             controller: controller,
             textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: DendroColors.text,
+              fontWeight: FontWeight.w800,
+            ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp('[0-9,.]')),
             ],
-            decoration: InputDecoration(labelText: label, helperText: helper),
+            decoration: InputDecoration(
+              labelText: label,
+              helperText: helper,
+              labelStyle: const TextStyle(
+                color: DendroColors.textMuted,
+                fontWeight: FontWeight.w700,
+              ),
+              helperStyle: const TextStyle(
+                color: DendroColors.textMuted,
+                fontWeight: FontWeight.w700,
+              ),
+              fillColor: DendroColors.darkReadableField,
+            ),
             validator: validator,
           ),
         ),
         const SizedBox(width: 8),
         IconButton.filledTonal(
           onPressed: () => _step(0.1),
+          style: IconButton.styleFrom(
+            backgroundColor: DendroColors.primarySoft,
+            foregroundColor: DendroColors.primary,
+          ),
           icon: const Icon(Icons.add),
         ),
       ],

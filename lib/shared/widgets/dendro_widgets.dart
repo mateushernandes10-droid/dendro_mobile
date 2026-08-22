@@ -119,11 +119,28 @@ class DendroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final resolvedBackground = backgroundColor ?? theme.cardColor;
+    final rawBackground = backgroundColor ?? theme.cardColor;
+    final resolvedBackground = _cardBackgroundForTheme(
+      rawBackground,
+      theme.brightness,
+    );
     final lightBackground =
         ThemeData.estimateBrightnessForColor(resolvedBackground) ==
         Brightness.light;
     final foregroundColor = lightBackground ? DendroColors.text : Colors.white;
+    final usesReadableCard =
+        resolvedBackground == DendroColors.darkReadableCard ||
+        resolvedBackground == DendroColors.darkReadableCardHighlight;
+    final inputTheme = DendroTheme.light.inputDecorationTheme.copyWith(
+      fillColor: usesReadableCard ? DendroColors.darkReadableField : null,
+      labelStyle: const TextStyle(
+        color: DendroColors.textMuted,
+        fontWeight: FontWeight.w700,
+      ),
+      hintStyle: const TextStyle(color: DendroColors.textMuted),
+      prefixIconColor: DendroColors.primary,
+      suffixIconColor: DendroColors.primary,
+    );
 
     return Container(
       width: double.infinity,
@@ -131,11 +148,18 @@ class DendroCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: resolvedBackground,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: borderColor ?? DendroColors.outline),
+        border: Border.all(
+          color:
+              borderColor ??
+              (usesReadableCard
+                  ? DendroColors.darkReadableBorder
+                  : DendroColors.outline),
+        ),
       ),
       child: Theme(
         data: lightBackground
             ? theme.copyWith(
+                colorScheme: DendroTheme.light.colorScheme,
                 textTheme: theme.textTheme.apply(
                   bodyColor: DendroColors.text,
                   displayColor: DendroColors.text,
@@ -144,7 +168,27 @@ class DendroCard extends StatelessWidget {
                   bodyColor: DendroColors.text,
                   displayColor: DendroColors.text,
                 ),
-                inputDecorationTheme: DendroTheme.light.inputDecorationTheme,
+                inputDecorationTheme: inputTheme,
+                iconButtonTheme: IconButtonThemeData(
+                  style: IconButton.styleFrom(
+                    foregroundColor: DendroColors.primary,
+                  ),
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(
+                    foregroundColor: DendroColors.primary,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                outlinedButtonTheme: OutlinedButtonThemeData(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: DendroColors.primary,
+                    side: const BorderSide(color: DendroColors.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
                 listTileTheme: theme.listTileTheme.copyWith(
                   textColor: DendroColors.text,
                   iconColor: DendroColors.textMuted,
@@ -172,6 +216,24 @@ class DendroCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _cardBackgroundForTheme(Color color, Brightness brightness) {
+    if (brightness != Brightness.dark) return color;
+    if (color == DendroColors.darkReadableCard ||
+        color == DendroColors.darkReadableCardHighlight ||
+        color == DendroColors.darkReadableField) {
+      return color;
+    }
+    if (ThemeData.estimateBrightnessForColor(color) == Brightness.dark) {
+      return color;
+    }
+    if (color == DendroColors.primarySoft ||
+        color == const Color(0xFFE0F2E8) ||
+        color == const Color(0xFFEAF7EF)) {
+      return DendroColors.darkReadableCardHighlight;
+    }
+    return DendroColors.darkReadableCard;
   }
 }
 
@@ -219,9 +281,14 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resolvedColor = _backgroundForTheme(
+      color,
+      Theme.of(context).brightness,
+    );
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: color,
+        color: resolvedColor,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
@@ -236,6 +303,19 @@ class StatusPill extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _backgroundForTheme(Color color, Brightness brightness) {
+    if (brightness != Brightness.dark) return color;
+    if (color == DendroColors.darkReadableField ||
+        color == DendroColors.darkReadableCard ||
+        color == DendroColors.darkReadableCardHighlight) {
+      return color;
+    }
+    if (ThemeData.estimateBrightnessForColor(color) == Brightness.dark) {
+      return color;
+    }
+    return DendroColors.darkReadableField;
   }
 }
 

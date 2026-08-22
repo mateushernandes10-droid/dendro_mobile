@@ -709,9 +709,13 @@ class _MetaPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = Theme.of(context).brightness == Brightness.dark
+        ? DendroColors.darkReadableField
+        : Colors.white;
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
