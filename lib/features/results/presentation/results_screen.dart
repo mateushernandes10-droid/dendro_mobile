@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/dendro_theme.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
+import '../../data_export/presentation/data_export_screen.dart';
 import '../data/results_repository.dart';
 
 const _allFilterValue = '__all__';
@@ -20,7 +21,7 @@ class ResultsScreen extends ConsumerWidget {
       icon: Icons.bar_chart,
       floatingActionButton: FloatingActionButton(
         heroTag: 'results_export',
-        onPressed: () {},
+        onPressed: () => _openExport(context, ref),
         tooltip: 'Exportar',
         child: const Icon(Icons.ios_share),
       ),
@@ -46,6 +47,18 @@ class ResultsScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _openExport(BuildContext context, WidgetRef ref) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => DataExportScreen(
+          propertyId: ref.read(resultsPropertyFilterProvider),
+          initialStandIds: ref.read(resultsStandFilterProvider),
+          speciesId: ref.read(resultsSpeciesFilterProvider),
+        ),
+      ),
     );
   }
 }

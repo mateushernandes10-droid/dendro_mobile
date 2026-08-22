@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../app/theme/dendro_theme.dart';
 import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
+import '../../data_export/presentation/data_export_screen.dart';
 import '../../plots/presentation/stand_plots_screen.dart';
 import '../../stands/data/stands_repository.dart';
 import '../data/inventory_formula_selection.dart';
@@ -41,6 +42,7 @@ class InventoryRunDetailScreen extends ConsumerWidget {
               summary: summary,
               onCompleteRun: () => _confirmCompleteRun(context, ref, summary),
               onDeleteRun: () => _confirmDeleteRun(context, ref, summary),
+              onExportRun: () => _openExport(context, summary),
               onEditStand: (stand) => _openStandForm(context, stand),
               onRemoveStand: (stand) =>
                   _confirmRemoveStandFromRun(context, ref, summary, stand),
@@ -187,6 +189,17 @@ class InventoryRunDetailScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _openExport(BuildContext context, InventoryRunSummary summary) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => DataExportScreen(
+          inventoryRunId: summary.run.id,
+          propertyId: summary.property.id,
+        ),
+      ),
+    );
+  }
+
   Future<void> _confirmRemoveStandFromRun(
     BuildContext context,
     WidgetRef ref,
@@ -266,6 +279,7 @@ class _InventoryRunBody extends StatelessWidget {
     required this.summary,
     required this.onCompleteRun,
     required this.onDeleteRun,
+    required this.onExportRun,
     required this.onEditStand,
     required this.onRemoveStand,
   });
@@ -273,6 +287,7 @@ class _InventoryRunBody extends StatelessWidget {
   final InventoryRunSummary summary;
   final VoidCallback onCompleteRun;
   final VoidCallback onDeleteRun;
+  final VoidCallback onExportRun;
   final ValueChanged<InventoryStandSummary> onEditStand;
   final ValueChanged<InventoryStandSummary> onRemoveStand;
 
@@ -293,6 +308,15 @@ class _InventoryRunBody extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: onExportRun,
+            icon: const Icon(Icons.ios_share),
+            label: const Text('Exportar dados'),
+          ),
+        ),
         const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
