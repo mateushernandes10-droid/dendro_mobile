@@ -6,6 +6,7 @@ import 'package:dendro_mobile/features/home/presentation/home_screen.dart';
 import 'package:dendro_mobile/features/inventory_runs/presentation/new_inventory_screen.dart';
 import 'package:dendro_mobile/features/plots/data/plots_repository.dart';
 import 'package:dendro_mobile/features/properties/data/properties_repository.dart';
+import 'package:dendro_mobile/features/settings/data/settings_repository.dart';
 import 'package:dendro_mobile/features/settings/presentation/settings_screen.dart';
 import 'package:dendro_mobile/features/shell/presentation/dendro_shell.dart';
 import 'package:dendro_mobile/features/stands/data/stands_repository.dart';
@@ -330,6 +331,64 @@ void main() {
     expect(find.text('Cadastrar talhão'), findsOneWidget);
     expect(find.text('Modelo matemático'), findsOneWidget);
     expect(find.text('Ajustar modelo matemático'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
+
+  testWidgets('ajuste de modelo mostra apenas formulas vinculadas a especie', (
+    tester,
+  ) async {
+    final database = DendroDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.runAsync(() async {
+      final settingsRepository = SettingsRepository(database);
+      final propertiesRepository = PropertiesRepository(database);
+      final standsRepository = StandsRepository(database);
+
+      await settingsRepository.setSpeciesFormulaLinked(
+        speciesId: 'species_pinus',
+        formulaId: 'formula_schumacher_hall',
+        linked: false,
+      );
+
+      final propertyId = await propertiesRepository.create(
+        name: 'Fazenda Vinculos',
+        municipality: 'Vacaria',
+        totalAreaHa: 30,
+      );
+      await standsRepository.create(
+        propertyId: propertyId,
+        identification: 'T-01',
+        speciesId: 'species_pinus',
+        areaHa: 10,
+      );
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dendroDatabaseProvider.overrideWithValue(database)],
+        child: MaterialApp(
+          theme: DendroTheme.light,
+          home: const NewInventoryScreen(),
+        ),
+      ),
+    );
+    for (var attempt = 0; attempt < 20; attempt++) {
+      if (find.text('Ajustar modelo matemático').evaluate().isNotEmpty) break;
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tester.tap(find.text('Ajustar modelo matemático'));
+    await tester.pumpAndSettle();
+    for (var attempt = 0; attempt < 20; attempt++) {
+      if (find.text('Modelo de Spurr').evaluate().isNotEmpty) break;
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('Modelo de Spurr'), findsOneWidget);
+    expect(find.text('Schumacher-Hall'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));

@@ -63,12 +63,31 @@ class _InventoryFormulaSelectionSheetState
       padding: EdgeInsets.only(bottom: bottomInset),
       child: formulasAsync.when(
         data: (formulas) {
+          if (linksAsync.isLoading && !linksAsync.hasValue) {
+            return const Padding(
+              padding: EdgeInsets.fromLTRB(18, 0, 18, 18),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (linksAsync.hasError) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+              child: _FormulaSelectionError(
+                onRetry: () => ref.invalidate(settingsSpeciesFormulasProvider),
+              ),
+            );
+          }
+
           final links = linksAsync.value ?? const [];
+          final linkedFormulaIds = links
+              .where((link) => link.speciesId == widget.speciesId)
+              .map((link) => link.formulaId)
+              .toSet();
           final availableFormulas = formulas
               .where(
                 (summary) =>
-                    summary.formula.active ||
-                    summary.formula.id == widget.initialSelection?.formulaId,
+                    summary.formula.active &&
+                    linkedFormulaIds.contains(summary.formula.id),
               )
               .toList();
           _ensureSelectedFormula(availableFormulas, links);
@@ -116,11 +135,6 @@ class _InventoryFormulaSelectionSheetState
                   for (final formula in availableFormulas)
                     _FormulaChoiceTile(
                       summary: formula,
-                      linkedToSpecies: links.any(
-                        (link) =>
-                            link.speciesId == widget.speciesId &&
-                            link.formulaId == formula.formula.id,
-                      ),
                       selected: formula.formula.id == _selectedFormulaId,
                       onTap: () {
                         setState(() {
@@ -278,13 +292,11 @@ class _InventoryFormulaSelectionSheetState
 class _FormulaChoiceTile extends StatelessWidget {
   const _FormulaChoiceTile({
     required this.summary,
-    required this.linkedToSpecies,
     required this.selected,
     required this.onTap,
   });
 
   final FormulaSummary summary;
-  final bool linkedToSpecies;
   final bool selected;
   final VoidCallback onTap;
 
@@ -327,11 +339,10 @@ class _FormulaChoiceTile extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (linkedToSpecies)
-                          const StatusPill(
-                            label: 'Vinculado',
-                            color: Colors.white,
-                          ),
+                        const StatusPill(
+                          label: 'Vinculado',
+                          color: Colors.white,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 3),
@@ -423,7 +434,7 @@ class _FormulaSelectionEmpty extends StatelessWidget {
     return const DendroCard(
       backgroundColor: Color(0xFFF3F4F3),
       child: Text(
-        'Nenhum modelo matemático ativo foi cadastrado.',
+        'Nenhum modelo matemático vinculado à espécie selecionada.',
         textAlign: TextAlign.center,
         style: TextStyle(fontWeight: FontWeight.w800),
       ),
