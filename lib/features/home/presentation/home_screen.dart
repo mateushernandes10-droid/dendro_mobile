@@ -7,6 +7,9 @@ import 'package:flutter/services.dart';
 import '../../../app/theme/dendro_theme.dart';
 import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
+import '../../activity_log/data/activity_log_repository.dart';
+import '../../activity_log/presentation/activity_log_screen.dart';
+import '../../activity_log/presentation/activity_log_widgets.dart';
 import '../../inventory_runs/data/inventory_formula_selection.dart';
 import '../../inventory_runs/data/inventory_runs_repository.dart';
 import '../../inventory_runs/presentation/inventory_run_detail_screen.dart';
@@ -47,8 +50,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _activeCollectionItems(activeRuns.asData?.value ?? []),
     );
     final selectedRunSummary = selectedCollection?.runSummary;
+    final recentActivities = ref.watch(recentActivityLogsProvider);
     final now = DateTime.now();
-    final recentActivities = _recentActivities(now);
 
     return DendroScreen(
       title: 'Início',
@@ -103,15 +106,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         SectionTitle(
           title: 'Atividades recentes',
           trailing: TextButton(
-            onPressed: () {},
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => const ActivityLogScreen(),
+              ),
+            ),
             child: const Text('Ver todas'),
           ),
         ),
-        for (final activity in recentActivities)
-          _ActivityItem(
-            activity: activity,
-            displayTime: _formatActivityDate(activity.occurredAt, now),
+        recentActivities.when(
+          data: (items) {
+            if (items.isEmpty) {
+              return const DendroCard(
+                backgroundColor: Color(0xFFF3F4F3),
+                child: Text(
+                  'Nenhuma atividade registrada ainda.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              );
+            }
+
+            return Column(
+              children: [
+                for (final activity in items)
+                  ActivityLogItem(
+                    activity: activity,
+                    displayTime: formatActivityLogDate(
+                      activity.occurredAt,
+                      now,
+                    ),
+                  ),
+              ],
+            );
+          },
+          loading: () => const DendroCard(child: LinearProgressIndicator()),
+          error: (error, stackTrace) => DendroCard(
+            child: Column(
+              children: [
+                const Text(
+                  'Nao foi possivel carregar as atividades recentes.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () => ref.invalidate(recentActivityLogsProvider),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Tentar novamente'),
+                ),
+              ],
+            ),
           ),
+        ),
       ],
     );
   }
@@ -1278,141 +1325,8 @@ class _InlineMetric extends StatelessWidget {
   }
 }
 
-class _RecentActivity {
-  const _RecentActivity({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.occurredAt,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final DateTime occurredAt;
-}
-
-class _ActivityItem extends StatelessWidget {
-  const _ActivityItem({required this.activity, required this.displayTime});
-
-  final _RecentActivity activity;
-  final String displayTime;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: DendroCard(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: DendroColors.primarySoft,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(activity.icon, size: 18, color: DendroColors.primary),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    activity.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  Text(
-                    activity.subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: DendroColors.textMuted,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              displayTime,
-              style: const TextStyle(
-                color: DendroColors.textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 String _formatArea(double value) {
   return '${value.toStringAsFixed(2).replaceAll('.', ',')} ha';
-}
-
-List<_RecentActivity> _recentActivities(DateTime now) {
-  final today = DateTime(now.year, now.month, now.day);
-
-  return [
-    _RecentActivity(
-      icon: Icons.check_circle,
-      title: 'Parcela P-12 coletada',
-      subtitle: 'Talhão 42-B - Pinus taeda',
-      occurredAt: today.add(const Duration(hours: 14, minutes: 30)),
-    ),
-    _RecentActivity(
-      icon: Icons.add_location_alt,
-      title: 'Nova parcela iniciada',
-      subtitle: 'P-13 com ponto P1 salvo',
-      occurredAt: today.add(const Duration(hours: 13, minutes: 48)),
-    ),
-    _RecentActivity(
-      icon: Icons.ios_share,
-      title: 'Exportação realizada',
-      subtitle: 'Relatório PDF - Fazenda Esperança',
-      occurredAt: today
-          .subtract(const Duration(days: 1))
-          .add(const Duration(hours: 9, minutes: 15)),
-    ),
-    _RecentActivity(
-      icon: Icons.home_work,
-      title: 'Propriedade cadastrada',
-      subtitle: 'Fazenda Boa Vista',
-      occurredAt: today
-          .subtract(const Duration(days: 3))
-          .add(const Duration(hours: 16, minutes: 45)),
-    ),
-  ];
-}
-
-String _formatActivityDate(DateTime occurredAt, DateTime now) {
-  final eventDate = DateTime(occurredAt.year, occurredAt.month, occurredAt.day);
-  final today = DateTime(now.year, now.month, now.day);
-  final yesterday = today.subtract(const Duration(days: 1));
-
-  if (eventDate == today) {
-    return '${_twoDigits(occurredAt.hour)}:${_twoDigits(occurredAt.minute)}';
-  }
-
-  if (eventDate == yesterday) return 'Ontem';
-
-  return '${_twoDigits(occurredAt.day)}/${_twoDigits(occurredAt.month)}/${occurredAt.year}';
-}
-
-String _twoDigits(int value) {
-  return value.toString().padLeft(2, '0');
 }
 
 double? _parseArea(String value) {

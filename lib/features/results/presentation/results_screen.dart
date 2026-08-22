@@ -6,6 +6,9 @@ import '../../../shared/widgets/dendro_widgets.dart';
 import '../data/results_repository.dart';
 
 const _allFilterValue = '__all__';
+const _darkFilterCardColor = Color(0xFFA9CBB4);
+const _darkFilterFieldColor = Color(0xFFDDEBDD);
+const _darkFilterBorderColor = Color(0xFF73957C);
 
 class ResultsScreen extends ConsumerWidget {
   const ResultsScreen({super.key});
@@ -57,6 +60,8 @@ class _FilterCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDarkMode ? _darkFilterFieldColor : Colors.white;
     final propertyId = ref.watch(resultsPropertyFilterProvider);
     final speciesId = ref.watch(resultsSpeciesFilterProvider);
     final selectedStands = ref.watch(resultsStandFilterProvider);
@@ -66,7 +71,10 @@ class _FilterCard extends ConsumerWidget {
     );
 
     return DendroCard(
-      backgroundColor: const Color(0xFFF3F4F3),
+      backgroundColor: isDarkMode
+          ? _darkFilterCardColor
+          : const Color(0xFFF3F4F3),
+      borderColor: isDarkMode ? _darkFilterBorderColor : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -78,9 +86,28 @@ class _FilterCard extends ConsumerWidget {
           DropdownButtonFormField<String>(
             key: ValueKey('property_$propertyId'),
             initialValue: propertyId ?? _allFilterValue,
-            decoration: const InputDecoration(
+            style: const TextStyle(
+              color: DendroColors.text,
+              fontWeight: FontWeight.w700,
+            ),
+            dropdownColor: fieldColor,
+            iconEnabledColor: DendroColors.primary,
+            iconDisabledColor: DendroColors.textMuted,
+            decoration: InputDecoration(
               labelText: 'Propriedade',
-              prefixIcon: Icon(Icons.map_outlined),
+              labelStyle: const TextStyle(
+                color: DendroColors.textMuted,
+                fontWeight: FontWeight.w700,
+              ),
+              floatingLabelStyle: const TextStyle(
+                color: DendroColors.primary,
+                fontWeight: FontWeight.w800,
+              ),
+              prefixIcon: const Icon(
+                Icons.map_outlined,
+                color: DendroColors.primary,
+              ),
+              fillColor: fieldColor,
             ),
             items: [
               const DropdownMenuItem(
@@ -103,9 +130,28 @@ class _FilterCard extends ConsumerWidget {
           DropdownButtonFormField<String>(
             key: ValueKey('species_$speciesId'),
             initialValue: speciesId ?? _allFilterValue,
-            decoration: const InputDecoration(
+            style: const TextStyle(
+              color: DendroColors.text,
+              fontWeight: FontWeight.w700,
+            ),
+            dropdownColor: fieldColor,
+            iconEnabledColor: DendroColors.primary,
+            iconDisabledColor: DendroColors.textMuted,
+            decoration: InputDecoration(
               labelText: 'Espécie',
-              prefixIcon: Icon(Icons.eco_outlined),
+              labelStyle: const TextStyle(
+                color: DendroColors.textMuted,
+                fontWeight: FontWeight.w700,
+              ),
+              floatingLabelStyle: const TextStyle(
+                color: DendroColors.primary,
+                fontWeight: FontWeight.w800,
+              ),
+              prefixIcon: const Icon(
+                Icons.eco_outlined,
+                color: DendroColors.primary,
+              ),
+              fillColor: fieldColor,
             ),
             items: [
               const DropdownMenuItem(
@@ -136,6 +182,10 @@ class _FilterCard extends ConsumerWidget {
               ),
               if (_hasActiveFilters(propertyId, speciesId, selectedStands))
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: DendroColors.primary,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
                   onPressed: () {
                     ref.read(resultsPropertyFilterProvider.notifier).state =
                         null;
@@ -164,6 +214,22 @@ class _FilterCard extends ConsumerWidget {
               children: [
                 for (final option in visibleStands)
                   FilterChip(
+                    backgroundColor: isDarkMode
+                        ? const Color(0xFFCFE3D4)
+                        : Colors.white,
+                    selectedColor: DendroColors.primary,
+                    checkmarkColor: Colors.white,
+                    side: BorderSide(
+                      color: selectedStands.contains(option.stand.id)
+                          ? DendroColors.primary
+                          : _darkFilterBorderColor,
+                    ),
+                    labelStyle: TextStyle(
+                      color: selectedStands.contains(option.stand.id)
+                          ? Colors.white
+                          : DendroColors.text,
+                      fontWeight: FontWeight.w800,
+                    ),
                     label: Text(
                       '${option.stand.identification} • ${option.species.name}',
                     ),

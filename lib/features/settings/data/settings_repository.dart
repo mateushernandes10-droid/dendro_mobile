@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/database/dendro_database.dart';
 import '../../../core/providers/database_providers.dart';
+import '../../activity_log/data/activity_log_repository.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return SettingsRepository(ref.watch(dendroDatabaseProvider));
@@ -58,6 +59,9 @@ class SettingsRepository {
 
   final DendroDatabase _database;
   final _uuid = const Uuid();
+  late final ActivityLogRepository _activityLog = ActivityLogRepository(
+    _database,
+  );
 
   Stream<List<SpeciesRecord>> watchSpecies() {
     return (_database.select(
@@ -98,20 +102,32 @@ class SettingsRepository {
   }) async {
     final id = _uuid.v4();
     final now = DateTime.now();
+    final speciesName = name.trim();
 
-    await _database
-        .into(_database.species)
-        .insert(
-          SpeciesCompanion.insert(
-            id: id,
-            name: name.trim(),
-            scientificName: Value(_blankToNull(scientificName)),
-            description: Value(_blankToNull(description)),
-            active: Value(active),
-            createdAt: now,
-            updatedAt: now,
-          ),
-        );
+    await _database.transaction(() async {
+      await _database
+          .into(_database.species)
+          .insert(
+            SpeciesCompanion.insert(
+              id: id,
+              name: speciesName,
+              scientificName: Value(_blankToNull(scientificName)),
+              description: Value(_blankToNull(description)),
+              active: Value(active),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+
+      await _activityLog.record(
+        type: ActivityLogType.speciesCreated,
+        title: 'Especie cadastrada',
+        subtitle: speciesName,
+        entityType: ActivityEntityType.species,
+        entityId: id,
+        occurredAt: now,
+      );
+    });
 
     return id;
   }
@@ -123,23 +139,50 @@ class SettingsRepository {
     String? description,
     required bool active,
   }) {
-    return (_database.update(
-      _database.species,
-    )..where((table) => table.id.equals(id))).write(
-      SpeciesCompanion(
-        name: Value(name.trim()),
-        scientificName: Value(_blankToNull(scientificName)),
-        description: Value(_blankToNull(description)),
-        active: Value(active),
-        updatedAt: Value(DateTime.now()),
-      ),
-    );
+    final now = DateTime.now();
+    final speciesName = name.trim();
+
+    return _database.transaction(() async {
+      await (_database.update(
+        _database.species,
+      )..where((table) => table.id.equals(id))).write(
+        SpeciesCompanion(
+          name: Value(speciesName),
+          scientificName: Value(_blankToNull(scientificName)),
+          description: Value(_blankToNull(description)),
+          active: Value(active),
+          updatedAt: Value(now),
+        ),
+      );
+
+      await _activityLog.record(
+        type: ActivityLogType.speciesUpdated,
+        title: 'Especie atualizada',
+        subtitle: speciesName,
+        entityType: ActivityEntityType.species,
+        entityId: id,
+        occurredAt: now,
+      );
+    });
   }
 
-  Future<void> deleteSpecies(String id) {
-    return (_database.delete(
-      _database.species,
-    )..where((table) => table.id.equals(id))).go();
+  Future<void> deleteSpecies(String id) async {
+    final species = await _speciesById(id);
+
+    await _database.transaction(() async {
+      await (_database.delete(
+        _database.species,
+      )..where((table) => table.id.equals(id))).go();
+
+      if (species == null) return;
+      await _activityLog.record(
+        type: ActivityLogType.speciesDeleted,
+        title: 'Especie excluida',
+        subtitle: species.name,
+        entityType: ActivityEntityType.species,
+        entityId: id,
+      );
+    });
   }
 
   Future<String> createFormula({
@@ -152,6 +195,7 @@ class SettingsRepository {
   }) async {
     final id = _uuid.v4();
     final now = DateTime.now();
+    final formulaName = name.trim();
 
     await _database.transaction(() async {
       await _database
@@ -159,7 +203,7 @@ class SettingsRepository {
           .insert(
             FormulasCompanion.insert(
               id: id,
-              name: name.trim(),
+              name: formulaName,
               description: Value(_blankToNull(description)),
               expression: expression.trim(),
               active: Value(active),
@@ -170,6 +214,15 @@ class SettingsRepository {
 
       await _replaceVariables(id, variables);
       await _replaceCoefficientDefinitions(id, coefficientSymbols);
+
+      await _activityLog.record(
+        type: ActivityLogType.formulaCreated,
+        title: 'Modelo matematico cadastrado',
+        subtitle: formulaName,
+        entityType: ActivityEntityType.formula,
+        entityId: id,
+        occurredAt: now,
+      );
     });
 
     return id;
@@ -186,11 +239,12 @@ class SettingsRepository {
   }) {
     return _database.transaction(() async {
       final now = DateTime.now();
+      final formulaName = name.trim();
       await (_database.update(
         _database.formulas,
       )..where((table) => table.id.equals(id))).write(
         FormulasCompanion(
-          name: Value(name.trim()),
+          name: Value(formulaName),
           description: Value(_blankToNull(description)),
           expression: Value(expression.trim()),
           active: Value(active),
@@ -200,13 +254,35 @@ class SettingsRepository {
 
       await _replaceVariables(id, variables);
       await _replaceCoefficientDefinitions(id, coefficientSymbols);
+
+      await _activityLog.record(
+        type: ActivityLogType.formulaUpdated,
+        title: 'Modelo matematico atualizado',
+        subtitle: formulaName,
+        entityType: ActivityEntityType.formula,
+        entityId: id,
+        occurredAt: now,
+      );
     });
   }
 
-  Future<void> deleteFormula(String id) {
-    return (_database.delete(
-      _database.formulas,
-    )..where((table) => table.id.equals(id))).go();
+  Future<void> deleteFormula(String id) async {
+    final formula = await _formulaById(id);
+
+    await _database.transaction(() async {
+      await (_database.delete(
+        _database.formulas,
+      )..where((table) => table.id.equals(id))).go();
+
+      if (formula == null) return;
+      await _activityLog.record(
+        type: ActivityLogType.formulaDeleted,
+        title: 'Modelo matematico excluido',
+        subtitle: formula.name,
+        entityType: ActivityEntityType.formula,
+        entityId: id,
+      );
+    });
   }
 
   Future<void> updateCoefficientValues({
@@ -214,6 +290,8 @@ class SettingsRepository {
     required Map<String, double?> valuesByCoefficientId,
   }) {
     return _database.transaction(() async {
+      final formula = await _formulaById(formulaId);
+      final now = DateTime.now();
       for (final entry in valuesByCoefficientId.entries) {
         await (_database.update(_database.formulaCoefficients)
               ..where((table) => table.id.equals(entry.key)))
@@ -221,6 +299,15 @@ class SettingsRepository {
       }
 
       await _touchFormula(formulaId);
+
+      await _activityLog.record(
+        type: ActivityLogType.formulaCoefficientsUpdated,
+        title: 'Coeficientes atualizados',
+        subtitle: formula?.name ?? 'Modelo matematico',
+        entityType: ActivityEntityType.formula,
+        entityId: formulaId,
+        occurredAt: now,
+      );
     });
   }
 
@@ -240,6 +327,15 @@ class SettingsRepository {
           speciesId: speciesId,
           formulaId: formulaId,
         );
+        if (existing == null) {
+          await _activityLog.record(
+            type: ActivityLogType.speciesFormulaLinked,
+            title: 'Modelo vinculado a especie',
+            subtitle: await _speciesFormulaSubtitle(speciesId, formulaId),
+            entityType: ActivityEntityType.species,
+            entityId: speciesId,
+          );
+        }
         return;
       }
 
@@ -255,6 +351,14 @@ class SettingsRepository {
       if (existing.isDefault) {
         await _ensureSpeciesHasDefaultFormula(speciesId);
       }
+
+      await _activityLog.record(
+        type: ActivityLogType.speciesFormulaUnlinked,
+        title: 'Modelo removido da especie',
+        subtitle: await _speciesFormulaSubtitle(speciesId, formulaId),
+        entityType: ActivityEntityType.species,
+        entityId: speciesId,
+      );
     });
   }
 
@@ -278,6 +382,14 @@ class SettingsRepository {
                 table.formulaId.equals(formulaId),
           ))
           .write(const SpeciesFormulasCompanion(isDefault: Value(true)));
+
+      await _activityLog.record(
+        type: ActivityLogType.speciesDefaultFormulaChanged,
+        title: 'Modelo padrao alterado',
+        subtitle: await _speciesFormulaSubtitle(speciesId, formulaId),
+        entityType: ActivityEntityType.species,
+        entityId: speciesId,
+      );
     });
   }
 
@@ -367,6 +479,28 @@ class SettingsRepository {
     return (_database.update(_database.formulas)
           ..where((table) => table.id.equals(formulaId)))
         .write(FormulasCompanion(updatedAt: Value(DateTime.now())));
+  }
+
+  Future<SpeciesRecord?> _speciesById(String id) {
+    return (_database.select(
+      _database.species,
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<FormulaRecord?> _formulaById(String id) {
+    return (_database.select(
+      _database.formulas,
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<String> _speciesFormulaSubtitle(
+    String speciesId,
+    String formulaId,
+  ) async {
+    final species = await _speciesById(speciesId);
+    final formula = await _formulaById(formulaId);
+
+    return '${formula?.name ?? 'Modelo'} - ${species?.name ?? 'Especie'}';
   }
 
   Future<bool> _speciesHasDefaultFormula(String speciesId) async {

@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/database/dendro_database.dart';
 import '../../../core/providers/database_providers.dart';
+import '../../activity_log/data/activity_log_repository.dart';
 import '../../inventory_runs/data/inventory_formula_selection.dart';
 
 final plotsRepositoryProvider = Provider<PlotsRepository>((ref) {
@@ -113,6 +114,9 @@ class PlotsRepository {
 
   final DendroDatabase _database;
   final _uuid = const Uuid();
+  late final ActivityLogRepository _activityLog = ActivityLogRepository(
+    _database,
+  );
 
   Stream<StandPlotsState> watchStandPlots(String standId) async* {
     final context = await _readStandContext(standId);
@@ -280,8 +284,19 @@ class PlotsRepository {
             talhaoLevantamentoId: moved.id,
             formulaSelection: formulaSelection,
           );
-          return _talhaoLevantamentoById(moved.id);
+          final updated = await _talhaoLevantamentoById(moved.id);
+          await _logInventoryStart(
+            context: context,
+            inventoryRunId: updated.inventoryRunId,
+            createdRun: false,
+          );
+          return updated;
         }
+        await _logInventoryStart(
+          context: context,
+          inventoryRunId: moved.inventoryRunId,
+          createdRun: false,
+        );
         return moved;
       }
 
@@ -292,9 +307,16 @@ class PlotsRepository {
           formulaSelection: formulaSelection,
         );
       }
-      return _talhaoLevantamentoById(planning.id);
+      final promoted = await _talhaoLevantamentoById(planning.id);
+      await _logInventoryStart(
+        context: context,
+        inventoryRunId: promoted.inventoryRunId,
+        createdRun: true,
+      );
+      return promoted;
     }
 
+    final createdRun = reusableActiveRun == null;
     final inventoryRunId =
         reusableActiveRun?.id ??
         await _createInventoryRun(
@@ -302,35 +324,75 @@ class PlotsRepository {
           status: InventoryRunStatus.inProgress,
         );
 
-    return _createTalhaoLevantamento(
+    final talhaoLevantamento = await _createTalhaoLevantamento(
       stand: context.stand,
       species: context.species,
       inventoryRunId: inventoryRunId,
       formulaSelection: formulaSelection,
     );
+
+    await _logInventoryStart(
+      context: context,
+      inventoryRunId: talhaoLevantamento.inventoryRunId,
+      createdRun: createdRun,
+    );
+
+    return talhaoLevantamento;
   }
 
   Future<void> updatePlotArea({required String id, double? areaHa}) async {
-    await (_database.update(
+    final plot = await (_database.select(
       _database.plots,
-    )..where((table) => table.id.equals(id))).write(
-      PlotsCompanion(areaHa: Value(areaHa), updatedAt: Value(DateTime.now())),
-    );
-    await touchFromPlot(id);
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
+    final context = plot == null
+        ? null
+        : await _readTalhaoContext(plot.talhaoLevantamentoId);
+    final now = DateTime.now();
+
+    await _database.transaction(() async {
+      await (_database.update(_database.plots)
+            ..where((table) => table.id.equals(id)))
+          .write(PlotsCompanion(areaHa: Value(areaHa), updatedAt: Value(now)));
+      await touchFromPlot(id);
+
+      if (plot == null || context == null) return;
+      await _activityLog.record(
+        type: ActivityLogType.plotUpdated,
+        title: 'Parcela atualizada',
+        subtitle: _plotActivitySubtitle(plot.identification, context),
+        entityType: ActivityEntityType.plot,
+        entityId: id,
+        occurredAt: now,
+      );
+    });
   }
 
   Future<void> deletePlot(String id) async {
     final plot = await (_database.select(
       _database.plots,
     )..where((table) => table.id.equals(id))).getSingleOrNull();
+    final context = plot == null
+        ? null
+        : await _readTalhaoContext(plot.talhaoLevantamentoId);
 
-    await (_database.delete(
-      _database.plots,
-    )..where((table) => table.id.equals(id))).go();
+    await _database.transaction(() async {
+      await (_database.delete(
+        _database.plots,
+      )..where((table) => table.id.equals(id))).go();
 
-    if (plot != null) {
-      await touchTalhaoLevantamento(plot.talhaoLevantamentoId);
-    }
+      if (plot != null) {
+        await touchTalhaoLevantamento(plot.talhaoLevantamentoId);
+      }
+
+      if (plot == null || context == null) return;
+      await _activityLog.record(
+        type: ActivityLogType.plotDeleted,
+        title: 'Parcela excluida',
+        subtitle: _plotActivitySubtitle(plot.identification, context),
+        entityType: ActivityEntityType.plot,
+        entityId: id,
+      );
+    });
   }
 
   Future<List<TreeRecord>> treesForPlot(String plotId) {
@@ -408,22 +470,33 @@ class PlotsRepository {
     final id = _uuid.v4();
     final now = DateTime.now();
     final identification = await nextPlotIdentification(talhaoLevantamentoId);
+    final context = await _readTalhaoContext(talhaoLevantamentoId);
 
-    await _database
-        .into(_database.plots)
-        .insert(
-          PlotsCompanion.insert(
-            id: id,
-            talhaoLevantamentoId: talhaoLevantamentoId,
-            identification: identification,
-            status: PlotStatus.pending,
-            areaHa: Value(areaHa),
-            createdAt: now,
-            updatedAt: now,
-          ),
-        );
+    await _database.transaction(() async {
+      await _database
+          .into(_database.plots)
+          .insert(
+            PlotsCompanion.insert(
+              id: id,
+              talhaoLevantamentoId: talhaoLevantamentoId,
+              identification: identification,
+              status: PlotStatus.pending,
+              areaHa: Value(areaHa),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
 
-    await touchTalhaoLevantamento(talhaoLevantamentoId);
+      await touchTalhaoLevantamento(talhaoLevantamentoId);
+      await _activityLog.record(
+        type: ActivityLogType.plotCreated,
+        title: 'Parcela cadastrada',
+        subtitle: _plotActivitySubtitle(identification, context),
+        entityType: ActivityEntityType.plot,
+        entityId: id,
+        occurredAt: now,
+      );
+    });
     return id;
   }
 
@@ -794,4 +867,38 @@ VALUES (?, ?, ?, ?, ?)
           ..limit(1))
         .getSingleOrNull();
   }
+
+  Future<void> _logInventoryStart({
+    required _StandContext context,
+    required String inventoryRunId,
+    required bool createdRun,
+  }) async {
+    final property = await _propertyById(context.stand.propertyId);
+    await _activityLog.record(
+      type: createdRun
+          ? ActivityLogType.inventoryRunStarted
+          : ActivityLogType.inventoryRunStandAdded,
+      title: createdRun
+          ? 'Levantamento iniciado'
+          : 'Talhao adicionado ao levantamento',
+      subtitle: _standActivitySubtitle(context.stand, property),
+      entityType: ActivityEntityType.inventoryRun,
+      entityId: inventoryRunId,
+    );
+  }
+
+  Future<PropertyRecord?> _propertyById(String id) {
+    return (_database.select(
+      _database.properties,
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
+  }
+}
+
+String _plotActivitySubtitle(String plotName, _TalhaoContext context) {
+  return '$plotName - ${context.stand.identification}';
+}
+
+String _standActivitySubtitle(StandRecord stand, PropertyRecord? property) {
+  if (property == null) return stand.identification;
+  return '${stand.identification} - ${property.name}';
 }

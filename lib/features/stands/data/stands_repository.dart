@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/database/dendro_database.dart';
 import '../../../core/providers/database_providers.dart';
+import '../../activity_log/data/activity_log_repository.dart';
 
 final standsRepositoryProvider = Provider<StandsRepository>((ref) {
   return StandsRepository(ref.watch(dendroDatabaseProvider));
@@ -97,6 +98,9 @@ class StandsRepository {
 
   final DendroDatabase _database;
   final _uuid = const Uuid();
+  late final ActivityLogRepository _activityLog = ActivityLogRepository(
+    _database,
+  );
 
   Stream<List<SpeciesRecord>> watchActiveSpecies() {
     return (_database.select(_database.species)
@@ -236,24 +240,37 @@ class StandsRepository {
   }) async {
     final id = _uuid.v4();
     final now = DateTime.now();
+    final standName = identification.trim();
+    final property = await _propertyById(propertyId);
 
-    await _database
-        .into(_database.stands)
-        .insert(
-          StandsCompanion.insert(
-            id: id,
-            propertyId: propertyId,
-            identification: identification.trim(),
-            speciesId: speciesId,
-            areaHa: areaHa,
-            plantingYear: Value(plantingYear),
-            spacing: Value(_blankToNull(spacing)),
-            managementRegime: Value(_blankToNull(managementRegime)),
-            notes: Value(_blankToNull(notes)),
-            createdAt: now,
-            updatedAt: now,
-          ),
-        );
+    await _database.transaction(() async {
+      await _database
+          .into(_database.stands)
+          .insert(
+            StandsCompanion.insert(
+              id: id,
+              propertyId: propertyId,
+              identification: standName,
+              speciesId: speciesId,
+              areaHa: areaHa,
+              plantingYear: Value(plantingYear),
+              spacing: Value(_blankToNull(spacing)),
+              managementRegime: Value(_blankToNull(managementRegime)),
+              notes: Value(_blankToNull(notes)),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+
+      await _activityLog.record(
+        type: ActivityLogType.standCreated,
+        title: 'Talhao cadastrado',
+        subtitle: _standActivitySubtitle(standName, property),
+        entityType: ActivityEntityType.stand,
+        entityId: id,
+        occurredAt: now,
+      );
+    });
 
     return id;
   }
@@ -267,27 +284,61 @@ class StandsRepository {
     String? spacing,
     String? managementRegime,
     String? notes,
-  }) {
-    return (_database.update(
-      _database.stands,
-    )..where((table) => table.id.equals(id))).write(
-      StandsCompanion(
-        identification: Value(identification.trim()),
-        speciesId: Value(speciesId),
-        areaHa: Value(areaHa),
-        plantingYear: Value(plantingYear),
-        spacing: Value(_blankToNull(spacing)),
-        managementRegime: Value(_blankToNull(managementRegime)),
-        notes: Value(_blankToNull(notes)),
-        updatedAt: Value(DateTime.now()),
-      ),
-    );
+  }) async {
+    final current = await _standById(id);
+    final property = current == null
+        ? null
+        : await _propertyById(current.propertyId);
+    final now = DateTime.now();
+    final standName = identification.trim();
+
+    await _database.transaction(() async {
+      await (_database.update(
+        _database.stands,
+      )..where((table) => table.id.equals(id))).write(
+        StandsCompanion(
+          identification: Value(standName),
+          speciesId: Value(speciesId),
+          areaHa: Value(areaHa),
+          plantingYear: Value(plantingYear),
+          spacing: Value(_blankToNull(spacing)),
+          managementRegime: Value(_blankToNull(managementRegime)),
+          notes: Value(_blankToNull(notes)),
+          updatedAt: Value(now),
+        ),
+      );
+
+      await _activityLog.record(
+        type: ActivityLogType.standUpdated,
+        title: 'Talhao atualizado',
+        subtitle: _standActivitySubtitle(standName, property),
+        entityType: ActivityEntityType.stand,
+        entityId: id,
+        occurredAt: now,
+      );
+    });
   }
 
-  Future<void> delete(String id) {
-    return (_database.delete(
-      _database.stands,
-    )..where((table) => table.id.equals(id))).go();
+  Future<void> delete(String id) async {
+    final stand = await _standById(id);
+    final property = stand == null
+        ? null
+        : await _propertyById(stand.propertyId);
+
+    await _database.transaction(() async {
+      await (_database.delete(
+        _database.stands,
+      )..where((table) => table.id.equals(id))).go();
+
+      if (stand == null) return;
+      await _activityLog.record(
+        type: ActivityLogType.standDeleted,
+        title: 'Talhao excluido',
+        subtitle: _standActivitySubtitle(stand.identification, property),
+        entityType: ActivityEntityType.stand,
+        entityId: id,
+      );
+    });
   }
 
   Future<StandSummary?> getSummary(String id) async {
@@ -342,6 +393,23 @@ class StandsRepository {
 
     return await query.getSingleOrNull() != null;
   }
+
+  Future<StandRecord?> _standById(String id) {
+    return (_database.select(
+      _database.stands,
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<PropertyRecord?> _propertyById(String id) {
+    return (_database.select(
+      _database.properties,
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
+  }
+}
+
+String _standActivitySubtitle(String standName, PropertyRecord? property) {
+  if (property == null) return standName;
+  return '$standName - ${property.name}';
 }
 
 String? _blankToNull(String? value) {

@@ -1,4 +1,5 @@
 import 'package:dendro_mobile/core/database/dendro_database.dart';
+import 'package:dendro_mobile/features/activity_log/data/activity_log_repository.dart';
 import 'package:dendro_mobile/features/inventory_runs/data/inventory_formula_selection.dart';
 import 'package:dendro_mobile/features/inventory_runs/data/inventory_runs_repository.dart';
 import 'package:dendro_mobile/features/plots/data/plots_repository.dart';
@@ -850,5 +851,54 @@ ORDER BY symbol
     expect(pinusOnly.treeCount, 2);
     expect(pinusOnly.stands.single.stand.identification, 'P-01');
     expect(pinusOnly.averageDapCm, closeTo(22.5, 0.0001));
+  });
+
+  test('repositorios registram historico de atividades', () async {
+    final activityLogRepository = ActivityLogRepository(database);
+    final propertiesRepository = PropertiesRepository(database);
+    final standsRepository = StandsRepository(database);
+    final plotsRepository = PlotsRepository(database);
+    final treesRepository = TreesRepository(database);
+    final inventoryRunsRepository = InventoryRunsRepository(database);
+
+    expect(await activityLogRepository.recent(limit: 20), isEmpty);
+
+    final propertyId = await propertiesRepository.create(
+      name: 'Fazenda Log',
+      municipality: 'Vacaria',
+      totalAreaHa: 20,
+    );
+    final standId = await standsRepository.create(
+      propertyId: propertyId,
+      identification: 'L-01',
+      speciesId: 'species_pinus',
+      areaHa: 10,
+    );
+    final talhao = await plotsRepository.startNewInventoryForStand(standId);
+    final plotId = await plotsRepository.createPlotForTalhaoLevantamento(
+      talhaoLevantamentoId: talhao.id,
+      areaHa: 0.04,
+    );
+    await treesRepository.createTree(
+      plotId: plotId,
+      draft: const TreeDraft(dapCm: 20, heightM: 12, hasTortuousStem: false),
+    );
+    await treesRepository.markPlotCollected(plotId);
+    await inventoryRunsRepository.completeRun(talhao.inventoryRunId);
+
+    final logs = await activityLogRepository.recent(limit: 20);
+    final types = logs.map((activity) => activity.type).toSet();
+
+    expect(types, contains(ActivityLogType.propertyCreated));
+    expect(types, contains(ActivityLogType.standCreated));
+    expect(types, contains(ActivityLogType.inventoryRunStarted));
+    expect(types, contains(ActivityLogType.plotCreated));
+    expect(types, contains(ActivityLogType.plotCollected));
+    expect(types, contains(ActivityLogType.inventoryRunCompleted));
+    expect(types, contains(ActivityLogType.standCompleted));
+    expect(
+      logs.map((activity) => activity.title),
+      isNot(contains('Exportacao realizada')),
+    );
   });
 }

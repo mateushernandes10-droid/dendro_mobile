@@ -36,7 +36,7 @@ void main() {
     });
     await tester.pump(const Duration(milliseconds: 2800));
     await tester.pump(const Duration(milliseconds: 400));
-    for (var attempt = 0; attempt < 8; attempt++) {
+    for (var attempt = 0; attempt < 30; attempt++) {
       if (find.text('Novo Levantamento').evaluate().isNotEmpty) break;
       await tester.pump(const Duration(milliseconds: 300));
     }

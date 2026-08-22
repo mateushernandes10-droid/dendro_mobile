@@ -272,18 +272,22 @@ class DendroDatabase extends _$DendroDatabase {
     : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await _createTalhaoFormulaCoefficientsTable();
+      await _createActivityLogsTable();
       await seedInitialCatalogs();
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await _createTalhaoFormulaCoefficientsTable();
+      }
+      if (from < 3) {
+        await _createActivityLogsTable();
       }
     },
   );
@@ -297,6 +301,20 @@ CREATE TABLE IF NOT EXISTS talhao_formula_coefficients (
   label TEXT NOT NULL,
   value REAL NULL,
   UNIQUE(talhao_levantamento_id, symbol)
+)
+''');
+  }
+
+  Future<void> _createActivityLogsTable() {
+    return customStatement('''
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id TEXT NOT NULL PRIMARY KEY,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  subtitle TEXT NOT NULL DEFAULT '',
+  entity_type TEXT NULL,
+  entity_id TEXT NULL,
+  occurred_at INTEGER NOT NULL
 )
 ''');
   }

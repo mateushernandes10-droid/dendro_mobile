@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/dendro_database.dart';
 import '../../../core/providers/database_providers.dart';
+import '../../activity_log/data/activity_log_repository.dart';
 import 'inventory_formula_selection.dart';
 
 final inventoryRunsRepositoryProvider = Provider<InventoryRunsRepository>((
@@ -91,6 +92,9 @@ class InventoryRunsRepository {
   InventoryRunsRepository(this._database);
 
   final DendroDatabase _database;
+  late final ActivityLogRepository _activityLog = ActivityLogRepository(
+    _database,
+  );
 
   Stream<InventoryRunSummary?> watchLatestActive() {
     return watchActive().map((runs) => runs.firstOrNull);
@@ -155,20 +159,46 @@ class InventoryRunsRepository {
 
   Future<void> completeRun(String runId) async {
     final now = DateTime.now();
+    final summary = await _summaryById(runId);
 
-    await (_database.update(
-      _database.inventoryRuns,
-    )..where((table) => table.id.equals(runId))).write(
-      InventoryRunsCompanion(
-        status: const Value(InventoryRunStatus.completed),
-        updatedAt: Value(now),
-        completedAt: Value(now),
-      ),
-    );
+    await _database.transaction(() async {
+      await (_database.update(
+        _database.inventoryRuns,
+      )..where((table) => table.id.equals(runId))).write(
+        InventoryRunsCompanion(
+          status: const Value(InventoryRunStatus.completed),
+          updatedAt: Value(now),
+          completedAt: Value(now),
+        ),
+      );
+
+      if (summary == null) return;
+      await _activityLog.record(
+        type: ActivityLogType.inventoryRunCompleted,
+        title: 'Levantamento finalizado',
+        subtitle: _runActivitySubtitle(summary),
+        entityType: ActivityEntityType.inventoryRun,
+        entityId: runId,
+        occurredAt: now,
+      );
+
+      for (final standSummary in summary.stands) {
+        await _activityLog.record(
+          type: ActivityLogType.standCompleted,
+          title: 'Talhao finalizado',
+          subtitle:
+              '${standSummary.stand.identification} - ${summary.property.name}',
+          entityType: ActivityEntityType.stand,
+          entityId: standSummary.stand.id,
+          occurredAt: now,
+        );
+      }
+    });
   }
 
   Future<void> deleteRun(String runId) {
     return _database.transaction(() async {
+      final summary = await _summaryById(runId);
       final talhoes = await (_database.select(
         _database.talhaoLevantamentos,
       )..where((table) => table.inventoryRunId.equals(runId))).get();
@@ -181,6 +211,15 @@ class InventoryRunsRepository {
       await (_database.delete(
         _database.inventoryRuns,
       )..where((table) => table.id.equals(runId))).go();
+
+      if (summary == null) return;
+      await _activityLog.record(
+        type: ActivityLogType.inventoryRunDeleted,
+        title: 'Levantamento excluido',
+        subtitle: _runActivitySubtitle(summary),
+        entityType: ActivityEntityType.inventoryRun,
+        entityId: runId,
+      );
     });
   }
 
@@ -193,12 +232,24 @@ class InventoryRunsRepository {
               .getSingleOrNull();
 
       if (talhao == null) return;
+      final run = await _inventoryRunById(talhao.inventoryRunId);
+      final stand = await _standById(talhao.standId);
+      final property = run == null ? null : await _propertyById(run.propertyId);
 
       await _deleteTalhaoLevantamentoData([talhao.id]);
 
       await (_database.update(_database.inventoryRuns)
             ..where((table) => table.id.equals(talhao.inventoryRunId)))
           .write(InventoryRunsCompanion(updatedAt: Value(DateTime.now())));
+
+      if (stand == null) return;
+      await _activityLog.record(
+        type: ActivityLogType.inventoryRunStandRemoved,
+        title: 'Talhao removido do levantamento',
+        subtitle: _standActivitySubtitle(stand, property),
+        entityType: ActivityEntityType.inventoryRun,
+        entityId: talhao.inventoryRunId,
+      );
     });
   }
 
@@ -219,6 +270,8 @@ class InventoryRunsRepository {
                 ..where((table) => table.id.equals(talhaoLevantamentoId))
                 ..limit(1))
               .getSingle();
+      final run = await _inventoryRunById(talhao.inventoryRunId);
+      final property = run == null ? null : await _propertyById(run.propertyId);
       final now = DateTime.now();
       final formulaId =
           formulaSelection?.formulaId ?? await _defaultFormulaId(speciesId);
@@ -258,7 +311,42 @@ class InventoryRunsRepository {
       await (_database.update(_database.inventoryRuns)
             ..where((table) => table.id.equals(talhao.inventoryRunId)))
           .write(InventoryRunsCompanion(updatedAt: Value(now)));
+
+      await _activityLog.record(
+        type: ActivityLogType.inventoryRunStandUpdated,
+        title: 'Talhao do levantamento atualizado',
+        subtitle: _standActivitySubtitle(
+          StandRecord(
+            id: talhao.standId,
+            propertyId: property?.id ?? '',
+            identification: identification.trim(),
+            speciesId: speciesId,
+            areaHa: areaHa,
+            plantingYear: plantingYear,
+            spacing: _blankToNull(spacing),
+            managementRegime: _blankToNull(managementRegime),
+            notes: _blankToNull(notes),
+            createdAt: now,
+            updatedAt: now,
+          ),
+          property,
+        ),
+        entityType: ActivityEntityType.inventoryRun,
+        entityId: talhao.inventoryRunId,
+        occurredAt: now,
+      );
     });
+  }
+
+  Future<InventoryRunSummary?> _summaryById(String runId) async {
+    final run =
+        await (_database.select(_database.inventoryRuns)
+              ..where((table) => table.id.equals(runId))
+              ..limit(1))
+            .getSingleOrNull();
+
+    if (run == null) return null;
+    return _summaryForRun(run);
   }
 
   Future<InventoryRunSummary> _summaryForRun(InventoryRunRecord run) async {
@@ -616,6 +704,33 @@ VALUES (?, ?, ?, ?, ?)
 
     return row.read(area) ?? 0;
   }
+
+  Future<InventoryRunRecord?> _inventoryRunById(String id) {
+    return (_database.select(
+      _database.inventoryRuns,
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<StandRecord?> _standById(String id) {
+    return (_database.select(
+      _database.stands,
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<PropertyRecord?> _propertyById(String id) {
+    return (_database.select(
+      _database.properties,
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
+  }
+}
+
+String _runActivitySubtitle(InventoryRunSummary summary) {
+  return '${summary.property.name} - ${summary.standLabel}';
+}
+
+String _standActivitySubtitle(StandRecord stand, PropertyRecord? property) {
+  if (property == null) return stand.identification;
+  return '${stand.identification} - ${property.name}';
 }
 
 String? _blankToNull(String? value) {

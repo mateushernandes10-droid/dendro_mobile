@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/database/dendro_database.dart';
 import '../../../core/providers/database_providers.dart';
+import '../../activity_log/data/activity_log_repository.dart';
 
 final propertiesRepositoryProvider = Provider<PropertiesRepository>((ref) {
   return PropertiesRepository(ref.watch(dendroDatabaseProvider));
@@ -40,6 +41,9 @@ class PropertiesRepository {
 
   final DendroDatabase _database;
   final _uuid = const Uuid();
+  late final ActivityLogRepository _activityLog = ActivityLogRepository(
+    _database,
+  );
 
   Stream<List<PropertySummary>> watchSummaries({String searchQuery = ''}) {
     final normalizedQuery = searchQuery.trim();
@@ -96,19 +100,34 @@ class PropertiesRepository {
     final id = _uuid.v4();
     final now = DateTime.now();
 
-    await _database
-        .into(_database.properties)
-        .insert(
-          PropertiesCompanion.insert(
-            id: id,
-            name: name.trim(),
-            municipality: municipality.trim(),
-            state: Value(state.trim()),
-            totalAreaHa: totalAreaHa,
-            createdAt: now,
-            updatedAt: now,
-          ),
-        );
+    final propertyName = name.trim();
+    final municipalityName = municipality.trim();
+    final stateCode = state.trim();
+
+    await _database.transaction(() async {
+      await _database
+          .into(_database.properties)
+          .insert(
+            PropertiesCompanion.insert(
+              id: id,
+              name: propertyName,
+              municipality: municipalityName,
+              state: Value(stateCode),
+              totalAreaHa: totalAreaHa,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+
+      await _activityLog.record(
+        type: ActivityLogType.propertyCreated,
+        title: 'Propriedade cadastrada',
+        subtitle: '$propertyName - $municipalityName-$stateCode',
+        entityType: ActivityEntityType.property,
+        entityId: id,
+        occurredAt: now,
+      );
+    });
 
     return id;
   }
@@ -120,23 +139,53 @@ class PropertiesRepository {
     required String state,
     required double totalAreaHa,
   }) async {
-    await (_database.update(
-      _database.properties,
-    )..where((table) => table.id.equals(id))).write(
-      PropertiesCompanion(
-        name: Value(name.trim()),
-        municipality: Value(municipality.trim()),
-        state: Value(state.trim()),
-        totalAreaHa: Value(totalAreaHa),
-        updatedAt: Value(DateTime.now()),
-      ),
-    );
+    final now = DateTime.now();
+    final propertyName = name.trim();
+    final municipalityName = municipality.trim();
+    final stateCode = state.trim();
+
+    await _database.transaction(() async {
+      await (_database.update(
+        _database.properties,
+      )..where((table) => table.id.equals(id))).write(
+        PropertiesCompanion(
+          name: Value(propertyName),
+          municipality: Value(municipalityName),
+          state: Value(stateCode),
+          totalAreaHa: Value(totalAreaHa),
+          updatedAt: Value(now),
+        ),
+      );
+
+      await _activityLog.record(
+        type: ActivityLogType.propertyUpdated,
+        title: 'Propriedade atualizada',
+        subtitle: '$propertyName - $municipalityName-$stateCode',
+        entityType: ActivityEntityType.property,
+        entityId: id,
+        occurredAt: now,
+      );
+    });
   }
 
-  Future<void> delete(String id) {
-    return (_database.delete(
-      _database.properties,
-    )..where((table) => table.id.equals(id))).go();
+  Future<void> delete(String id) async {
+    final property = await findById(id);
+
+    await _database.transaction(() async {
+      await (_database.delete(
+        _database.properties,
+      )..where((table) => table.id.equals(id))).go();
+
+      if (property == null) return;
+      await _activityLog.record(
+        type: ActivityLogType.propertyDeleted,
+        title: 'Propriedade excluida',
+        subtitle:
+            '${property.name} - ${property.municipality}-${property.state}',
+        entityType: ActivityEntityType.property,
+        entityId: id,
+      );
+    });
   }
 
   Future<PropertySummary?> getSummary(String id) async {

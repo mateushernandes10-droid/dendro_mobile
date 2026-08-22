@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/database/dendro_database.dart';
 import '../../../core/providers/database_providers.dart';
+import '../../activity_log/data/activity_log_repository.dart';
 
 final treesRepositoryProvider = Provider<TreesRepository>((ref) {
   return TreesRepository(ref.watch(dendroDatabaseProvider));
@@ -76,6 +77,9 @@ class TreesRepository {
 
   final DendroDatabase _database;
   final _uuid = const Uuid();
+  late final ActivityLogRepository _activityLog = ActivityLogRepository(
+    _database,
+  );
 
   Stream<TreeCollectionState> watchCollection(String plotId) {
     final treesQuery = _database.select(_database.trees)
@@ -199,8 +203,25 @@ class TreesRepository {
     });
   }
 
-  Future<void> markPlotCollected(String plotId) {
-    return _touchPlot(plotId, status: PlotStatus.collected);
+  Future<void> markPlotCollected(String plotId) async {
+    final context = await _readCollectionContext(plotId);
+    final alreadyCollected = context.plot.status == PlotStatus.collected;
+    final now = DateTime.now();
+
+    await _database.transaction(() async {
+      await _touchPlot(plotId, status: PlotStatus.collected);
+
+      if (alreadyCollected) return;
+      await _activityLog.record(
+        type: ActivityLogType.plotCollected,
+        title: 'Parcela coletada',
+        subtitle:
+            '${context.plot.identification} - ${context.stand.identification}',
+        entityType: ActivityEntityType.plot,
+        entityId: plotId,
+        occurredAt: now,
+      );
+    });
   }
 
   Future<int> nextTreeNumber(String plotId) async {
