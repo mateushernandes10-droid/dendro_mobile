@@ -433,9 +433,7 @@ class InventoryRunsRepository {
       )..where((table) => table.id.isIn(plotIds))).go();
     }
 
-    await (_database.delete(
-      _database.talhaoFormulaCoefficients,
-    )..where((table) => table.talhaoLevantamentoId.isIn(talhaoIds))).go();
+    await _deleteFormulaCoefficientSnapshots(talhaoIds);
 
     await (_database.delete(
       _database.talhaoLevantamentos,
@@ -464,23 +462,26 @@ class InventoryRunsRepository {
   Future<List<InventoryFormulaCoefficientValue>> _formulaCoefficientsForTalhao(
     TalhaoLevantamentoRecord talhaoLevantamento,
   ) async {
-    final snapshot =
-        await (_database.select(_database.talhaoFormulaCoefficients)
-              ..where(
-                (table) => table.talhaoLevantamentoId.equals(
-                  talhaoLevantamento.id,
-                ),
-              )
-              ..orderBy([(table) => OrderingTerm.asc(table.symbol)]))
-            .get();
+    final snapshot = await _database
+        .customSelect(
+          '''
+SELECT symbol, label, value
+FROM talhao_formula_coefficients
+WHERE talhao_levantamento_id = ?
+ORDER BY symbol
+''',
+          variables: [Variable<String>(talhaoLevantamento.id)],
+          readsFrom: const {},
+        )
+        .get();
 
     if (snapshot.isNotEmpty) {
       return [
-        for (final coefficient in snapshot)
+        for (final row in snapshot)
           InventoryFormulaCoefficientValue(
-            symbol: coefficient.symbol,
-            label: coefficient.label,
-            value: coefficient.value,
+            symbol: row.read<String>('symbol'),
+            label: row.read<String>('label'),
+            value: row.readNullable<double>('value'),
           ),
       ];
     }
@@ -488,9 +489,7 @@ class InventoryRunsRepository {
     final global =
         await (_database.select(_database.formulaCoefficients)
               ..where(
-                (table) => table.formulaId.equals(
-                  talhaoLevantamento.formulaId,
-                ),
+                (table) => table.formulaId.equals(talhaoLevantamento.formulaId),
               )
               ..orderBy([(table) => OrderingTerm.asc(table.symbol)]))
             .get();
@@ -510,13 +509,10 @@ class InventoryRunsRepository {
     required String formulaId,
     required Map<String, double?> coefficientValuesBySymbol,
   }) async {
-    await (_database.delete(_database.talhaoFormulaCoefficients)
-          ..where(
-            (table) => table.talhaoLevantamentoId.equals(
-              talhaoLevantamentoId,
-            ),
-          ))
-        .go();
+    await _database.customStatement(
+      'DELETE FROM talhao_formula_coefficients WHERE talhao_levantamento_id = ?',
+      [talhaoLevantamentoId],
+    );
 
     final coefficients =
         await (_database.select(_database.formulaCoefficients)
@@ -525,19 +521,33 @@ class InventoryRunsRepository {
             .get();
 
     for (final coefficient in coefficients) {
-      await _database.into(_database.talhaoFormulaCoefficients).insert(
-            TalhaoFormulaCoefficientsCompanion.insert(
-              id: '${talhaoLevantamentoId}_${coefficient.symbol}',
-              talhaoLevantamentoId: talhaoLevantamentoId,
-              symbol: coefficient.symbol,
-              label: coefficient.label,
-              value: Value(
-                coefficientValuesBySymbol.containsKey(coefficient.symbol)
-                    ? coefficientValuesBySymbol[coefficient.symbol]
-                    : coefficient.value,
-              ),
-            ),
-          );
+      await _database.customStatement(
+        '''
+INSERT INTO talhao_formula_coefficients
+  (id, talhao_levantamento_id, symbol, label, value)
+VALUES (?, ?, ?, ?, ?)
+''',
+        [
+          '${talhaoLevantamentoId}_${coefficient.symbol}',
+          talhaoLevantamentoId,
+          coefficient.symbol,
+          coefficient.label,
+          coefficientValuesBySymbol.containsKey(coefficient.symbol)
+              ? coefficientValuesBySymbol[coefficient.symbol]
+              : coefficient.value,
+        ],
+      );
+    }
+  }
+
+  Future<void> _deleteFormulaCoefficientSnapshots(
+    List<String> talhaoIds,
+  ) async {
+    for (final talhaoId in talhaoIds) {
+      await _database.customStatement(
+        'DELETE FROM talhao_formula_coefficients WHERE talhao_levantamento_id = ?',
+        [talhaoId],
+      );
     }
   }
 

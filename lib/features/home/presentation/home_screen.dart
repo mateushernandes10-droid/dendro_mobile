@@ -7,9 +7,11 @@ import 'package:flutter/services.dart';
 import '../../../app/theme/dendro_theme.dart';
 import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
+import '../../inventory_runs/data/inventory_formula_selection.dart';
 import '../../inventory_runs/data/inventory_runs_repository.dart';
 import '../../inventory_runs/presentation/inventory_run_detail_screen.dart';
 import '../../inventory_runs/presentation/new_inventory_screen.dart';
+import '../../inventory_runs/presentation/widgets/inventory_formula_selection_sheet.dart';
 import '../../plots/data/plots_repository.dart';
 import '../../plots/presentation/stand_plots_screen.dart';
 import '../../properties/data/properties_repository.dart';
@@ -470,6 +472,7 @@ class _NewInventorySheetState extends ConsumerState<_NewInventorySheet> {
   String? _standId;
   String? _pendingCreatedStandId;
   String? _startErrorMessage;
+  final Map<String, InventoryFormulaSelection> _formulaSelectionsByStandId = {};
   bool _saving = false;
 
   @override
@@ -665,7 +668,10 @@ class _NewInventorySheetState extends ConsumerState<_NewInventorySheet> {
       setState(() => _startErrorMessage = null);
       final talhaoLevantamento = await ref
           .read(plotsRepositoryProvider)
-          .startNewInventoryForStand(standId);
+          .startNewInventoryForStand(
+            standId,
+            formulaSelection: _formulaSelectionsByStandId[standId],
+          );
 
       ref.invalidate(activeInventoryRunsProvider);
       ref.invalidate(activeInventoryRunProvider);
@@ -708,7 +714,7 @@ class _NewInventorySheetState extends ConsumerState<_NewInventorySheet> {
   }
 
   Future<void> _openNewStandSheet(String propertyId) async {
-    final standId = await showModalBottomSheet<String>(
+    final creation = await showModalBottomSheet<_QuickStandCreation>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -716,11 +722,17 @@ class _NewInventorySheetState extends ConsumerState<_NewInventorySheet> {
       builder: (context) => _QuickStandFormSheet(propertyId: propertyId),
     );
 
-    if (standId == null || !mounted) return;
+    if (creation == null || !mounted) return;
 
     setState(() {
-      _pendingCreatedStandId = standId;
+      _pendingCreatedStandId = creation.standId;
       _startErrorMessage = null;
+      if (creation.formulaSelection == null) {
+        _formulaSelectionsByStandId.remove(creation.standId);
+      } else {
+        _formulaSelectionsByStandId[creation.standId] =
+            creation.formulaSelection!;
+      }
     });
     ref.invalidate(propertyStandsProvider(propertyId));
     ref.invalidate(propertySummariesProvider);
@@ -827,6 +839,7 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
   final _spacingController = TextEditingController();
   final _managementRegimeController = TextEditingController();
   final _notesController = TextEditingController();
+  InventoryFormulaSelection? _formulaSelection;
   String? _speciesId;
   bool _saving = false;
 
@@ -906,7 +919,10 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
                     ],
                     onChanged: _saving
                         ? null
-                        : (value) => setState(() => _speciesId = value),
+                        : (value) => setState(() {
+                            _speciesId = value;
+                            _formulaSelection = null;
+                          }),
                     validator: (value) =>
                         value == null ? 'Selecione uma espécie' : null,
                   );
@@ -916,6 +932,13 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
                 error: (error, stackTrace) => const DendroCard(
                   child: Text('Não foi possível carregar as espécies.'),
                 ),
+              ),
+              const SizedBox(height: 12),
+              _FormulaAdjustmentCard(
+                selection: _formulaSelection,
+                onPressed: _speciesId == null || _saving
+                    ? null
+                    : _adjustFormula,
               ),
               const SizedBox(height: 12),
               Row(
@@ -1024,7 +1047,12 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
       ref.invalidate(propertySummariesProvider);
 
       if (!mounted) return;
-      Navigator.of(context).pop(standId);
+      Navigator.of(context).pop(
+        _QuickStandCreation(
+          standId: standId,
+          formulaSelection: _formulaSelection,
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1047,7 +1075,23 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
     final selectedStillExists = species.any((item) => item.id == _speciesId);
     if (_speciesId == null || !selectedStillExists) {
       _speciesId = species.first.id;
+      _formulaSelection = null;
     }
+  }
+
+  Future<void> _adjustFormula() async {
+    final speciesId = _speciesId;
+    if (speciesId == null) return;
+
+    final selection = await showInventoryFormulaSelectionSheet(
+      context: context,
+      speciesId: speciesId,
+      initialSelection: _formulaSelection,
+    );
+
+    if (selection == null || !mounted) return;
+
+    setState(() => _formulaSelection = selection);
   }
 
   String? _requiredValidator(String? value) {
@@ -1073,6 +1117,63 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
       return 'Confira o ano';
     }
     return null;
+  }
+}
+
+class _QuickStandCreation {
+  const _QuickStandCreation({
+    required this.standId,
+    required this.formulaSelection,
+  });
+
+  final String standId;
+  final InventoryFormulaSelection? formulaSelection;
+}
+
+class _FormulaAdjustmentCard extends StatelessWidget {
+  const _FormulaAdjustmentCard({
+    required this.selection,
+    required this.onPressed,
+  });
+
+  final InventoryFormulaSelection? selection;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return DendroCard(
+      backgroundColor: const Color(0xFFEAF7EF),
+      borderColor: const Color(0xFFA4D1B4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Modelo matemático',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            selection == null
+                ? 'Será usado o modelo padrão da espécie selecionada.'
+                : selection!.formulaName ?? 'Modelo personalizado',
+            style: const TextStyle(
+              color: DendroColors.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onPressed,
+              icon: const Icon(Icons.functions),
+              label: const Text('Ajustar modelo matemático'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

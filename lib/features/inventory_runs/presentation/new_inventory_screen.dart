@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/dendro_theme.dart';
 import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
+import '../data/inventory_formula_selection.dart';
 import '../data/inventory_runs_repository.dart';
+import 'widgets/inventory_formula_selection_sheet.dart';
 import '../../plots/data/plots_repository.dart';
 import '../../stands/data/stands_repository.dart';
 
@@ -24,6 +26,7 @@ class _NewInventoryScreenState extends ConsumerState<NewInventoryScreen> {
   String? _speciesIdFilter;
   String? _savingStandId;
   String? _errorMessage;
+  final Map<String, InventoryFormulaSelection> _formulaSelectionsByStandId = {};
 
   @override
   void initState() {
@@ -118,6 +121,9 @@ class _NewInventoryScreenState extends ConsumerState<NewInventoryScreen> {
                       onCreateStand: () =>
                           _openNewStandSheet(propertyId: option.property.id),
                       onStart: _startStand,
+                      formulaSelectionForStand: (standId) =>
+                          _formulaSelectionsByStandId[standId],
+                      onAdjustFormula: _adjustFormula,
                     ),
                     const SizedBox(height: 18),
                   ],
@@ -198,7 +204,10 @@ class _NewInventoryScreenState extends ConsumerState<NewInventoryScreen> {
     try {
       final talhaoLevantamento = await ref
           .read(plotsRepositoryProvider)
-          .startNewInventoryForStand(summary.stand.id);
+          .startNewInventoryForStand(
+            summary.stand.id,
+            formulaSelection: _formulaSelectionsByStandId[summary.stand.id],
+          );
 
       _invalidateStartProviders(summary.stand.id);
 
@@ -219,8 +228,23 @@ class _NewInventoryScreenState extends ConsumerState<NewInventoryScreen> {
     }
   }
 
+  Future<void> _adjustFormula(StandSummary summary) async {
+    final selection = await showInventoryFormulaSelectionSheet(
+      context: context,
+      speciesId: summary.species.id,
+      initialSelection: _formulaSelectionsByStandId[summary.stand.id],
+    );
+
+    if (selection == null || !mounted) return;
+
+    setState(() {
+      _formulaSelectionsByStandId[summary.stand.id] = selection;
+      _errorMessage = null;
+    });
+  }
+
   Future<void> _openNewStandSheet({required String propertyId}) async {
-    final standId = await showModalBottomSheet<String>(
+    final creation = await showModalBottomSheet<_QuickStandCreation>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -228,14 +252,20 @@ class _NewInventoryScreenState extends ConsumerState<NewInventoryScreen> {
       builder: (context) => _QuickStandFormSheet(propertyId: propertyId),
     );
 
-    if (standId == null || !mounted) return;
+    if (creation == null || !mounted) return;
 
     ref.invalidate(inventoryStartOptionsProvider);
     ref.invalidate(propertyStandsProvider(propertyId));
+    if (creation.formulaSelection == null) {
+      _formulaSelectionsByStandId.remove(creation.standId);
+    } else {
+      _formulaSelectionsByStandId[creation.standId] =
+          creation.formulaSelection!;
+    }
 
     final summary = await ref
         .read(standsRepositoryProvider)
-        .getSummary(standId);
+        .getSummary(creation.standId);
     if (summary == null || !mounted) return;
 
     await _startStand(summary);
@@ -370,12 +400,17 @@ class _InventoryStartPropertyGroup extends StatelessWidget {
     required this.savingStandId,
     required this.onCreateStand,
     required this.onStart,
+    required this.formulaSelectionForStand,
+    required this.onAdjustFormula,
   });
 
   final InventoryStartPropertyOption option;
   final String? savingStandId;
   final VoidCallback onCreateStand;
   final ValueChanged<StandSummary> onStart;
+  final InventoryFormulaSelection? Function(String standId)
+  formulaSelectionForStand;
+  final ValueChanged<StandSummary> onAdjustFormula;
 
   @override
   Widget build(BuildContext context) {
@@ -408,6 +443,8 @@ class _InventoryStartPropertyGroup extends StatelessWidget {
               saving: savingStandId == summary.stand.id,
               disabled:
                   savingStandId != null && savingStandId != summary.stand.id,
+              formulaSelection: formulaSelectionForStand(summary.stand.id),
+              onAdjustFormula: () => onAdjustFormula(summary),
               onStart: () => onStart(summary),
             ),
             const SizedBox(height: 8),
@@ -490,12 +527,16 @@ class _StartStandCard extends StatelessWidget {
     required this.summary,
     required this.saving,
     required this.disabled,
+    required this.formulaSelection,
+    required this.onAdjustFormula,
     required this.onStart,
   });
 
   final StandSummary summary;
   final bool saving;
   final bool disabled;
+  final InventoryFormulaSelection? formulaSelection;
+  final VoidCallback onAdjustFormula;
   final VoidCallback onStart;
 
   @override
@@ -542,6 +583,13 @@ class _StartStandCard extends StatelessWidget {
               ),
             ],
           ),
+          if (!active) ...[
+            const SizedBox(height: 12),
+            _FormulaAdjustmentButton(
+              selection: formulaSelection,
+              onPressed: disabled || saving ? null : onAdjustFormula,
+            ),
+          ],
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -590,6 +638,31 @@ class _StandMeta extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FormulaAdjustmentButton extends StatelessWidget {
+  const _FormulaAdjustmentButton({
+    required this.selection,
+    required this.onPressed,
+  });
+
+  final InventoryFormulaSelection? selection;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(selection == null ? Icons.functions : Icons.tune),
+      label: Text(
+        selection == null
+            ? 'Ajustar modelo matemático'
+            : 'Modelo ajustado: ${selection!.formulaName ?? 'personalizado'}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }
@@ -716,6 +789,7 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
   final _spacingController = TextEditingController();
   final _managementRegimeController = TextEditingController();
   final _notesController = TextEditingController();
+  InventoryFormulaSelection? _formulaSelection;
   String? _speciesId;
   bool _saving = false;
 
@@ -799,7 +873,10 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
                     ],
                     onChanged: _saving
                         ? null
-                        : (value) => setState(() => _speciesId = value),
+                        : (value) => setState(() {
+                            _speciesId = value;
+                            _formulaSelection = null;
+                          }),
                     validator: (value) =>
                         value == null ? 'Selecione uma espécie' : null,
                   );
@@ -809,6 +886,13 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
                 error: (error, stackTrace) => const DendroCard(
                   child: Text('Não foi possível carregar as espécies.'),
                 ),
+              ),
+              const SizedBox(height: 12),
+              _FormulaAdjustmentCard(
+                selection: _formulaSelection,
+                onPressed: _speciesId == null || _saving
+                    ? null
+                    : _adjustFormula,
               ),
               const SizedBox(height: 12),
               Row(
@@ -917,7 +1001,12 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
       ref.invalidate(inventoryStartOptionsProvider);
 
       if (!mounted) return;
-      Navigator.of(context).pop(standId);
+      Navigator.of(context).pop(
+        _QuickStandCreation(
+          standId: standId,
+          formulaSelection: _formulaSelection,
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -940,7 +1029,23 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
     final selectedStillExists = species.any((item) => item.id == _speciesId);
     if (_speciesId == null || !selectedStillExists) {
       _speciesId = species.first.id;
+      _formulaSelection = null;
     }
+  }
+
+  Future<void> _adjustFormula() async {
+    final speciesId = _speciesId;
+    if (speciesId == null) return;
+
+    final selection = await showInventoryFormulaSelectionSheet(
+      context: context,
+      speciesId: speciesId,
+      initialSelection: _formulaSelection,
+    );
+
+    if (selection == null || !mounted) return;
+
+    setState(() => _formulaSelection = selection);
   }
 
   String? _requiredValidator(String? value) {
@@ -966,6 +1071,63 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
       return 'Confira o ano';
     }
     return null;
+  }
+}
+
+class _QuickStandCreation {
+  const _QuickStandCreation({
+    required this.standId,
+    required this.formulaSelection,
+  });
+
+  final String standId;
+  final InventoryFormulaSelection? formulaSelection;
+}
+
+class _FormulaAdjustmentCard extends StatelessWidget {
+  const _FormulaAdjustmentCard({
+    required this.selection,
+    required this.onPressed,
+  });
+
+  final InventoryFormulaSelection? selection;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return DendroCard(
+      backgroundColor: const Color(0xFFEAF7EF),
+      borderColor: const Color(0xFFA4D1B4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Modelo matemático',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            selection == null
+                ? 'Será usado o modelo padrão da espécie selecionada.'
+                : selection!.formulaName ?? 'Modelo personalizado',
+            style: const TextStyle(
+              color: DendroColors.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onPressed,
+              icon: const Icon(Icons.functions),
+              label: const Text('Ajustar modelo matemático'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

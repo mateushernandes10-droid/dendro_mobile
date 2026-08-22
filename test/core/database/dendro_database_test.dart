@@ -1,4 +1,5 @@
 import 'package:dendro_mobile/core/database/dendro_database.dart';
+import 'package:dendro_mobile/features/inventory_runs/data/inventory_formula_selection.dart';
 import 'package:dendro_mobile/features/inventory_runs/data/inventory_runs_repository.dart';
 import 'package:dendro_mobile/features/plots/data/plots_repository.dart';
 import 'package:dendro_mobile/features/properties/data/properties_repository.dart';
@@ -6,6 +7,7 @@ import 'package:dendro_mobile/features/results/data/results_repository.dart';
 import 'package:dendro_mobile/features/settings/data/settings_repository.dart';
 import 'package:dendro_mobile/features/stands/data/stands_repository.dart';
 import 'package:dendro_mobile/features/tree_collection/data/trees_repository.dart';
+import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -311,6 +313,77 @@ void main() {
       hasLength(1),
     );
   });
+
+  test(
+    'levantamento salva modelo e coeficientes especificos do talhao',
+    () async {
+      final propertiesRepository = PropertiesRepository(database);
+      final standsRepository = StandsRepository(database);
+      final plotsRepository = PlotsRepository(database);
+      final inventoryRunsRepository = InventoryRunsRepository(database);
+
+      final propertyId = await propertiesRepository.create(
+        name: 'Fazenda Modelo',
+        municipality: 'Vacaria',
+        totalAreaHa: 70,
+      );
+      final species = await standsRepository.watchActiveSpecies().first;
+      final pinus = species.firstWhere((item) => item.name == 'Pinus');
+      final standId = await standsRepository.create(
+        propertyId: propertyId,
+        identification: 'M-01',
+        speciesId: pinus.id,
+        areaHa: 15,
+      );
+      final schumacher = (await database.select(database.formulas).get())
+          .singleWhere((formula) => formula.id == 'formula_schumacher_hall');
+
+      final talhao = await plotsRepository.startNewInventoryForStand(
+        standId,
+        formulaSelection: const InventoryFormulaSelection(
+          formulaId: 'formula_schumacher_hall',
+          formulaName: 'Schumacher-Hall',
+          coefficientValuesBySymbol: {'a': -9.87, 'b': 1.95, 'c': 0.87},
+        ),
+      );
+
+      expect(talhao.formulaId, schumacher.id);
+
+      final coefficients = await database
+          .customSelect(
+            '''
+SELECT symbol, value
+FROM talhao_formula_coefficients
+WHERE talhao_levantamento_id = ?
+ORDER BY symbol
+''',
+            variables: [drift.Variable<String>(talhao.id)],
+          )
+          .get();
+
+      expect(coefficients, hasLength(3));
+      expect(coefficients[0].read<String>('symbol'), 'a');
+      expect(coefficients[0].read<double>('value'), closeTo(-9.87, 0.00001));
+      expect(coefficients[1].read<String>('symbol'), 'b');
+      expect(coefficients[1].read<double>('value'), closeTo(1.95, 0.00001));
+      expect(coefficients[2].read<String>('symbol'), 'c');
+      expect(coefficients[2].read<double>('value'), closeTo(0.87, 0.00001));
+
+      final summary = await inventoryRunsRepository
+          .watchById(talhao.inventoryRunId)
+          .first;
+
+      expect(summary, isNotNull);
+      expect(summary!.stands.single.formula.name, 'Schumacher-Hall');
+      expect(summary.stands.single.formulaCoefficients, hasLength(3));
+      expect(
+        summary.stands.single.formulaCoefficients
+            .singleWhere((coefficient) => coefficient.symbol == 'a')
+            .value,
+        closeTo(-9.87, 0.00001),
+      );
+    },
+  );
 
   test('repositorio coleta arvore e encerra parcela', () async {
     final propertiesRepository = PropertiesRepository(database);

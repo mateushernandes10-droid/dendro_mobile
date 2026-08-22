@@ -119,16 +119,58 @@ class DendroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final resolvedBackground = backgroundColor ?? theme.cardColor;
+    final lightBackground =
+        ThemeData.estimateBrightnessForColor(resolvedBackground) ==
+        Brightness.light;
+    final foregroundColor = lightBackground ? DendroColors.text : Colors.white;
 
     return Container(
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: backgroundColor ?? theme.cardColor,
+        color: resolvedBackground,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderColor ?? DendroColors.outline),
       ),
-      child: child,
+      child: Theme(
+        data: lightBackground
+            ? theme.copyWith(
+                textTheme: theme.textTheme.apply(
+                  bodyColor: DendroColors.text,
+                  displayColor: DendroColors.text,
+                ),
+                primaryTextTheme: theme.primaryTextTheme.apply(
+                  bodyColor: DendroColors.text,
+                  displayColor: DendroColors.text,
+                ),
+                inputDecorationTheme: DendroTheme.light.inputDecorationTheme,
+                listTileTheme: theme.listTileTheme.copyWith(
+                  textColor: DendroColors.text,
+                  iconColor: DendroColors.textMuted,
+                  titleTextStyle: const TextStyle(
+                    color: DendroColors.text,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  subtitleTextStyle: const TextStyle(
+                    color: DendroColors.textMuted,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              )
+            : theme,
+        child: DefaultTextStyle.merge(
+          style: TextStyle(color: foregroundColor),
+          child: IconTheme.merge(
+            data: IconThemeData(
+              color: lightBackground ? DendroColors.textMuted : Colors.white,
+            ),
+            child: child,
+          ),
+        ),
+      ),
     );
   }
 }

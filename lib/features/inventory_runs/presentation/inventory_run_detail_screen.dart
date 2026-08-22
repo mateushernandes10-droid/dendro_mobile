@@ -7,7 +7,9 @@ import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
 import '../../plots/presentation/stand_plots_screen.dart';
 import '../../stands/data/stands_repository.dart';
+import '../data/inventory_formula_selection.dart';
 import '../data/inventory_runs_repository.dart';
+import 'widgets/inventory_formula_selection_sheet.dart';
 
 class InventoryRunDetailScreen extends ConsumerWidget {
   const InventoryRunDetailScreen({required this.runId, super.key});
@@ -473,6 +475,17 @@ class _InventoryStandCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+                      const SizedBox(height: 2),
+                      Text(
+                        summary.formula.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: DendroColors.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -570,6 +583,7 @@ class _InventoryStandFormSheetState
   late final TextEditingController _spacingController;
   late final TextEditingController _managementRegimeController;
   late final TextEditingController _notesController;
+  InventoryFormulaSelection? _formulaSelection;
   String? _speciesId;
   bool _saving = false;
 
@@ -593,6 +607,14 @@ class _InventoryStandFormSheetState
     );
     _notesController = TextEditingController(text: stand.notes ?? '');
     _speciesId = widget.summary.talhaoLevantamento.speciesId;
+    _formulaSelection = InventoryFormulaSelection(
+      formulaId: widget.summary.talhaoLevantamento.formulaId,
+      formulaName: widget.summary.formula.name,
+      coefficientValuesBySymbol: {
+        for (final coefficient in widget.summary.formulaCoefficients)
+          coefficient.symbol: coefficient.value,
+      },
+    );
   }
 
   @override
@@ -675,7 +697,10 @@ class _InventoryStandFormSheetState
                     ],
                     onChanged: _saving
                         ? null
-                        : (value) => setState(() => _speciesId = value),
+                        : (value) => setState(() {
+                            _speciesId = value;
+                            _formulaSelection = null;
+                          }),
                     validator: (value) =>
                         value == null ? 'Selecione uma espécie' : null,
                   );
@@ -685,6 +710,13 @@ class _InventoryStandFormSheetState
                 error: (error, stackTrace) => const DendroCard(
                   child: Text('Não foi possível carregar as espécies.'),
                 ),
+              ),
+              const SizedBox(height: 12),
+              _InventoryFormulaAdjustmentCard(
+                selection: _formulaSelection,
+                onPressed: _speciesId == null || _saving
+                    ? null
+                    : _adjustFormula,
               ),
               const SizedBox(height: 12),
               Row(
@@ -787,6 +819,7 @@ class _InventoryStandFormSheetState
             spacing: _spacingController.text,
             managementRegime: _managementRegimeController.text,
             notes: _notesController.text,
+            formulaSelection: _formulaSelection,
           );
 
       ref.invalidate(inventoryRunDetailProvider(widget.runId));
@@ -814,6 +847,18 @@ class _InventoryStandFormSheetState
     }
   }
 
+  Future<void> _adjustFormula() async {
+    final selection = await showInventoryFormulaSelectionSheet(
+      context: context,
+      speciesId: _speciesId!,
+      initialSelection: _formulaSelection,
+    );
+
+    if (selection == null || !mounted) return;
+
+    setState(() => _formulaSelection = selection);
+  }
+
   void _syncSpeciesSelection(List<SpeciesRecord> species) {
     if (species.isEmpty) {
       _speciesId = null;
@@ -823,6 +868,7 @@ class _InventoryStandFormSheetState
     final selectedStillExists = species.any((item) => item.id == _speciesId);
     if (_speciesId == null || !selectedStillExists) {
       _speciesId = species.first.id;
+      _formulaSelection = null;
     }
   }
 
@@ -881,6 +927,53 @@ class _InlineInfo extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _InventoryFormulaAdjustmentCard extends StatelessWidget {
+  const _InventoryFormulaAdjustmentCard({
+    required this.selection,
+    required this.onPressed,
+  });
+
+  final InventoryFormulaSelection? selection;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return DendroCard(
+      backgroundColor: const Color(0xFFEAF7EF),
+      borderColor: const Color(0xFFA4D1B4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Modelo matemático',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            selection == null
+                ? 'Será usado o modelo padrão da espécie selecionada.'
+                : selection!.formulaName ?? 'Modelo personalizado',
+            style: const TextStyle(
+              color: DendroColors.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onPressed,
+              icon: const Icon(Icons.functions),
+              label: const Text('Ajustar modelo matemático'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

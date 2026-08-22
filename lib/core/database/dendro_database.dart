@@ -262,7 +262,6 @@ class Trees extends Table {
     Stands,
     InventoryRuns,
     TalhaoLevantamentos,
-    TalhaoFormulaCoefficients,
     Plots,
     PlotGeoPoints,
     Trees,
@@ -279,14 +278,28 @@ class DendroDatabase extends _$DendroDatabase {
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
+      await _createTalhaoFormulaCoefficientsTable();
       await seedInitialCatalogs();
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
-        await m.createTable(talhaoFormulaCoefficients);
+        await _createTalhaoFormulaCoefficientsTable();
       }
     },
   );
+
+  Future<void> _createTalhaoFormulaCoefficientsTable() {
+    return customStatement('''
+CREATE TABLE IF NOT EXISTS talhao_formula_coefficients (
+  id TEXT NOT NULL PRIMARY KEY,
+  talhao_levantamento_id TEXT NOT NULL REFERENCES talhao_levantamentos(id) ON DELETE CASCADE,
+  symbol TEXT NOT NULL,
+  label TEXT NOT NULL,
+  value REAL NULL,
+  UNIQUE(talhao_levantamento_id, symbol)
+)
+''');
+  }
 
   Future<void> seedInitialCatalogs() async {
     final now = DateTime.now();

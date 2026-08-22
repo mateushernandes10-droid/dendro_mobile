@@ -3,12 +3,14 @@ import 'package:dendro_mobile/app/theme/dendro_theme.dart';
 import 'package:dendro_mobile/core/database/dendro_database.dart';
 import 'package:dendro_mobile/core/providers/database_providers.dart';
 import 'package:dendro_mobile/features/home/presentation/home_screen.dart';
+import 'package:dendro_mobile/features/inventory_runs/presentation/new_inventory_screen.dart';
 import 'package:dendro_mobile/features/plots/data/plots_repository.dart';
 import 'package:dendro_mobile/features/properties/data/properties_repository.dart';
 import 'package:dendro_mobile/features/settings/presentation/settings_screen.dart';
 import 'package:dendro_mobile/features/shell/presentation/dendro_shell.dart';
 import 'package:dendro_mobile/features/stands/data/stands_repository.dart';
 import 'package:dendro_mobile/features/tree_collection/data/trees_repository.dart';
+import 'package:dendro_mobile/shared/widgets/dendro_widgets.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,6 +46,21 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));
+  });
+
+  testWidgets('card claro preserva texto legivel no modo escuro', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: DendroTheme.dark,
+        home: const Scaffold(body: DendroCard(child: Text('Titulo do card'))),
+      ),
+    );
+
+    final textContext = tester.element(find.text('Titulo do card'));
+
+    expect(DefaultTextStyle.of(textContext).style.color, DendroColors.text);
   });
 
   testWidgets('home mostra coleta ativa sem estourar o card', (tester) async {
@@ -272,6 +289,47 @@ void main() {
 
     expect(find.text('Levantamento'), findsOneWidget);
     expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
+
+  testWidgets('novo talhao no levantamento permite ajustar modelo', (
+    tester,
+  ) async {
+    final database = DendroDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.runAsync(() async {
+      final propertiesRepository = PropertiesRepository(database);
+
+      await propertiesRepository.create(
+        name: 'Fazenda Modelo',
+        municipality: 'Vacaria',
+        totalAreaHa: 30,
+      );
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dendroDatabaseProvider.overrideWithValue(database)],
+        child: MaterialApp(
+          theme: DendroTheme.light,
+          home: const NewInventoryScreen(),
+        ),
+      ),
+    );
+    for (var attempt = 0; attempt < 20; attempt++) {
+      if (find.text('Fazenda Modelo').evaluate().isNotEmpty) break;
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Novo talhão'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cadastrar talhão'), findsOneWidget);
+    expect(find.text('Modelo matemático'), findsOneWidget);
+    expect(find.text('Ajustar modelo matemático'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));

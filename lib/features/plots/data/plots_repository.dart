@@ -569,7 +569,8 @@ class PlotsRepository {
   }) async {
     final id = _uuid.v4();
     final now = DateTime.now();
-    final formulaId = formulaSelection?.formulaId ?? await _defaultFormulaId(species.id);
+    final formulaId =
+        formulaSelection?.formulaId ?? await _defaultFormulaId(species.id);
 
     await _database
         .into(_database.talhaoLevantamentos)
@@ -604,14 +605,14 @@ class PlotsRepository {
       talhaoLevantamentoId,
     );
 
-    await (_database.update(_database.talhaoLevantamentos)
-          ..where((table) => table.id.equals(talhaoLevantamentoId)))
-        .write(
-          TalhaoLevantamentosCompanion(
-            formulaId: Value(formulaSelection.formulaId),
-            updatedAt: Value(now),
-          ),
-        );
+    await (_database.update(
+      _database.talhaoLevantamentos,
+    )..where((table) => table.id.equals(talhaoLevantamentoId))).write(
+      TalhaoLevantamentosCompanion(
+        formulaId: Value(formulaSelection.formulaId),
+        updatedAt: Value(now),
+      ),
+    );
 
     await _replaceTalhaoFormulaCoefficients(
       talhaoLevantamentoId: talhaoLevantamentoId,
@@ -626,13 +627,10 @@ class PlotsRepository {
     required String formulaId,
     required Map<String, double?> coefficientValuesBySymbol,
   }) async {
-    await (_database.delete(_database.talhaoFormulaCoefficients)
-          ..where(
-            (table) => table.talhaoLevantamentoId.equals(
-              talhaoLevantamentoId,
-            ),
-          ))
-        .go();
+    await _database.customStatement(
+      'DELETE FROM talhao_formula_coefficients WHERE talhao_levantamento_id = ?',
+      [talhaoLevantamentoId],
+    );
 
     final coefficients =
         await (_database.select(_database.formulaCoefficients)
@@ -641,19 +639,22 @@ class PlotsRepository {
             .get();
 
     for (final coefficient in coefficients) {
-      await _database.into(_database.talhaoFormulaCoefficients).insert(
-            TalhaoFormulaCoefficientsCompanion.insert(
-              id: _uuid.v4(),
-              talhaoLevantamentoId: talhaoLevantamentoId,
-              symbol: coefficient.symbol,
-              label: coefficient.label,
-              value: Value(
-                coefficientValuesBySymbol.containsKey(coefficient.symbol)
-                    ? coefficientValuesBySymbol[coefficient.symbol]
-                    : coefficient.value,
-              ),
-            ),
-          );
+      await _database.customStatement(
+        '''
+INSERT INTO talhao_formula_coefficients
+  (id, talhao_levantamento_id, symbol, label, value)
+VALUES (?, ?, ?, ?, ?)
+''',
+        [
+          _uuid.v4(),
+          talhaoLevantamentoId,
+          coefficient.symbol,
+          coefficient.label,
+          coefficientValuesBySymbol.containsKey(coefficient.symbol)
+              ? coefficientValuesBySymbol[coefficient.symbol]
+              : coefficient.value,
+        ],
+      );
     }
   }
 

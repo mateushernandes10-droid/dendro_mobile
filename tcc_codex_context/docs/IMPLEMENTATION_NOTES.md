@@ -16,6 +16,8 @@ Notas objetivas das decisoes feitas durante a implementacao.
 - O mesmo fluxo deve poder ser aberto pela tela Inicio e pela aba Levantamentos.
 - Talhoes com levantamento em andamento devem aparecer como `Em coleta`.
 - Para talhoes em coleta, a acao deve ser `Continuar coleta`, evitando criar outro levantamento para o mesmo talhao.
+- Ao iniciar um levantamento para um talhao, o usuario pode ajustar o modelo matematico e os coeficientes para aquela coleta especifica.
+- O modelo e os coeficientes escolhidos devem ficar salvos no vinculo `talhaolevantamento`, sem alterar o cadastro global do modelo matematico.
 - Ao iniciar a coleta de outro talhao da mesma propriedade, o app deve anexar esse talhao ao levantamento em andamento da propriedade, em vez de criar um levantamento separado.
 - A aba Levantamentos deve mostrar primeiro a propriedade/levantamento e, dentro do card, os talhoes vinculados a esse levantamento.
 - Dados antigos que tenham ficado com mais de um levantamento em andamento para a mesma propriedade devem ser normalizados na leitura, reunindo os talhoes no levantamento ativo mais recente.
@@ -24,6 +26,7 @@ Notas objetivas das decisoes feitas durante a implementacao.
 - Na tela Inicio, tocar em `Continuar Coleta` deve abrir diretamente as parcelas do talhao em foco, sem passar pela tela geral do levantamento.
 - A tela de detalhe do levantamento deve permitir excluir o levantamento como desistencia. Antes de excluir, deve exibir confirmacao clara informando que talhoes vinculados, parcelas, arvores e coordenadas daquele levantamento serao apagados permanentemente.
 - Na lista de talhoes dentro do levantamento, cada talhao deve ter menu de tres pontos com `Editar` e `Excluir`. `Excluir` remove o talhao apenas daquele levantamento, apagando parcelas/arvores/coordenadas desse vinculo e preservando o cadastro permanente do talhao na propriedade.
+- Na opcao `Editar` do talhao dentro do levantamento, o usuario tambem pode trocar o modelo matematico e os coeficientes usados naquele talhao do levantamento.
 
 ## Coordenadas da parcela
 
