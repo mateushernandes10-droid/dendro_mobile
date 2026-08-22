@@ -1,4 +1,4 @@
-package com.example.dendromobile
+package br.com.dendromobile.app
 
 import io.flutter.embedding.android.FlutterActivity
 
