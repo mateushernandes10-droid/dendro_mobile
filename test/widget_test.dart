@@ -535,10 +535,13 @@ void main() {
     expect(find.text('Cadastro de espécies'), findsOneWidget);
     expect(find.text('Espécies cadastradas'), findsOneWidget);
     expect(find.text('Pinus'), findsOneWidget);
+    expect(find.byTooltip('Voltar'), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
 
-    Navigator.of(tester.element(find.text('Cadastro de espécies'))).pop();
+    await tester.tap(find.byTooltip('Voltar'));
     await tester.pumpAndSettle();
+
+    expect(find.text('Ajustes'), findsOneWidget);
 
     await tester.tap(find.text('Modelos matemáticos'));
     await tester.pumpAndSettle();
@@ -546,6 +549,7 @@ void main() {
     expect(find.text('Fórmulas cadastradas'), findsOneWidget);
     expect(find.text('Modelo de Spurr'), findsOneWidget);
     expect(find.text('Schumacher-Hall'), findsOneWidget);
+    expect(find.byTooltip('Voltar'), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());

@@ -9,6 +9,8 @@ class DendroScreen extends StatelessWidget {
     required this.icon,
     required this.children,
     this.floatingActionButton,
+    this.showBackButton,
+    this.onBack,
     super.key,
   });
 
@@ -16,9 +18,14 @@ class DendroScreen extends StatelessWidget {
   final IconData icon;
   final List<Widget> children;
   final Widget? floatingActionButton;
+  final bool? showBackButton;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
+    final shouldShowBackButton =
+        showBackButton ?? Navigator.of(context).canPop();
+
     return SafeArea(
       child: Stack(
         children: [
@@ -30,7 +37,12 @@ class DendroScreen extends StatelessWidget {
               floatingActionButton == null ? 24 : 96,
             ),
             children: [
-              DendroHeader(title: title, icon: icon),
+              DendroHeader(
+                title: title,
+                icon: icon,
+                showBackButton: shouldShowBackButton,
+                onBack: onBack,
+              ),
               const SizedBox(height: 20),
               ...children,
             ],
@@ -44,10 +56,18 @@ class DendroScreen extends StatelessWidget {
 }
 
 class DendroHeader extends StatelessWidget {
-  const DendroHeader({required this.title, required this.icon, super.key});
+  const DendroHeader({
+    required this.title,
+    required this.icon,
+    this.showBackButton = false,
+    this.onBack,
+    super.key,
+  });
 
   final String title;
   final IconData icon;
+  final bool showBackButton;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -55,15 +75,34 @@ class DendroHeader extends StatelessWidget {
 
     return Row(
       children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: DendroColors.primarySoft,
-            borderRadius: BorderRadius.circular(8),
+        if (showBackButton)
+          SizedBox(
+            width: 38,
+            height: 38,
+            child: IconButton(
+              onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.arrow_back),
+              tooltip: 'Voltar',
+              style: IconButton.styleFrom(
+                backgroundColor: DendroColors.primarySoft,
+                foregroundColor: DendroColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: EdgeInsets.zero,
+              ),
+            ),
+          )
+        else
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: DendroColors.primarySoft,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: DendroColors.primary, size: 22),
           ),
-          child: Icon(icon, color: DendroColors.primary, size: 22),
-        ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
