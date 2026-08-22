@@ -3,6 +3,7 @@ import 'package:dendro_mobile/features/inventory_runs/data/inventory_runs_reposi
 import 'package:dendro_mobile/features/plots/data/plots_repository.dart';
 import 'package:dendro_mobile/features/properties/data/properties_repository.dart';
 import 'package:dendro_mobile/features/results/data/results_repository.dart';
+import 'package:dendro_mobile/features/settings/data/settings_repository.dart';
 import 'package:dendro_mobile/features/stands/data/stands_repository.dart';
 import 'package:dendro_mobile/features/tree_collection/data/trees_repository.dart';
 import 'package:drift/native.dart';
@@ -37,6 +38,81 @@ void main() {
     );
     expect(variables, hasLength(4));
     expect(coefficients, hasLength(5));
+  });
+
+  test('repositorio de ajustes mantem especies formulas e vinculos', () async {
+    final repository = SettingsRepository(database);
+
+    final speciesId = await repository.createSpecies(
+      name: 'Acacia',
+      scientificName: 'Acacia mearnsii',
+      description: 'Cadastro para testes',
+    );
+    final formulaId = await repository.createFormula(
+      name: 'Modelo Regional',
+      description: 'Modelo local',
+      expression: 'a + b * D + c * H',
+      variables: const [
+        FormulaVariableDraft(
+          symbol: 'D',
+          label: 'DAP',
+          unit: 'cm',
+          valueSource: 'Medição da árvore',
+          variableKey: FormulaVariableKey.dap,
+        ),
+        FormulaVariableDraft(
+          symbol: 'H',
+          label: 'Altura',
+          unit: 'm',
+          valueSource: 'Medição da árvore',
+          variableKey: FormulaVariableKey.height,
+        ),
+      ],
+      coefficientSymbols: const ['a', 'b', 'c'],
+    );
+
+    await repository.setSpeciesFormulaLinked(
+      speciesId: speciesId,
+      formulaId: formulaId,
+      linked: true,
+    );
+
+    final links = await database.select(database.speciesFormulas).get();
+    final customLink = links.singleWhere(
+      (link) => link.speciesId == speciesId && link.formulaId == formulaId,
+    );
+    expect(customLink.isDefault, isTrue);
+
+    final coefficients =
+        (await database.select(database.formulaCoefficients).get())
+            .where((item) => item.formulaId == formulaId)
+            .toList();
+    await repository.updateCoefficientValues(
+      formulaId: formulaId,
+      valuesByCoefficientId: {
+        for (final coefficient in coefficients)
+          coefficient.id: switch (coefficient.symbol) {
+            'a' => -0.8732,
+            'b' => 1.9542,
+            _ => 0.8711,
+          },
+      },
+    );
+
+    final formulas = await repository.watchFormulas().first;
+    final customFormula = formulas.singleWhere(
+      (summary) => summary.formula.id == formulaId,
+    );
+
+    expect(customFormula.formula.name, 'Modelo Regional');
+    expect(customFormula.variables.map((item) => item.symbol), ['D', 'H']);
+    expect(customFormula.coefficients, hasLength(3));
+    expect(
+      customFormula.coefficients
+          .singleWhere((item) => item.symbol == 'a')
+          .value,
+      closeTo(-0.8732, 0.00001),
+    );
   });
 
   test('repositorio cadastra e busca propriedade', () async {
@@ -211,16 +287,22 @@ void main() {
     final activeRuns = await inventoryRunsRepository.watchActive().first;
 
     expect(secondStandState.plots, isEmpty);
-    expect(activeRuns, hasLength(2));
+    expect(activeRuns, hasLength(1));
+    expect(activeRuns.single.property.id, propertyId);
+    expect(activeRuns.single.stands, hasLength(2));
+    expect(
+      activeRuns.single.stands.map((summary) => summary.stand.identification),
+      containsAll(['T-01', 'T-02']),
+    );
 
     final allRuns = await inventoryRunsRepository.watchAll().first;
 
-    expect(allRuns, hasLength(3));
+    expect(allRuns, hasLength(2));
     expect(
       allRuns.where(
         (summary) => summary.run.status == InventoryRunStatus.inProgress,
       ),
-      hasLength(2),
+      hasLength(1),
     );
     expect(
       allRuns.where(
@@ -335,6 +417,262 @@ void main() {
       ),
       hasLength(1),
     );
+  });
+
+  test(
+    'repositorio agrupa levantamentos ativos antigos da mesma propriedade',
+    () async {
+      final propertiesRepository = PropertiesRepository(database);
+      final standsRepository = StandsRepository(database);
+      final inventoryRunsRepository = InventoryRunsRepository(database);
+
+      final propertyId = await propertiesRepository.create(
+        name: 'Fazenda Agrupada',
+        municipality: 'Vacaria',
+        totalAreaHa: 80,
+      );
+      final species = await standsRepository.watchActiveSpecies().first;
+      final pinus = species.firstWhere((item) => item.name == 'Pinus');
+      final formula = (await database.select(database.formulas).get()).first;
+
+      final firstStandId = await standsRepository.create(
+        propertyId: propertyId,
+        identification: 'A-01',
+        speciesId: pinus.id,
+        areaHa: 12,
+      );
+      final secondStandId = await standsRepository.create(
+        propertyId: propertyId,
+        identification: 'A-02',
+        speciesId: pinus.id,
+        areaHa: 8,
+      );
+
+      final startedAt = DateTime(2026, 8, 22, 8);
+      await database
+          .into(database.inventoryRuns)
+          .insert(
+            InventoryRunsCompanion.insert(
+              id: 'legacy-run-1',
+              propertyId: propertyId,
+              status: InventoryRunStatus.inProgress,
+              startedAt: startedAt,
+              updatedAt: startedAt,
+            ),
+          );
+      await database
+          .into(database.inventoryRuns)
+          .insert(
+            InventoryRunsCompanion.insert(
+              id: 'legacy-run-2',
+              propertyId: propertyId,
+              status: InventoryRunStatus.inProgress,
+              startedAt: startedAt.add(const Duration(minutes: 5)),
+              updatedAt: startedAt.add(const Duration(minutes: 5)),
+            ),
+          );
+
+      await database
+          .into(database.talhaoLevantamentos)
+          .insert(
+            TalhaoLevantamentosCompanion.insert(
+              id: 'legacy-talhao-1',
+              inventoryRunId: 'legacy-run-1',
+              standId: firstStandId,
+              speciesId: pinus.id,
+              formulaId: formula.id,
+              createdAt: startedAt,
+              updatedAt: startedAt,
+            ),
+          );
+      await database
+          .into(database.talhaoLevantamentos)
+          .insert(
+            TalhaoLevantamentosCompanion.insert(
+              id: 'legacy-talhao-2',
+              inventoryRunId: 'legacy-run-2',
+              standId: secondStandId,
+              speciesId: pinus.id,
+              formulaId: formula.id,
+              createdAt: startedAt.add(const Duration(minutes: 5)),
+              updatedAt: startedAt.add(const Duration(minutes: 5)),
+            ),
+          );
+
+      final activeRuns = await inventoryRunsRepository.watchActive().first;
+
+      expect(activeRuns, hasLength(1));
+      expect(activeRuns.single.property.name, 'Fazenda Agrupada');
+      expect(activeRuns.single.stands, hasLength(2));
+      expect(
+        activeRuns.single.stands.map((summary) => summary.stand.identification),
+        containsAll(['A-01', 'A-02']),
+      );
+
+      final storedRuns = await database.select(database.inventoryRuns).get();
+      expect(storedRuns, hasLength(1));
+      expect(storedRuns.single.id, 'legacy-run-2');
+    },
+  );
+
+  test('repositorio exclui levantamento e dados vinculados', () async {
+    final propertiesRepository = PropertiesRepository(database);
+    final standsRepository = StandsRepository(database);
+    final plotsRepository = PlotsRepository(database);
+    final treesRepository = TreesRepository(database);
+    final inventoryRunsRepository = InventoryRunsRepository(database);
+
+    final propertyId = await propertiesRepository.create(
+      name: 'Fazenda Desistencia',
+      municipality: 'Vacaria',
+      totalAreaHa: 30,
+    );
+    final species = await standsRepository.watchActiveSpecies().first;
+    final pinus = species.firstWhere((item) => item.name == 'Pinus');
+
+    final standId = await standsRepository.create(
+      propertyId: propertyId,
+      identification: 'D-01',
+      speciesId: pinus.id,
+      areaHa: 10,
+    );
+
+    final talhaoLevantamento = await plotsRepository.startNewInventoryForStand(
+      standId,
+    );
+    final plotId = await plotsRepository.createPlotForTalhaoLevantamento(
+      talhaoLevantamentoId: talhaoLevantamento.id,
+      areaHa: 0.04,
+    );
+    await treesRepository.createTree(
+      plotId: plotId,
+      draft: TreeDraft(
+        dapCm: 24,
+        heightM: 15,
+        hasTortuousStem: false,
+        latitude: -28.5,
+        longitude: -50.9,
+        accuracyMeters: 3,
+        locationCapturedAt: DateTime(2026, 8, 22, 10),
+        plotReferencePosition: PlotReferencePosition.p1,
+      ),
+    );
+
+    expect(await database.select(database.inventoryRuns).get(), hasLength(1));
+    expect(
+      await database.select(database.talhaoLevantamentos).get(),
+      hasLength(1),
+    );
+    expect(await database.select(database.plots).get(), hasLength(1));
+    expect(await database.select(database.trees).get(), hasLength(1));
+    expect(await database.select(database.plotGeoPoints).get(), hasLength(1));
+
+    await inventoryRunsRepository.deleteRun(talhaoLevantamento.inventoryRunId);
+
+    expect(await database.select(database.inventoryRuns).get(), isEmpty);
+    expect(await database.select(database.talhaoLevantamentos).get(), isEmpty);
+    expect(await database.select(database.plots).get(), isEmpty);
+    expect(await database.select(database.trees).get(), isEmpty);
+    expect(await database.select(database.plotGeoPoints).get(), isEmpty);
+    expect(await database.select(database.properties).get(), hasLength(1));
+    expect(await database.select(database.stands).get(), hasLength(1));
+    expect(await inventoryRunsRepository.watchAll().first, isEmpty);
+  });
+
+  test('repositorio edita e remove talhao de um levantamento', () async {
+    final propertiesRepository = PropertiesRepository(database);
+    final standsRepository = StandsRepository(database);
+    final plotsRepository = PlotsRepository(database);
+    final treesRepository = TreesRepository(database);
+    final inventoryRunsRepository = InventoryRunsRepository(database);
+
+    final propertyId = await propertiesRepository.create(
+      name: 'Fazenda Ajuste',
+      municipality: 'Vacaria',
+      totalAreaHa: 50,
+    );
+    final species = await standsRepository.watchActiveSpecies().first;
+    final pinus = species.firstWhere((item) => item.name == 'Pinus');
+    final eucalyptus = species.firstWhere((item) => item.name == 'Eucalyptus');
+
+    final firstStandId = await standsRepository.create(
+      propertyId: propertyId,
+      identification: 'R-01',
+      speciesId: pinus.id,
+      areaHa: 10,
+    );
+    final secondStandId = await standsRepository.create(
+      propertyId: propertyId,
+      identification: 'R-02',
+      speciesId: pinus.id,
+      areaHa: 12,
+    );
+
+    final firstTalhao = await plotsRepository.startNewInventoryForStand(
+      firstStandId,
+    );
+    final firstPlotId = await plotsRepository.createPlotForTalhaoLevantamento(
+      talhaoLevantamentoId: firstTalhao.id,
+      areaHa: 0.04,
+    );
+    await treesRepository.createTree(
+      plotId: firstPlotId,
+      draft: TreeDraft(
+        dapCm: 21,
+        heightM: 13,
+        hasTortuousStem: false,
+        latitude: -28.5,
+        longitude: -50.9,
+        locationCapturedAt: DateTime(2026, 8, 22, 11),
+        plotReferencePosition: PlotReferencePosition.p1,
+      ),
+    );
+
+    final secondTalhao = await plotsRepository.startNewInventoryForStand(
+      secondStandId,
+    );
+    expect(firstTalhao.inventoryRunId, secondTalhao.inventoryRunId);
+
+    await inventoryRunsRepository.updateStandInRun(
+      talhaoLevantamentoId: secondTalhao.id,
+      identification: 'R-02 ajustado',
+      speciesId: eucalyptus.id,
+      areaHa: 14,
+      plantingYear: 2020,
+      spacing: '3 x 2',
+      managementRegime: 'Desbaste',
+      notes: 'Ajustado no levantamento',
+    );
+
+    var summary = await inventoryRunsRepository
+        .watchById(firstTalhao.inventoryRunId)
+        .first;
+    expect(summary, isNotNull);
+    var adjustedStand = summary!.stands.firstWhere(
+      (item) => item.talhaoLevantamento.id == secondTalhao.id,
+    );
+    expect(adjustedStand.stand.identification, 'R-02 ajustado');
+    expect(adjustedStand.stand.areaHa, 14);
+    expect(adjustedStand.stand.plantingYear, 2020);
+    expect(adjustedStand.species.name, 'Eucalyptus');
+
+    await inventoryRunsRepository.removeStandFromRun(firstTalhao.id);
+
+    summary = await inventoryRunsRepository
+        .watchById(firstTalhao.inventoryRunId)
+        .first;
+    expect(summary, isNotNull);
+    expect(summary!.stands, hasLength(1));
+    expect(summary.stands.single.talhaoLevantamento.id, secondTalhao.id);
+    expect(await database.select(database.inventoryRuns).get(), hasLength(1));
+    expect(
+      await database.select(database.talhaoLevantamentos).get(),
+      hasLength(1),
+    );
+    expect(await database.select(database.plots).get(), isEmpty);
+    expect(await database.select(database.trees).get(), isEmpty);
+    expect(await database.select(database.plotGeoPoints).get(), isEmpty);
+    expect(await database.select(database.stands).get(), hasLength(2));
   });
 
   test('repositorio de resultados calcula dashboard com filtros', () async {

@@ -122,26 +122,24 @@ class _RunCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            summary.property.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        StatusPill(label: _statusLabel(status)),
-                      ],
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: StatusPill(label: _statusLabel(status)),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      summary.property.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        height: 1.12,
+                      ),
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      '${_formatDate(summary.run.startedAt)} - ${summary.standLabel}',
+                      'Início ${_formatDate(summary.run.startedAt)} • ${_standCountLabel(summary.stands.length)}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -150,6 +148,8 @@ class _RunCard extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    _RunStandsList(stands: summary.stands),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 12,
@@ -179,6 +179,91 @@ class _RunCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RunStandsList extends StatelessWidget {
+  const _RunStandsList({required this.stands});
+
+  final List<InventoryStandSummary> stands;
+
+  @override
+  Widget build(BuildContext context) {
+    if (stands.isEmpty) {
+      return const Text(
+        'Sem talhão vinculado',
+        style: TextStyle(
+          color: DendroColors.textMuted,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < stands.length; index++) ...[
+          if (index > 0)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 7),
+              child: Divider(height: 1),
+            ),
+          _RunStandRow(summary: stands[index]),
+        ],
+      ],
+    );
+  }
+}
+
+class _RunStandRow extends StatelessWidget {
+  const _RunStandRow({required this.summary});
+
+  final InventoryStandSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 2),
+          child: Icon(
+            Icons.forest_outlined,
+            size: 17,
+            color: DendroColors.primary,
+          ),
+        ),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                summary.stand.identification,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: DendroColors.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${summary.species.name} • ${summary.treeCount} árvores • ${summary.collectedPlotCount}/${summary.plotCount} parcelas • ${_formatArea(summary.measuredAreaHa)} ha',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: DendroColors.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -301,6 +386,12 @@ String _formatDate(DateTime value) {
   final month = value.month.toString().padLeft(2, '0');
   final year = value.year.toString();
   return '$day/$month/$year';
+}
+
+String _standCountLabel(int count) {
+  if (count == 0) return 'sem talhão';
+  if (count == 1) return '1 talhão';
+  return '$count talhões';
 }
 
 String _formatArea(double value) {

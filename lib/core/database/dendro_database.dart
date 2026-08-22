@@ -159,6 +159,27 @@ class TalhaoLevantamentos extends Table {
   List<String> get customConstraints => ['UNIQUE(inventory_run_id, stand_id)'];
 }
 
+@DataClassName('TalhaoFormulaCoefficientRecord')
+class TalhaoFormulaCoefficients extends Table {
+  TextColumn get id => text()();
+  TextColumn get talhaoLevantamentoId => text().references(
+    TalhaoLevantamentos,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+  TextColumn get symbol => text()();
+  TextColumn get label => text()();
+  RealColumn get value => real().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(talhao_levantamento_id, symbol)',
+  ];
+}
+
 @DataClassName('PlotRecord')
 class Plots extends Table {
   TextColumn get id => text()();
@@ -241,6 +262,7 @@ class Trees extends Table {
     Stands,
     InventoryRuns,
     TalhaoLevantamentos,
+    TalhaoFormulaCoefficients,
     Plots,
     PlotGeoPoints,
     Trees,
@@ -251,13 +273,18 @@ class DendroDatabase extends _$DendroDatabase {
     : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await seedInitialCatalogs();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(talhaoFormulaCoefficients);
+      }
     },
   );
 

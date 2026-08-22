@@ -5,8 +5,10 @@ import 'package:dendro_mobile/core/providers/database_providers.dart';
 import 'package:dendro_mobile/features/home/presentation/home_screen.dart';
 import 'package:dendro_mobile/features/plots/data/plots_repository.dart';
 import 'package:dendro_mobile/features/properties/data/properties_repository.dart';
+import 'package:dendro_mobile/features/settings/presentation/settings_screen.dart';
 import 'package:dendro_mobile/features/shell/presentation/dendro_shell.dart';
 import 'package:dendro_mobile/features/stands/data/stands_repository.dart';
+import 'package:dendro_mobile/features/tree_collection/data/trees_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -92,6 +94,108 @@ void main() {
 
     expect(find.text('Continuar Coleta'), findsOneWidget);
     expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
+
+  testWidgets('home mostra talhao no card e resumo total do levantamento', (
+    tester,
+  ) async {
+    final database = DendroDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.runAsync(() async {
+      final propertiesRepository = PropertiesRepository(database);
+      final standsRepository = StandsRepository(database);
+      final plotsRepository = PlotsRepository(database);
+      final treesRepository = TreesRepository(database);
+
+      final propertyId = await propertiesRepository.create(
+        name: 'Fazenda Total',
+        municipality: 'Vacaria',
+        totalAreaHa: 40,
+      );
+      final species = await standsRepository.watchActiveSpecies().first;
+      final pinus = species.firstWhere((item) => item.name == 'Pinus');
+
+      final firstStandId = await standsRepository.create(
+        propertyId: propertyId,
+        identification: 'T-01',
+        speciesId: pinus.id,
+        areaHa: 12,
+      );
+      final secondStandId = await standsRepository.create(
+        propertyId: propertyId,
+        identification: 'T-02',
+        speciesId: pinus.id,
+        areaHa: 8,
+      );
+
+      final firstTalhao = await plotsRepository.startNewInventoryForStand(
+        firstStandId,
+      );
+      final firstPlotId = await plotsRepository.createPlotForTalhaoLevantamento(
+        talhaoLevantamentoId: firstTalhao.id,
+        areaHa: 0.04,
+      );
+      await treesRepository.createTree(
+        plotId: firstPlotId,
+        draft: const TreeDraft(dapCm: 20, heightM: 12, hasTortuousStem: false),
+      );
+      await treesRepository.createTree(
+        plotId: firstPlotId,
+        draft: const TreeDraft(dapCm: 22, heightM: 13, hasTortuousStem: false),
+      );
+
+      final secondTalhao = await plotsRepository.startNewInventoryForStand(
+        secondStandId,
+      );
+      final secondPlotId = await plotsRepository
+          .createPlotForTalhaoLevantamento(
+            talhaoLevantamentoId: secondTalhao.id,
+            areaHa: 0.05,
+          );
+      await treesRepository.createTree(
+        plotId: secondPlotId,
+        draft: const TreeDraft(dapCm: 25, heightM: 14, hasTortuousStem: false),
+      );
+    });
+
+    tester.view.physicalSize = const Size(360, 780);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dendroDatabaseProvider.overrideWithValue(database)],
+        child: MaterialApp(
+          theme: DendroTheme.light,
+          home: const Scaffold(body: HomeScreen()),
+        ),
+      ),
+    );
+    for (var attempt = 0; attempt < 20; attempt++) {
+      if (find.text('Continuar Coleta').evaluate().isNotEmpty) break;
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('T-01'), findsOneWidget);
+    expect(find.text('Continuar Coleta'), findsOneWidget);
+    expect(find.text('Resumo do levantamento'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('0,04 ha'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('0,09 ha'), findsOneWidget);
+
+    await tester.tap(find.text('Continuar Coleta'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Parcelas'), findsWidgets);
+    expect(find.text('Talhões do levantamento'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));
@@ -279,6 +383,53 @@ void main() {
       'Resultados',
       'Ajustes',
     ]);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
+
+  testWidgets('ajustes navega para especies e modelos do catalogo', (
+    tester,
+  ) async {
+    final database = DendroDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dendroDatabaseProvider.overrideWithValue(database)],
+        child: MaterialApp(
+          theme: DendroTheme.light,
+          home: const Scaffold(body: SettingsScreen()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ajustes'), findsOneWidget);
+    expect(find.text('Modo escuro'), findsOneWidget);
+    expect(find.text('Cadastro de espécies'), findsOneWidget);
+    expect(find.text('Modelos matemáticos'), findsOneWidget);
+    expect(find.text('Nova espécie'), findsNothing);
+    expect(find.text('Nova fórmula'), findsNothing);
+
+    await tester.tap(find.text('Cadastro de espécies'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cadastro de espécies'), findsOneWidget);
+    expect(find.text('Espécies cadastradas'), findsOneWidget);
+    expect(find.text('Pinus'), findsOneWidget);
+    expect(find.byIcon(Icons.add), findsOneWidget);
+
+    Navigator.of(tester.element(find.text('Cadastro de espécies'))).pop();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Modelos matemáticos'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Fórmulas cadastradas'), findsOneWidget);
+    expect(find.text('Modelo de Spurr'), findsOneWidget);
+    expect(find.text('Schumacher-Hall'), findsOneWidget);
+    expect(find.byIcon(Icons.add), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));

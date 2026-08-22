@@ -51,6 +51,8 @@ class DendroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Row(
       children: [
         Container(
@@ -71,8 +73,7 @@ class DendroHeader extends StatelessWidget {
             style: const TextStyle(
               fontSize: 21,
               fontWeight: FontWeight.w900,
-              color: DendroColors.text,
-            ),
+            ).copyWith(color: colorScheme.onSurface),
           ),
         ),
         const SizedBox(width: 10),
@@ -104,26 +105,28 @@ class DendroLogoMark extends StatelessWidget {
 class DendroCard extends StatelessWidget {
   const DendroCard({
     required this.child,
-    this.backgroundColor = Colors.white,
-    this.borderColor = DendroColors.outline,
+    this.backgroundColor,
+    this.borderColor,
     this.padding = const EdgeInsets.all(14),
     super.key,
   });
 
   final Widget child;
-  final Color backgroundColor;
-  final Color borderColor;
+  final Color? backgroundColor;
+  final Color? borderColor;
   final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: backgroundColor ?? theme.cardColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: borderColor ?? DendroColors.outline),
       ),
       child: child,
     );
@@ -138,6 +141,8 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -148,8 +153,7 @@ class SectionTitle extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
-                color: DendroColors.text,
-              ),
+              ).copyWith(color: colorScheme.onSurface),
             ),
           ),
           ?trailing,

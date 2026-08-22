@@ -11,6 +11,7 @@ import '../../inventory_runs/data/inventory_runs_repository.dart';
 import '../../inventory_runs/presentation/inventory_run_detail_screen.dart';
 import '../../inventory_runs/presentation/new_inventory_screen.dart';
 import '../../plots/data/plots_repository.dart';
+import '../../plots/presentation/stand_plots_screen.dart';
 import '../../properties/data/properties_repository.dart';
 import '../../stands/data/stands_repository.dart';
 
@@ -40,7 +41,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final activeRuns = ref.watch(activeInventoryRunsProvider);
-    final selectedSummary = _selectedSummary(activeRuns.asData?.value ?? []);
+    final selectedCollection = _selectedCollection(
+      _activeCollectionItems(activeRuns.asData?.value ?? []),
+    );
+    final selectedRunSummary = selectedCollection?.runSummary;
     final now = DateTime.now();
     final recentActivities = _recentActivities(now);
 
@@ -55,27 +59,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         const SizedBox(height: 14),
         activeRuns.when(
-          data: (summaries) => _ActiveCollectionsPager(
-            controller: _activeRunController,
-            summaries: summaries,
-            selectedIndex: _selectedActiveRunIndex,
-            onPageChanged: (index) =>
-                setState(() => _selectedActiveRunIndex = index),
-            onContinue: (summary) => _openInventoryRun(context, summary.run.id),
-          ),
+          data: (summaries) {
+            final collections = _activeCollectionItems(summaries);
+            return _ActiveCollectionsPager(
+              controller: _activeRunController,
+              collections: collections,
+              selectedIndex: _selectedActiveRunIndex,
+              onPageChanged: (index) =>
+                  setState(() => _selectedActiveRunIndex = index),
+              onContinue: (collection) =>
+                  _openActiveCollection(context, collection),
+            );
+          },
           loading: () => const _ActiveCollectionLoadingCard(),
           error: (error, stackTrace) => _ActiveCollectionErrorCard(
             onRetry: () => ref.invalidate(activeInventoryRunsProvider),
           ),
         ),
         const SizedBox(height: 20),
-        const SectionTitle(title: 'Resumo atual'),
+        const SectionTitle(title: 'Resumo do levantamento'),
         Row(
           children: [
             Expanded(
               child: MetricTile(
                 label: 'Árvores medidas',
-                value: (selectedSummary?.treeCount ?? 0).toString(),
+                value: (selectedRunSummary?.treeCount ?? 0).toString(),
                 icon: Icons.park_outlined,
               ),
             ),
@@ -83,7 +91,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Expanded(
               child: MetricTile(
                 label: 'Área medida',
-                value: _formatArea(selectedSummary?.measuredAreaHa ?? 0),
+                value: _formatArea(selectedRunSummary?.measuredAreaHa ?? 0),
                 icon: Icons.area_chart_outlined,
               ),
             ),
@@ -125,43 +133,93 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  InventoryRunSummary? _selectedSummary(List<InventoryRunSummary> summaries) {
-    if (summaries.isEmpty) return null;
-    if (_selectedActiveRunIndex >= summaries.length) {
+  void _openActiveCollection(
+    BuildContext context,
+    _ActiveCollectionItem collection,
+  ) {
+    final standSummary = collection.standSummary;
+    if (standSummary == null) {
+      _openInventoryRun(context, collection.runSummary.run.id);
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => StandPlotsScreen(
+          standId: standSummary.stand.id,
+          talhaoLevantamentoId: standSummary.talhaoLevantamento.id,
+          showStartInventoryAction: false,
+          enableTreeCollection: true,
+        ),
+      ),
+    );
+  }
+
+  _ActiveCollectionItem? _selectedCollection(
+    List<_ActiveCollectionItem> collections,
+  ) {
+    if (collections.isEmpty) return null;
+    if (_selectedActiveRunIndex >= collections.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          setState(() => _selectedActiveRunIndex = summaries.length - 1);
+          setState(() => _selectedActiveRunIndex = collections.length - 1);
         }
       });
-      return summaries.last;
+      return collections.last;
     }
-    return summaries[_selectedActiveRunIndex];
+    return collections[_selectedActiveRunIndex];
   }
+}
+
+class _ActiveCollectionItem {
+  const _ActiveCollectionItem({
+    required this.runSummary,
+    required this.standSummary,
+  });
+
+  final InventoryRunSummary runSummary;
+  final InventoryStandSummary? standSummary;
+}
+
+List<_ActiveCollectionItem> _activeCollectionItems(
+  List<InventoryRunSummary> summaries,
+) {
+  return [
+    for (final summary in summaries)
+      if (summary.stands.isEmpty)
+        _ActiveCollectionItem(runSummary: summary, standSummary: null)
+      else
+        for (final standSummary in summary.stands)
+          _ActiveCollectionItem(
+            runSummary: summary,
+            standSummary: standSummary,
+          ),
+  ];
 }
 
 class _ActiveCollectionsPager extends StatelessWidget {
   const _ActiveCollectionsPager({
     required this.controller,
-    required this.summaries,
+    required this.collections,
     required this.selectedIndex,
     required this.onPageChanged,
     required this.onContinue,
   });
 
   final PageController controller;
-  final List<InventoryRunSummary> summaries;
+  final List<_ActiveCollectionItem> collections;
   final int selectedIndex;
   final ValueChanged<int> onPageChanged;
-  final ValueChanged<InventoryRunSummary> onContinue;
+  final ValueChanged<_ActiveCollectionItem> onContinue;
 
   @override
   Widget build(BuildContext context) {
-    if (summaries.isEmpty) {
-      return const _ActiveCollectionCard(summary: null, onContinue: null);
+    if (collections.isEmpty) {
+      return const _ActiveCollectionCard(collection: null, onContinue: null);
     }
 
-    final safeIndex = selectedIndex >= summaries.length
-        ? summaries.length - 1
+    final safeIndex = selectedIndex >= collections.length
+        ? collections.length - 1
         : selectedIndex;
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final extraHeight = ((textScale - 1) * 84).clamp(0.0, 84.0).toDouble();
@@ -173,20 +231,20 @@ class _ActiveCollectionsPager extends StatelessWidget {
           height: pagerHeight,
           child: PageView.builder(
             controller: controller,
-            itemCount: summaries.length,
+            itemCount: collections.length,
             onPageChanged: onPageChanged,
             itemBuilder: (context, index) {
-              final summary = summaries[index];
+              final collection = collections[index];
               return _ActiveCollectionCard(
-                summary: summary,
-                onContinue: () => onContinue(summary),
+                collection: collection,
+                onContinue: () => onContinue(collection),
               );
             },
           ),
         ),
         const SizedBox(height: 10),
         _ActiveCollectionDots(
-          count: summaries.length,
+          count: collections.length,
           selectedIndex: safeIndex,
         ),
       ],
@@ -229,18 +287,18 @@ class _ActiveCollectionDots extends StatelessWidget {
 
 class _ActiveCollectionCard extends StatelessWidget {
   const _ActiveCollectionCard({
-    required this.summary,
+    required this.collection,
     required this.onContinue,
   });
 
-  final InventoryRunSummary? summary;
+  final _ActiveCollectionItem? collection;
   final VoidCallback? onContinue;
 
   @override
   Widget build(BuildContext context) {
-    final activeSummary = summary;
+    final activeCollection = collection;
 
-    if (activeSummary == null) {
+    if (activeCollection == null) {
       return const DendroCard(
         backgroundColor: Color(0xFFF3F4F3),
         child: Column(
@@ -270,6 +328,19 @@ class _ActiveCollectionCard extends StatelessWidget {
       );
     }
 
+    final runSummary = activeCollection.runSummary;
+    final standSummary = activeCollection.standSummary;
+    final title = standSummary?.stand.identification ?? runSummary.standLabel;
+    final subtitlePrefix = standSummary?.species.name;
+    final propertyLabel =
+        '${runSummary.property.name} - ${runSummary.property.municipality}-${runSummary.property.state}';
+    final subtitle = subtitlePrefix == null
+        ? propertyLabel
+        : '$subtitlePrefix • $propertyLabel';
+    final treeCount = standSummary?.treeCount ?? runSummary.treeCount;
+    final measuredAreaHa =
+        standSummary?.measuredAreaHa ?? runSummary.measuredAreaHa;
+
     return DendroCard(
       backgroundColor: const Color(0xFFE0F2E8),
       borderColor: const Color(0xFFA4D1B4),
@@ -285,7 +356,7 @@ class _ActiveCollectionCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            activeSummary.standLabel,
+            title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -296,7 +367,7 @@ class _ActiveCollectionCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${activeSummary.property.name} - ${activeSummary.property.municipality}-${activeSummary.property.state}',
+            subtitle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -311,13 +382,13 @@ class _ActiveCollectionCard extends StatelessWidget {
               Expanded(
                 child: _InlineMetric(
                   label: 'Árvores medidas',
-                  value: activeSummary.treeCount.toString(),
+                  value: treeCount.toString(),
                 ),
               ),
               Expanded(
                 child: _InlineMetric(
                   label: 'Área medida',
-                  value: _formatArea(activeSummary.measuredAreaHa),
+                  value: _formatArea(measuredAreaHa),
                 ),
               ),
             ],

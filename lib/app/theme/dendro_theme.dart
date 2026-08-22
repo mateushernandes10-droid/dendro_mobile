@@ -85,4 +85,132 @@ abstract final class DendroTheme {
       ),
     );
   }
+
+  static ThemeData get dark {
+    const darkSurface = Color(0xFF071611);
+    const darkPanel = Color(0xFF0F241A);
+    const lightCard = Color(0xFFF6FAF5);
+    const darkPrimary = Color(0xFF9ED9B5);
+
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: darkPrimary,
+      brightness: Brightness.dark,
+      primary: darkPrimary,
+      secondary: const Color(0xFFB7D7C3),
+      surface: darkSurface,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: darkSurface,
+      cardColor: lightCard,
+      fontFamily: 'Roboto',
+      appBarTheme: const AppBarTheme(
+        backgroundColor: darkSurface,
+        foregroundColor: Colors.white,
+        centerTitle: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: darkPanel,
+        modalBackgroundColor: darkPanel,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: darkPanel,
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 22,
+          fontWeight: FontWeight.w900,
+        ),
+        contentTextStyle: const TextStyle(
+          color: Color(0xFFDCE8DF),
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      cardTheme: CardThemeData(
+        color: lightCard,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Color(0xFF476052)),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: darkPanel,
+        elevation: 4,
+        indicatorColor: const Color(0xFF214B35),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? Colors.white
+                : const Color(0xFFB8C8BD),
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            color: states.contains(WidgetState.selected)
+                ? Colors.white
+                : const Color(0xFFB8C8BD),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: darkPrimary,
+          foregroundColor: DendroColors.primary,
+          elevation: 0,
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF10251C),
+        labelStyle: const TextStyle(color: Color(0xFFDCE8DF)),
+        hintStyle: const TextStyle(color: Color(0xFF93A89B)),
+        prefixIconColor: const Color(0xFFB8D9C4),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF476052)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF476052)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: darkPrimary, width: 1.4),
+        ),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: Color(0xFF173324),
+        contentTextStyle: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: darkPrimary),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: darkPrimary,
+          side: const BorderSide(color: darkPrimary),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: darkPrimary,
+        foregroundColor: DendroColors.primary,
+      ),
+    );
+  }
 }

@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/database/dendro_database.dart';
 import '../../../core/providers/database_providers.dart';
+import '../../inventory_runs/data/inventory_formula_selection.dart';
 
 final plotsRepositoryProvider = Provider<PlotsRepository>((ref) {
   return PlotsRepository(ref.watch(dendroDatabaseProvider));
@@ -247,8 +248,9 @@ class PlotsRepository {
   }
 
   Future<TalhaoLevantamentoRecord> startNewInventoryForStand(
-    String standId,
-  ) async {
+    String standId, {
+    InventoryFormulaSelection? formulaSelection,
+  }) async {
     final active = await _findTalhaoLevantamentoByStatus(
       standId,
       InventoryRunStatus.inProgress,
@@ -257,25 +259,54 @@ class PlotsRepository {
       throw ActiveInventoryForStandException(active);
     }
 
+    final context = await _readStandContext(standId);
+    final reusableActiveRun = await _findLatestInventoryRunForPropertyByStatus(
+      propertyId: context.stand.propertyId,
+      status: InventoryRunStatus.inProgress,
+    );
+
     final planning = await _findTalhaoLevantamentoByStatus(
       standId,
       InventoryRunStatus.planning,
     );
     if (planning != null && await _hasPlots(planning.id)) {
+      if (reusableActiveRun != null) {
+        final moved = await _moveTalhaoLevantamentoToRun(
+          talhaoLevantamento: planning,
+          inventoryRunId: reusableActiveRun.id,
+        );
+        if (formulaSelection != null) {
+          await _applyFormulaSelection(
+            talhaoLevantamentoId: moved.id,
+            formulaSelection: formulaSelection,
+          );
+          return _talhaoLevantamentoById(moved.id);
+        }
+        return moved;
+      }
+
       await _promoteInventoryRun(planning.inventoryRunId);
+      if (formulaSelection != null) {
+        await _applyFormulaSelection(
+          talhaoLevantamentoId: planning.id,
+          formulaSelection: formulaSelection,
+        );
+      }
       return _talhaoLevantamentoById(planning.id);
     }
 
-    final context = await _readStandContext(standId);
-    final inventoryRunId = await _createInventoryRun(
-      propertyId: context.stand.propertyId,
-      status: InventoryRunStatus.inProgress,
-    );
+    final inventoryRunId =
+        reusableActiveRun?.id ??
+        await _createInventoryRun(
+          propertyId: context.stand.propertyId,
+          status: InventoryRunStatus.inProgress,
+        );
 
     return _createTalhaoLevantamento(
       stand: context.stand,
       species: context.species,
       inventoryRunId: inventoryRunId,
+      formulaSelection: formulaSelection,
     );
   }
 
@@ -493,6 +524,21 @@ class PlotsRepository {
     return row?.readTable(_database.talhaoLevantamentos);
   }
 
+  Future<InventoryRunRecord?> _findLatestInventoryRunForPropertyByStatus({
+    required String propertyId,
+    required InventoryRunStatus status,
+  }) {
+    return (_database.select(_database.inventoryRuns)
+          ..where(
+            (table) =>
+                table.propertyId.equals(propertyId) &
+                table.status.equalsValue(status),
+          )
+          ..orderBy([(table) => OrderingTerm.desc(table.updatedAt)])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   Future<String> _createInventoryRun({
     required String propertyId,
     required InventoryRunStatus status,
@@ -519,10 +565,11 @@ class PlotsRepository {
     required StandRecord stand,
     required SpeciesRecord species,
     required String inventoryRunId,
+    InventoryFormulaSelection? formulaSelection,
   }) async {
     final id = _uuid.v4();
     final now = DateTime.now();
-    final formulaId = await _defaultFormulaId(species.id);
+    final formulaId = formulaSelection?.formulaId ?? await _defaultFormulaId(species.id);
 
     await _database
         .into(_database.talhaoLevantamentos)
@@ -538,7 +585,102 @@ class PlotsRepository {
           ),
         );
 
+    await _replaceTalhaoFormulaCoefficients(
+      talhaoLevantamentoId: id,
+      formulaId: formulaId,
+      coefficientValuesBySymbol:
+          formulaSelection?.coefficientValuesBySymbol ?? const {},
+    );
+    await _touchInventoryRun(inventoryRunId, now: now);
     return _talhaoLevantamentoById(id);
+  }
+
+  Future<void> _applyFormulaSelection({
+    required String talhaoLevantamentoId,
+    required InventoryFormulaSelection formulaSelection,
+  }) async {
+    final now = DateTime.now();
+    final talhaoLevantamento = await _talhaoLevantamentoById(
+      talhaoLevantamentoId,
+    );
+
+    await (_database.update(_database.talhaoLevantamentos)
+          ..where((table) => table.id.equals(talhaoLevantamentoId)))
+        .write(
+          TalhaoLevantamentosCompanion(
+            formulaId: Value(formulaSelection.formulaId),
+            updatedAt: Value(now),
+          ),
+        );
+
+    await _replaceTalhaoFormulaCoefficients(
+      talhaoLevantamentoId: talhaoLevantamentoId,
+      formulaId: formulaSelection.formulaId,
+      coefficientValuesBySymbol: formulaSelection.coefficientValuesBySymbol,
+    );
+    await _touchInventoryRun(talhaoLevantamento.inventoryRunId, now: now);
+  }
+
+  Future<void> _replaceTalhaoFormulaCoefficients({
+    required String talhaoLevantamentoId,
+    required String formulaId,
+    required Map<String, double?> coefficientValuesBySymbol,
+  }) async {
+    await (_database.delete(_database.talhaoFormulaCoefficients)
+          ..where(
+            (table) => table.talhaoLevantamentoId.equals(
+              talhaoLevantamentoId,
+            ),
+          ))
+        .go();
+
+    final coefficients =
+        await (_database.select(_database.formulaCoefficients)
+              ..where((table) => table.formulaId.equals(formulaId))
+              ..orderBy([(table) => OrderingTerm.asc(table.symbol)]))
+            .get();
+
+    for (final coefficient in coefficients) {
+      await _database.into(_database.talhaoFormulaCoefficients).insert(
+            TalhaoFormulaCoefficientsCompanion.insert(
+              id: _uuid.v4(),
+              talhaoLevantamentoId: talhaoLevantamentoId,
+              symbol: coefficient.symbol,
+              label: coefficient.label,
+              value: Value(
+                coefficientValuesBySymbol.containsKey(coefficient.symbol)
+                    ? coefficientValuesBySymbol[coefficient.symbol]
+                    : coefficient.value,
+              ),
+            ),
+          );
+    }
+  }
+
+  Future<TalhaoLevantamentoRecord> _moveTalhaoLevantamentoToRun({
+    required TalhaoLevantamentoRecord talhaoLevantamento,
+    required String inventoryRunId,
+  }) async {
+    if (talhaoLevantamento.inventoryRunId == inventoryRunId) {
+      return talhaoLevantamento;
+    }
+
+    final previousRunId = talhaoLevantamento.inventoryRunId;
+    final now = DateTime.now();
+
+    await (_database.update(
+      _database.talhaoLevantamentos,
+    )..where((table) => table.id.equals(talhaoLevantamento.id))).write(
+      TalhaoLevantamentosCompanion(
+        inventoryRunId: Value(inventoryRunId),
+        updatedAt: Value(now),
+      ),
+    );
+
+    await _touchInventoryRun(inventoryRunId, now: now);
+    await _deleteInventoryRunIfEmpty(previousRunId);
+
+    return _talhaoLevantamentoById(talhaoLevantamento.id);
   }
 
   Future<void> _promoteInventoryRun(String inventoryRunId) {
@@ -553,6 +695,31 @@ class PlotsRepository {
         completedAt: const Value(null),
       ),
     );
+  }
+
+  Future<void> _touchInventoryRun(String inventoryRunId, {DateTime? now}) {
+    return (_database.update(_database.inventoryRuns)
+          ..where((table) => table.id.equals(inventoryRunId)))
+        .write(InventoryRunsCompanion(updatedAt: Value(now ?? DateTime.now())));
+  }
+
+  Future<void> _deleteInventoryRunIfEmpty(String inventoryRunId) async {
+    final count = _database.talhaoLevantamentos.id.count();
+    final row =
+        await (_database.selectOnly(_database.talhaoLevantamentos)
+              ..addColumns([count])
+              ..where(
+                _database.talhaoLevantamentos.inventoryRunId.equals(
+                  inventoryRunId,
+                ),
+              ))
+            .getSingle();
+
+    if ((row.read(count) ?? 0) > 0) return;
+
+    await (_database.delete(
+      _database.inventoryRuns,
+    )..where((table) => table.id.equals(inventoryRunId))).go();
   }
 
   Future<TalhaoLevantamentoRecord> _talhaoLevantamentoById(String id) {

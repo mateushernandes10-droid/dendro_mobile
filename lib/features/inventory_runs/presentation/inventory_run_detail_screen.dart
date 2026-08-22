@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/theme/dendro_theme.dart';
 import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
 import '../../plots/presentation/stand_plots_screen.dart';
+import '../../stands/data/stands_repository.dart';
 import '../data/inventory_runs_repository.dart';
 
 class InventoryRunDetailScreen extends ConsumerWidget {
@@ -36,6 +38,10 @@ class InventoryRunDetailScreen extends ConsumerWidget {
             return _InventoryRunBody(
               summary: summary,
               onCompleteRun: () => _confirmCompleteRun(context, ref, summary),
+              onDeleteRun: () => _confirmDeleteRun(context, ref, summary),
+              onEditStand: (stand) => _openStandForm(context, stand),
+              onRemoveStand: (stand) =>
+                  _confirmRemoveStandFromRun(context, ref, summary, stand),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -107,13 +113,166 @@ class InventoryRunDetailScreen extends ConsumerWidget {
       );
     }
   }
+
+  Future<void> _confirmDeleteRun(
+    BuildContext context,
+    WidgetRef ref,
+    InventoryRunSummary summary,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(Icons.warning_amber_rounded, color: Colors.red.shade700),
+        title: const Text('Excluir levantamento'),
+        content: Text(_deleteRunMessage(summary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    try {
+      await ref.read(inventoryRunsRepositoryProvider).deleteRun(summary.run.id);
+      ref.invalidate(inventoryRunDetailProvider(summary.run.id));
+      ref.invalidate(inventoryRunsProvider);
+      ref.invalidate(activeInventoryRunsProvider);
+      ref.invalidate(activeInventoryRunProvider);
+
+      if (!context.mounted) return;
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Levantamento de ${summary.property.name} excluído.'),
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red.shade700,
+          content: const Text('Não foi possível excluir o levantamento.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openStandForm(
+    BuildContext context,
+    InventoryStandSummary summary,
+  ) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) =>
+          _InventoryStandFormSheet(runId: runId, summary: summary),
+    );
+  }
+
+  Future<void> _confirmRemoveStandFromRun(
+    BuildContext context,
+    WidgetRef ref,
+    InventoryRunSummary runSummary,
+    InventoryStandSummary standSummary,
+  ) async {
+    final hasData = standSummary.plotCount > 0 || standSummary.treeCount > 0;
+    final message = hasData
+        ? 'O talhão ${standSummary.stand.identification} já possui ${standSummary.plotCount} ${_plural(standSummary.plotCount, 'parcela')} e ${standSummary.treeCount} ${_plural(standSummary.treeCount, 'árvore')} registrada${standSummary.treeCount == 1 ? '' : 's'} neste levantamento. Se confirmar, todos os dados desse talhão dentro do levantamento serão apagados permanentemente. O cadastro do talhão na propriedade será mantido. Deseja continuar?'
+        : 'Deseja remover o talhão ${standSummary.stand.identification} deste levantamento? O cadastro do talhão na propriedade será mantido.';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(Icons.warning_amber_rounded, color: Colors.red.shade700),
+        title: const Text('Remover talhão do levantamento'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref
+          .read(inventoryRunsRepositoryProvider)
+          .removeStandFromRun(standSummary.talhaoLevantamento.id);
+      _invalidateAfterStandChange(ref, runSummary);
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Talhão ${standSummary.stand.identification} removido do levantamento.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red.shade700,
+          content: const Text('Não foi possível remover o talhão.'),
+        ),
+      );
+    }
+  }
+
+  void _invalidateAfterStandChange(
+    WidgetRef ref,
+    InventoryRunSummary runSummary,
+  ) {
+    ref.invalidate(inventoryRunDetailProvider(runSummary.run.id));
+    ref.invalidate(inventoryRunsProvider);
+    ref.invalidate(activeInventoryRunsProvider);
+    ref.invalidate(activeInventoryRunProvider);
+    ref.invalidate(propertyStandsProvider(runSummary.property.id));
+    ref.invalidate(inventoryStartOptionsProvider);
+  }
 }
 
 class _InventoryRunBody extends StatelessWidget {
-  const _InventoryRunBody({required this.summary, required this.onCompleteRun});
+  const _InventoryRunBody({
+    required this.summary,
+    required this.onCompleteRun,
+    required this.onDeleteRun,
+    required this.onEditStand,
+    required this.onRemoveStand,
+  });
 
   final InventoryRunSummary summary;
   final VoidCallback onCompleteRun;
+  final VoidCallback onDeleteRun;
+  final ValueChanged<InventoryStandSummary> onEditStand;
+  final ValueChanged<InventoryStandSummary> onRemoveStand;
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +291,19 @@ class _InventoryRunBody extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: onDeleteRun,
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Excluir levantamento'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red.shade700,
+              side: BorderSide(color: Colors.red.shade700),
+            ),
+          ),
+        ),
         const SizedBox(height: 18),
         Row(
           children: [
@@ -171,6 +343,8 @@ class _InventoryRunBody extends StatelessWidget {
           for (final stand in summary.stands)
             _InventoryStandCard(
               summary: stand,
+              onEdit: () => onEditStand(stand),
+              onRemove: () => onRemoveStand(stand),
               onOpen: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (context) => StandPlotsScreen(
@@ -245,10 +419,17 @@ class _RunSummaryCard extends StatelessWidget {
 }
 
 class _InventoryStandCard extends StatelessWidget {
-  const _InventoryStandCard({required this.summary, required this.onOpen});
+  const _InventoryStandCard({
+    required this.summary,
+    required this.onOpen,
+    required this.onEdit,
+    required this.onRemove,
+  });
 
   final InventoryStandSummary summary;
   final VoidCallback onOpen;
+  final VoidCallback onEdit;
+  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -298,6 +479,40 @@ class _InventoryStandCard extends StatelessWidget {
                 StatusPill(
                   label: '${summary.collectedPlotCount}/${summary.plotCount}',
                 ),
+                PopupMenuButton<_InventoryStandAction>(
+                  tooltip: 'Ações',
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (action) {
+                    switch (action) {
+                      case _InventoryStandAction.edit:
+                        onEdit();
+                      case _InventoryStandAction.remove:
+                        onRemove();
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: _InventoryStandAction.edit,
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_outlined),
+                          SizedBox(width: 10),
+                          Text('Editar'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: _InventoryStandAction.remove,
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline),
+                          SizedBox(width: 10),
+                          Text('Excluir'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -330,6 +545,310 @@ class _InventoryStandCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+enum _InventoryStandAction { edit, remove }
+
+class _InventoryStandFormSheet extends ConsumerStatefulWidget {
+  const _InventoryStandFormSheet({required this.runId, required this.summary});
+
+  final String runId;
+  final InventoryStandSummary summary;
+
+  @override
+  ConsumerState<_InventoryStandFormSheet> createState() =>
+      _InventoryStandFormSheetState();
+}
+
+class _InventoryStandFormSheetState
+    extends ConsumerState<_InventoryStandFormSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _identificationController;
+  late final TextEditingController _areaController;
+  late final TextEditingController _plantingYearController;
+  late final TextEditingController _spacingController;
+  late final TextEditingController _managementRegimeController;
+  late final TextEditingController _notesController;
+  String? _speciesId;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final stand = widget.summary.stand;
+
+    _identificationController = TextEditingController(
+      text: stand.identification,
+    );
+    _areaController = TextEditingController(
+      text: stand.areaHa.toStringAsFixed(2).replaceAll('.', ','),
+    );
+    _plantingYearController = TextEditingController(
+      text: stand.plantingYear?.toString() ?? '',
+    );
+    _spacingController = TextEditingController(text: stand.spacing ?? '');
+    _managementRegimeController = TextEditingController(
+      text: stand.managementRegime ?? '',
+    );
+    _notesController = TextEditingController(text: stand.notes ?? '');
+    _speciesId = widget.summary.talhaoLevantamento.speciesId;
+  }
+
+  @override
+  void dispose() {
+    _identificationController.dispose();
+    _areaController.dispose();
+    _plantingYearController.dispose();
+    _spacingController.dispose();
+    _managementRegimeController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final species = ref.watch(activeSpeciesProvider);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Editar talhão do levantamento',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _saving
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                    tooltip: 'Fechar',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _identificationController,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Identificação',
+                  prefixIcon: Icon(Icons.label_outline),
+                ),
+                validator: _requiredValidator,
+              ),
+              const SizedBox(height: 12),
+              species.when(
+                data: (items) {
+                  _syncSpeciesSelection(items);
+                  return DropdownButtonFormField<String>(
+                    key: ValueKey('inventory-stand-species-$_speciesId'),
+                    initialValue: _speciesId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Espécie',
+                      prefixIcon: Icon(Icons.eco_outlined),
+                    ),
+                    items: [
+                      for (final item in items)
+                        DropdownMenuItem(
+                          value: item.id,
+                          child: Text(
+                            item.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: _saving
+                        ? null
+                        : (value) => setState(() => _speciesId = value),
+                    validator: (value) =>
+                        value == null ? 'Selecione uma espécie' : null,
+                  );
+                },
+                loading: () =>
+                    const DendroCard(child: LinearProgressIndicator()),
+                error: (error, stackTrace) => const DendroCard(
+                  child: Text('Não foi possível carregar as espécies.'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _areaController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp('[0-9,.]')),
+                      ],
+                      decoration: const InputDecoration(
+                        labelText: 'Área (ha)',
+                        prefixIcon: Icon(Icons.area_chart_outlined),
+                      ),
+                      validator: _areaValidator,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 126,
+                    child: TextFormField(
+                      controller: _plantingYearController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(4),
+                      ],
+                      decoration: const InputDecoration(labelText: 'Ano'),
+                      validator: _plantingYearValidator,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _spacingController,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Espaçamento (opcional)',
+                  prefixIcon: Icon(Icons.grid_4x4_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _managementRegimeController,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Regime de manejo (opcional)',
+                  prefixIcon: Icon(Icons.agriculture_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _notesController,
+                minLines: 2,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Observação (opcional)',
+                  prefixIcon: Icon(Icons.notes_outlined),
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(_saving ? 'Salvando...' : 'Salvar alterações'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _saving = true);
+
+    try {
+      await ref
+          .read(inventoryRunsRepositoryProvider)
+          .updateStandInRun(
+            talhaoLevantamentoId: widget.summary.talhaoLevantamento.id,
+            identification: _identificationController.text,
+            speciesId: _speciesId!,
+            areaHa: _parseArea(_areaController.text)!,
+            plantingYear: _parseOptionalInt(_plantingYearController.text),
+            spacing: _spacingController.text,
+            managementRegime: _managementRegimeController.text,
+            notes: _notesController.text,
+          );
+
+      ref.invalidate(inventoryRunDetailProvider(widget.runId));
+      ref.invalidate(inventoryRunsProvider);
+      ref.invalidate(activeInventoryRunsProvider);
+      ref.invalidate(activeInventoryRunProvider);
+      ref.invalidate(propertyStandsProvider(widget.summary.stand.propertyId));
+      ref.invalidate(inventoryStartOptionsProvider);
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Talhão atualizado.')));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red.shade700,
+          content: const Text('Não foi possível salvar o talhão.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  void _syncSpeciesSelection(List<SpeciesRecord> species) {
+    if (species.isEmpty) {
+      _speciesId = null;
+      return;
+    }
+
+    final selectedStillExists = species.any((item) => item.id == _speciesId);
+    if (_speciesId == null || !selectedStillExists) {
+      _speciesId = species.first.id;
+    }
+  }
+
+  String? _requiredValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Campo obrigatório';
+    }
+    return null;
+  }
+
+  String? _areaValidator(String? value) {
+    final area = _parseArea(value ?? '');
+    if (area == null) return 'Informe uma área válida';
+    if (area < 0) return 'Área não pode ser negativa';
+    return null;
+  }
+
+  String? _plantingYearValidator(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+
+    final year = int.tryParse(value.trim());
+    if (year == null) return 'Ano inválido';
+    if (year < 1900 || year > DateTime.now().year + 1) {
+      return 'Confira o ano';
+    }
+    return null;
   }
 }
 
@@ -444,6 +963,18 @@ String _completeRunMessage(InventoryRunSummary summary) {
   return 'Encerrar o levantamento com ${summary.collectedPlotCount} ${_plural(summary.collectedPlotCount, 'parcela')} ${_plural(summary.collectedPlotCount, 'coletada')}?';
 }
 
+String _deleteRunMessage(InventoryRunSummary summary) {
+  final standText = summary.stands.isEmpty
+      ? 'nenhum talhão vinculado'
+      : summary.stands.length == 1
+      ? '1 talhão vinculado'
+      : '${summary.stands.length} talhões vinculados';
+
+  return 'Deseja realmente excluir este levantamento de ${summary.property.name}? '
+      'Ele possui $standText, ${summary.plotCount} ${_plural(summary.plotCount, 'parcela')} e ${summary.treeCount} ${_plural(summary.treeCount, 'árvore')} registrada${summary.treeCount == 1 ? '' : 's'}. '
+      'Todos os dados salvos nesse levantamento, incluindo parcelas, árvores e coordenadas, serão apagados permanentemente e não poderão ser recuperados.';
+}
+
 String _plural(int count, String singular) {
   if (count == 1) return singular;
   return '${singular}s';
@@ -451,6 +982,16 @@ String _plural(int count, String singular) {
 
 String _formatArea(double value) {
   return '${value.toStringAsFixed(2).replaceAll('.', ',')} ha';
+}
+
+double? _parseArea(String value) {
+  return double.tryParse(value.trim().replaceAll(',', '.'));
+}
+
+int? _parseOptionalInt(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) return null;
+  return int.tryParse(trimmed);
 }
 
 String _formatDateTime(DateTime value) {
