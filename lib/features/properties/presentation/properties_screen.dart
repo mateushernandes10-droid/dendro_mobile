@@ -33,6 +33,7 @@ class _PropertiesScreenState extends ConsumerState<PropertiesScreen> {
   @override
   Widget build(BuildContext context) {
     final summaries = ref.watch(propertySummariesProvider);
+    final advancedFilters = ref.watch(propertyAdvancedFiltersProvider);
 
     return DendroScreen(
       title: 'Propriedades',
@@ -46,8 +47,14 @@ class _PropertiesScreenState extends ConsumerState<PropertiesScreen> {
       children: [
         _PropertyFilters(
           controller: _searchController,
+          filters: advancedFilters,
           onChanged: (value) {
             ref.read(propertySearchQueryProvider.notifier).state = value;
+          },
+          onOpenFilters: () => _openFilters(context, advancedFilters),
+          onClearFilters: () {
+            ref.read(propertyAdvancedFiltersProvider.notifier).state =
+                const PropertyAdvancedFilters();
           },
         ),
         const SizedBox(height: 16),
@@ -55,7 +62,9 @@ class _PropertiesScreenState extends ConsumerState<PropertiesScreen> {
           data: (items) {
             if (items.isEmpty) {
               return _EmptyPropertiesState(
-                hasSearch: _searchController.text.trim().isNotEmpty,
+                hasSearch:
+                    _searchController.text.trim().isNotEmpty ||
+                    advancedFilters.isActive,
                 onCreate: () => _openPropertyForm(context),
               );
             }
@@ -109,6 +118,24 @@ class _PropertiesScreenState extends ConsumerState<PropertiesScreen> {
     );
   }
 
+  Future<void> _openFilters(
+    BuildContext context,
+    PropertyAdvancedFilters filters,
+  ) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => _PropertyAdvancedFiltersSheet(
+        initialFilters: filters,
+        onApply: (nextFilters) {
+          ref.read(propertyAdvancedFiltersProvider.notifier).state =
+              nextFilters;
+        },
+      ),
+    );
+  }
+
   Future<void> _confirmDelete(
     BuildContext context,
     PropertySummary summary,
@@ -149,44 +176,289 @@ class _PropertiesScreenState extends ConsumerState<PropertiesScreen> {
 }
 
 class _PropertyFilters extends StatelessWidget {
-  const _PropertyFilters({required this.controller, required this.onChanged});
+  const _PropertyFilters({
+    required this.controller,
+    required this.filters,
+    required this.onChanged,
+    required this.onOpenFilters,
+    required this.onClearFilters,
+  });
 
   final TextEditingController controller;
+  final PropertyAdvancedFilters filters;
   final ValueChanged<String> onChanged;
+  final VoidCallback onOpenFilters;
+  final VoidCallback onClearFilters;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final activeLabels = _activeFilterLabels(filters);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: TextField(
-            controller: controller,
-            onChanged: onChanged,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search),
-              hintText: 'Buscar propriedade',
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        IconButton.outlined(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Filtros avançados entram na próxima etapa.'),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onChanged: onChanged,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  hintText: 'Buscar propriedade',
+                ),
               ),
-            );
-          },
-          icon: const Icon(Icons.tune),
-          tooltip: 'Filtros',
-          style: IconButton.styleFrom(
-            minimumSize: const Size(52, 52),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
             ),
-          ),
+            const SizedBox(width: 10),
+            IconButton.outlined(
+              onPressed: onOpenFilters,
+              icon: Icon(filters.isActive ? Icons.filter_alt : Icons.tune),
+              tooltip: 'Filtros',
+              style: IconButton.styleFrom(
+                minimumSize: const Size(52, 52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ),
+        if (activeLabels.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              for (final label in activeLabels)
+                ActionChip(
+                  label: Text(label),
+                  avatar: const Icon(Icons.filter_alt, size: 16),
+                  onPressed: onOpenFilters,
+                ),
+              ActionChip(
+                label: const Text('Limpar filtros'),
+                avatar: const Icon(Icons.close, size: 16),
+                onPressed: onClearFilters,
+              ),
+            ],
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _PropertyAdvancedFiltersSheet extends StatefulWidget {
+  const _PropertyAdvancedFiltersSheet({
+    required this.initialFilters,
+    required this.onApply,
+  });
+
+  final PropertyAdvancedFilters initialFilters;
+  final ValueChanged<PropertyAdvancedFilters> onApply;
+
+  @override
+  State<_PropertyAdvancedFiltersSheet> createState() =>
+      _PropertyAdvancedFiltersSheetState();
+}
+
+class _PropertyAdvancedFiltersSheetState
+    extends State<_PropertyAdvancedFiltersSheet> {
+  late final TextEditingController _municipalityController;
+  late final TextEditingController _minAreaController;
+  late final TextEditingController _maxAreaController;
+  late final TextEditingController _minStandController;
+  late final TextEditingController _maxStandController;
+
+  @override
+  void initState() {
+    super.initState();
+    final filters = widget.initialFilters;
+    _municipalityController = TextEditingController(text: filters.municipality);
+    _minAreaController = TextEditingController(
+      text: filters.minAreaHa == null ? '' : _formatArea(filters.minAreaHa!),
+    );
+    _maxAreaController = TextEditingController(
+      text: filters.maxAreaHa == null ? '' : _formatArea(filters.maxAreaHa!),
+    );
+    _minStandController = TextEditingController(
+      text: filters.minStandCount?.toString() ?? '',
+    );
+    _maxStandController = TextEditingController(
+      text: filters.maxStandCount?.toString() ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _municipalityController.dispose();
+    _minAreaController.dispose();
+    _maxAreaController.dispose();
+    _minStandController.dispose();
+    _maxStandController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Filtros de propriedades',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                  tooltip: 'Fechar',
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _municipalityController,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Município',
+                prefixIcon: Icon(Icons.place_outlined),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _minAreaController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: 'Área mín. (ha)',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _maxAreaController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: 'Área máx. (ha)',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _minStandController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      labelText: 'Talhões mín.',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _maxStandController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      labelText: 'Talhões máx.',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _clear,
+                    icon: const Icon(Icons.cleaning_services_outlined),
+                    label: const Text('Limpar'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _apply,
+                    icon: const Icon(Icons.check),
+                    label: const Text('Aplicar'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _clear() {
+    widget.onApply(const PropertyAdvancedFilters());
+    Navigator.of(context).pop();
+  }
+
+  void _apply() {
+    final minArea = _parseOptionalArea(_minAreaController.text);
+    final maxArea = _parseOptionalArea(_maxAreaController.text);
+    final minStand = _parseOptionalInt(_minStandController.text);
+    final maxStand = _parseOptionalInt(_maxStandController.text);
+
+    if (_invalidOptionalNumber(_minAreaController.text, minArea) ||
+        _invalidOptionalNumber(_maxAreaController.text, maxArea) ||
+        _invalidOptionalNumber(_minStandController.text, minStand) ||
+        _invalidOptionalNumber(_maxStandController.text, maxStand)) {
+      _showFilterError('Revise os valores informados.');
+      return;
+    }
+    if (minArea != null && maxArea != null && minArea > maxArea) {
+      _showFilterError('A área mínima não pode ser maior que a máxima.');
+      return;
+    }
+    if (minStand != null && maxStand != null && minStand > maxStand) {
+      _showFilterError(
+        'A quantidade mínima de talhões não pode ser maior que a máxima.',
+      );
+      return;
+    }
+
+    widget.onApply(
+      PropertyAdvancedFilters(
+        municipality: _municipalityController.text.trim(),
+        minAreaHa: minArea,
+        maxAreaHa: maxArea,
+        minStandCount: minStand,
+        maxStandCount: maxStand,
+      ),
+    );
+    Navigator.of(context).pop();
+  }
+
+  void _showFilterError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(backgroundColor: Colors.red.shade700, content: Text(message)),
     );
   }
 }
@@ -626,6 +898,42 @@ class _LoadErrorCard extends StatelessWidget {
 
 enum _PropertyAction { edit, delete }
 
+List<String> _activeFilterLabels(PropertyAdvancedFilters filters) {
+  final labels = <String>[];
+  final municipality = filters.municipality.trim();
+
+  if (municipality.isNotEmpty) {
+    labels.add('Município: $municipality');
+  }
+  if (filters.minAreaHa != null || filters.maxAreaHa != null) {
+    labels.add(
+      'Área: ${_rangeLabel(filters.minAreaHa, filters.maxAreaHa, suffix: ' ha')}',
+    );
+  }
+  if (filters.minStandCount != null || filters.maxStandCount != null) {
+    labels.add(
+      'Talhões: ${_rangeLabel(filters.minStandCount, filters.maxStandCount)}',
+    );
+  }
+
+  return labels;
+}
+
+String _rangeLabel(num? min, num? max, {String suffix = ''}) {
+  if (min != null && max != null) {
+    return '${_formatNumber(min)}-${_formatNumber(max)}$suffix';
+  }
+  if (min != null) return 'acima de ${_formatNumber(min)}$suffix';
+  return 'até ${_formatNumber(max!)}$suffix';
+}
+
+String _formatNumber(num value) {
+  if (value is int || value == value.roundToDouble()) {
+    return value.toStringAsFixed(0);
+  }
+  return value.toStringAsFixed(2).replaceAll('.', ',');
+}
+
 String _formatArea(double value) {
   return value.toStringAsFixed(2).replaceAll('.', ',');
 }
@@ -636,4 +944,20 @@ String _formatStandCount(int count) {
 
 double? _parseArea(String value) {
   return double.tryParse(value.trim().replaceAll(',', '.'));
+}
+
+double? _parseOptionalArea(String value) {
+  final normalized = value.trim();
+  if (normalized.isEmpty) return null;
+  return _parseArea(normalized);
+}
+
+int? _parseOptionalInt(String value) {
+  final normalized = value.trim();
+  if (normalized.isEmpty) return null;
+  return int.tryParse(normalized);
+}
+
+bool _invalidOptionalNumber(String raw, Object? parsed) {
+  return raw.trim().isNotEmpty && parsed == null;
 }

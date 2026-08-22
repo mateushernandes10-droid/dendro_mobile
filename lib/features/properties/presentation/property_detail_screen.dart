@@ -6,7 +6,6 @@ import '../../../app/theme/dendro_theme.dart';
 import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
 import '../../data_export/presentation/data_export_screen.dart';
-import '../../results/data/results_repository.dart';
 import '../../results/presentation/results_screen.dart';
 import '../data/properties_repository.dart';
 import '../../stands/data/stands_repository.dart';
@@ -110,14 +109,7 @@ class PropertyDetailScreen extends ConsumerWidget {
   Future<void> _openResults(BuildContext context) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => ProviderScope(
-          overrides: [
-            resultsPropertyFilterProvider.overrideWith((ref) => property.id),
-            resultsStandFilterProvider.overrideWith((ref) => <String>{}),
-            resultsSpeciesFilterProvider.overrideWith((ref) => null),
-          ],
-          child: const ResultsScreen(),
-        ),
+        builder: (context) => ResultsScreen(initialPropertyId: property.id),
       ),
     );
   }

@@ -8,11 +8,51 @@ import '../data/results_repository.dart';
 
 const _allFilterValue = '__all__';
 
-class ResultsScreen extends ConsumerWidget {
-  const ResultsScreen({super.key});
+class ResultsScreen extends ConsumerStatefulWidget {
+  const ResultsScreen({
+    this.initialPropertyId,
+    this.initialStandIds = const {},
+    this.initialSpeciesId,
+    super.key,
+  });
+
+  final String? initialPropertyId;
+  final Set<String> initialStandIds;
+  final String? initialSpeciesId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ResultsScreen> createState() => _ResultsScreenState();
+}
+
+class _ResultsScreenState extends ConsumerState<ResultsScreen> {
+  bool _appliedInitialFilters = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _applyInitialFilters();
+  }
+
+  void _applyInitialFilters() {
+    if (_appliedInitialFilters) return;
+    _appliedInitialFilters = true;
+
+    if (widget.initialPropertyId != null) {
+      ref.read(resultsPropertyFilterProvider.notifier).state =
+          widget.initialPropertyId;
+    }
+    if (widget.initialStandIds.isNotEmpty) {
+      ref.read(resultsStandFilterProvider.notifier).state =
+          widget.initialStandIds;
+    }
+    if (widget.initialSpeciesId != null) {
+      ref.read(resultsSpeciesFilterProvider.notifier).state =
+          widget.initialSpeciesId;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final options = ref.watch(resultsFilterOptionsProvider);
     final dashboard = ref.watch(resultsDashboardProvider);
 

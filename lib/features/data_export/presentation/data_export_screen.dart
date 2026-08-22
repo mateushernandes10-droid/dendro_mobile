@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../app/theme/dendro_theme.dart';
 import '../../../core/database/dendro_database.dart';
@@ -234,21 +235,45 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
     setState(() => _exporting = true);
 
     try {
-      await ref
-          .read(dataExportRepositoryProvider)
-          .recordExport(
-            formats: [_format.label],
-            property: property,
-            standCount: selectedTalhaoIds.length,
-          );
+      final request = DataExportRequest(
+        propertyId: _propertyId,
+        inventoryRunId: widget.inventoryRunId,
+        speciesId: widget.speciesId,
+      );
+      final repository = ref.read(dataExportRepositoryProvider);
+      final file = await repository.generateFile(
+        request: request,
+        format: _format,
+        talhaoLevantamentoIds: selectedTalhaoIds,
+      );
+
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          title: 'DENDRO Mobile',
+          subject: 'DENDRO Mobile - ${property.name}',
+          text: 'Exportação DENDRO Mobile - ${property.name}',
+          files: [XFile(file.path, mimeType: file.mimeType)],
+          fileNameOverrides: [file.fileName],
+        ),
+      );
 
       if (!mounted) return;
+      if (result.status == ShareResultStatus.success ||
+          result.status == ShareResultStatus.unavailable) {
+        await repository.recordExport(
+          formats: [_format.label],
+          property: property,
+          standCount: selectedTalhaoIds.length,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${file.fileName} pronto para compartilhar.')),
+        );
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Exportação ${_format.label} registrada para ${property.name}.',
-          ),
-        ),
+        const SnackBar(content: Text('Compartilhamento cancelado.')),
       );
     } catch (_) {
       if (!mounted) return;
@@ -264,43 +289,35 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
   }
 }
 
-enum DataExportFormat {
-  pdf(
-    label: 'PDF',
-    title: 'Relatório PDF',
-    description: 'Resumo formatado para impressão e entrega.',
-    icon: Icons.picture_as_pdf_outlined,
-  ),
-  csv(
-    label: 'CSV',
-    title: 'Dados brutos (CSV)',
-    description: 'Tabelas simples para análise em outros softwares.',
-    icon: Icons.table_rows_outlined,
-  ),
-  xls(
-    label: 'XLS',
-    title: 'Planilha (Excel)',
-    description: 'Dados organizados para conferência e cálculos.',
-    icon: Icons.grid_on_outlined,
-  ),
-  googleEarth(
-    label: 'KML',
-    title: 'Coordenadas (Google Earth)',
-    description: 'Arquivo com pontos GPS para abrir no Google Earth.',
-    icon: Icons.public,
-  );
+extension _DataExportFormatUi on DataExportFormat {
+  String get title {
+    return switch (this) {
+      DataExportFormat.pdf => 'Relatório PDF',
+      DataExportFormat.csv => 'Dados brutos (CSV)',
+      DataExportFormat.xls => 'Planilha (Excel)',
+      DataExportFormat.googleEarth => 'Coordenadas (Google Earth)',
+    };
+  }
 
-  const DataExportFormat({
-    required this.label,
-    required this.title,
-    required this.description,
-    required this.icon,
-  });
+  String get description {
+    return switch (this) {
+      DataExportFormat.pdf => 'Resumo formatado para impressão e entrega.',
+      DataExportFormat.csv =>
+        'Tabelas simples para análise em outros softwares.',
+      DataExportFormat.xls => 'Dados organizados para conferência e cálculos.',
+      DataExportFormat.googleEarth =>
+        'Arquivo com pontos GPS para abrir no Google Earth.',
+    };
+  }
 
-  final String label;
-  final String title;
-  final String description;
-  final IconData icon;
+  IconData get icon {
+    return switch (this) {
+      DataExportFormat.pdf => Icons.picture_as_pdf_outlined,
+      DataExportFormat.csv => Icons.table_rows_outlined,
+      DataExportFormat.xls => Icons.grid_on_outlined,
+      DataExportFormat.googleEarth => Icons.public,
+    };
+  }
 }
 
 class _ExportIntroCard extends StatelessWidget {

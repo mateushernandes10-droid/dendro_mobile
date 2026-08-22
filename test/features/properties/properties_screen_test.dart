@@ -65,9 +65,10 @@ class _FakePropertiesRepository implements PropertiesRepository {
   @override
   Stream<List<PropertySummary>> watchSummaries({
     String searchQuery = '',
+    PropertyAdvancedFilters filters = const PropertyAdvancedFilters(),
   }) async* {
-    yield _summaries(searchQuery);
-    yield* _changes.stream.map((_) => _summaries(searchQuery));
+    yield _summaries(searchQuery, filters);
+    yield* _changes.stream.map((_) => _summaries(searchQuery, filters));
   }
 
   @override
@@ -148,8 +149,11 @@ class _FakePropertiesRepository implements PropertiesRepository {
     );
   }
 
-  List<PropertySummary> _summaries(String query) {
-    return _filtered(query)
+  List<PropertySummary> _summaries(
+    String query,
+    PropertyAdvancedFilters filters,
+  ) {
+    return _filtered(query, filters)
         .map(
           (property) => PropertySummary(
             property: property,
@@ -160,8 +164,12 @@ class _FakePropertiesRepository implements PropertiesRepository {
         .toList();
   }
 
-  List<PropertyRecord> _filtered(String query) {
+  List<PropertyRecord> _filtered(
+    String query, [
+    PropertyAdvancedFilters filters = const PropertyAdvancedFilters(),
+  ]) {
     final normalizedQuery = query.trim().toLowerCase();
+    final municipality = filters.municipality.trim().toLowerCase();
     final records = normalizedQuery.isEmpty
         ? _properties
         : _properties
@@ -171,6 +179,20 @@ class _FakePropertiesRepository implements PropertiesRepository {
               )
               .toList();
 
-    return [...records]..sort((a, b) => a.name.compareTo(b.name));
+    return records.where((property) {
+      if (municipality.isNotEmpty &&
+          !property.municipality.toLowerCase().contains(municipality)) {
+        return false;
+      }
+      if (filters.minAreaHa != null &&
+          property.totalAreaHa < filters.minAreaHa!) {
+        return false;
+      }
+      if (filters.maxAreaHa != null &&
+          property.totalAreaHa > filters.maxAreaHa!) {
+        return false;
+      }
+      return true;
+    }).toList()..sort((a, b) => a.name.compareTo(b.name));
   }
 }

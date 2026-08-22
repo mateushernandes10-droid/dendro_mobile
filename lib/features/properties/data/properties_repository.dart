@@ -14,13 +14,46 @@ final propertySearchQueryProvider = StateProvider.autoDispose<String>((ref) {
   return '';
 });
 
+final propertyAdvancedFiltersProvider =
+    StateProvider.autoDispose<PropertyAdvancedFilters>((ref) {
+      return const PropertyAdvancedFilters();
+    });
+
 final propertySummariesProvider =
     StreamProvider.autoDispose<List<PropertySummary>>((ref) {
       final repository = ref.watch(propertiesRepositoryProvider);
       final searchQuery = ref.watch(propertySearchQueryProvider);
+      final filters = ref.watch(propertyAdvancedFiltersProvider);
 
-      return repository.watchSummaries(searchQuery: searchQuery);
+      return repository.watchSummaries(
+        searchQuery: searchQuery,
+        filters: filters,
+      );
     });
+
+class PropertyAdvancedFilters {
+  const PropertyAdvancedFilters({
+    this.municipality = '',
+    this.minAreaHa,
+    this.maxAreaHa,
+    this.minStandCount,
+    this.maxStandCount,
+  });
+
+  final String municipality;
+  final double? minAreaHa;
+  final double? maxAreaHa;
+  final int? minStandCount;
+  final int? maxStandCount;
+
+  bool get isActive {
+    return municipality.trim().isNotEmpty ||
+        minAreaHa != null ||
+        maxAreaHa != null ||
+        minStandCount != null ||
+        maxStandCount != null;
+  }
+}
 
 class PropertySummary {
   const PropertySummary({
@@ -45,8 +78,12 @@ class PropertiesRepository {
     _database,
   );
 
-  Stream<List<PropertySummary>> watchSummaries({String searchQuery = ''}) {
+  Stream<List<PropertySummary>> watchSummaries({
+    String searchQuery = '',
+    PropertyAdvancedFilters filters = const PropertyAdvancedFilters(),
+  }) {
     final normalizedQuery = searchQuery.trim();
+    final municipality = filters.municipality.trim();
 
     final statement = _database.select(_database.properties)
       ..orderBy([(table) => OrderingTerm.asc(table.name)]);
@@ -54,18 +91,40 @@ class PropertiesRepository {
     if (normalizedQuery.isNotEmpty) {
       statement.where((table) => table.name.like('%$normalizedQuery%'));
     }
+    if (municipality.isNotEmpty) {
+      statement.where((table) => table.municipality.like('%$municipality%'));
+    }
+    if (filters.minAreaHa != null) {
+      statement.where(
+        (table) => table.totalAreaHa.isBiggerOrEqualValue(filters.minAreaHa!),
+      );
+    }
+    if (filters.maxAreaHa != null) {
+      statement.where(
+        (table) => table.totalAreaHa.isSmallerOrEqualValue(filters.maxAreaHa!),
+      );
+    }
 
     return statement.watch().asyncMap((properties) async {
       final summaries = <PropertySummary>[];
 
       for (final property in properties) {
-        summaries.add(
-          PropertySummary(
-            property: property,
-            standCount: await _countStands(property.id),
-            inventoryRunCount: await _countInventoryRuns(property.id),
-          ),
+        final summary = PropertySummary(
+          property: property,
+          standCount: await _countStands(property.id),
+          inventoryRunCount: await _countInventoryRuns(property.id),
         );
+
+        if (filters.minStandCount != null &&
+            summary.standCount < filters.minStandCount!) {
+          continue;
+        }
+        if (filters.maxStandCount != null &&
+            summary.standCount > filters.maxStandCount!) {
+          continue;
+        }
+
+        summaries.add(summary);
       }
 
       return summaries;
