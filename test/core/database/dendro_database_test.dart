@@ -1,4 +1,5 @@
 import 'package:dendro_mobile/core/database/dendro_database.dart';
+import 'package:dendro_mobile/core/forest/forest_volume_calculator.dart';
 import 'package:dendro_mobile/features/activity_log/data/activity_log_repository.dart';
 import 'package:dendro_mobile/features/inventory_runs/data/inventory_formula_selection.dart';
 import 'package:dendro_mobile/features/inventory_runs/data/inventory_runs_repository.dart';
@@ -41,6 +42,14 @@ void main() {
     );
     expect(variables, hasLength(4));
     expect(coefficients, hasLength(5));
+    expect(
+      coefficients.singleWhere((item) => item.id == 'formula_spurr_a').value,
+      closeTo(ForestVolumeCalculator.defaultSpurrA, 0.0000000001),
+    );
+    expect(
+      coefficients.singleWhere((item) => item.id == 'formula_spurr_b').value,
+      closeTo(ForestVolumeCalculator.defaultSpurrB, 0.0000000001),
+    );
   });
 
   test('repositorio de ajustes mantem especies formulas e vinculos', () async {

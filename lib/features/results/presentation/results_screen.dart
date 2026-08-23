@@ -314,7 +314,7 @@ class _ResultsDashboardView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _VolumePendingCard(hasMeasurements: dashboard.hasMeasurements),
+        _VolumeSummaryCard(dashboard: dashboard),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -375,6 +375,26 @@ class _ResultsDashboardView extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: MetricTile(
+                label: 'Volume/ha',
+                value: _formatNullableMeasure(dashboard.volumePerHaM3, 'm³/ha'),
+                icon: Icons.inventory_2_outlined,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: MetricTile(
+                label: 'Árvores/ha',
+                value: _formatNullableNumber(dashboard.treesPerHa),
+                icon: Icons.park_outlined,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 20),
         const SectionTitle(title: 'Distribuição diamétrica'),
         _DiameterDistributionCard(classes: dashboard.diameterClasses),
@@ -389,13 +409,14 @@ class _ResultsDashboardView extends StatelessWidget {
   }
 }
 
-class _VolumePendingCard extends StatelessWidget {
-  const _VolumePendingCard({required this.hasMeasurements});
+class _VolumeSummaryCard extends StatelessWidget {
+  const _VolumeSummaryCard({required this.dashboard});
 
-  final bool hasMeasurements;
+  final ResultsDashboard dashboard;
 
   @override
   Widget build(BuildContext context) {
+    final estimatedVolume = dashboard.estimatedVolumeM3;
     return DendroCard(
       backgroundColor: DendroColors.primary,
       borderColor: DendroColors.primary,
@@ -412,7 +433,9 @@ class _VolumePendingCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            hasMeasurements ? 'A calcular' : 'Sem dados',
+            dashboard.hasMeasurements
+                ? _formatNullableVolume(estimatedVolume)
+                : 'Sem dados',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 30,
@@ -421,8 +444,10 @@ class _VolumePendingCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            hasMeasurements
-                ? 'Depende do motor de fórmulas e coeficientes validados.'
+            dashboard.hasMeasurements
+                ? estimatedVolume == null
+                      ? 'Informe a área das parcelas para extrapolar por hectare e talhão.'
+                      : 'Calculado por Spurr e extrapolado pela área medida das parcelas.'
                 : 'Registre árvores para alimentar os resultados.',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -582,6 +607,16 @@ class _StandResultRow extends StatelessWidget {
                 _InlineMetric(
                   'Alt. ${_formatNullableMeasure(summary.averageHeightM, 'm')}',
                 ),
+                _InlineMetric(
+                  'Vol. ${_formatNullableMeasure(summary.volumePerHaM3, 'm³/ha')}',
+                ),
+                _InlineMetric(
+                  'Total ${_formatNullableVolume(summary.estimatedVolumeM3)}',
+                ),
+                if (summary.convertedUnit != 'm3')
+                  _InlineMetric(
+                    '${_formatNullableNumber(summary.convertedEstimatedVolume)} ${summary.convertedUnit}',
+                  ),
               ],
             ),
           ],
@@ -672,4 +707,14 @@ String _formatArea(double value) {
 String _formatNullableMeasure(double? value, String unit) {
   if (value == null) return '-';
   return '${value.toStringAsFixed(1).replaceAll('.', ',')} $unit';
+}
+
+String _formatNullableVolume(double? value) {
+  if (value == null) return '-';
+  return '${value.toStringAsFixed(2).replaceAll('.', ',')} m³';
+}
+
+String _formatNullableNumber(double? value) {
+  if (value == null) return '-';
+  return value.toStringAsFixed(1).replaceAll('.', ',');
 }

@@ -9,6 +9,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../core/database/dendro_database.dart';
+import '../../../core/forest/forest_volume_calculator.dart';
 import '../../../core/providers/database_providers.dart';
 import '../../activity_log/data/activity_log_repository.dart';
 
@@ -151,6 +152,26 @@ class DataExportDataset {
   double get measuredAreaHa =>
       stands.fold(0, (total, stand) => total + stand.measuredAreaHa);
 
+  double get sampleVolumeM3 =>
+      stands.fold(0, (total, stand) => total + stand.sampleVolumeM3);
+
+  double get standAreaHa =>
+      stands.fold(0, (total, stand) => total + stand.option.stand.areaHa);
+
+  double? get volumePerHaM3 =>
+      measuredAreaHa == 0 ? null : sampleVolumeM3 / measuredAreaHa;
+
+  double? get estimatedVolumeM3 {
+    if (measuredAreaHa == 0) return null;
+    return stands.fold<double>(
+      0,
+      (total, stand) => total + (stand.estimatedVolumeM3 ?? 0),
+    );
+  }
+
+  double? get treesPerHa =>
+      measuredAreaHa == 0 ? null : treeCount / measuredAreaHa;
+
   double? get averageDapCm {
     final allTrees = [
       for (final stand in stands)
@@ -194,6 +215,51 @@ class DataExportStandDataset {
         total +
         (plot.plot.status == PlotStatus.pending ? 0 : plot.plot.areaHa ?? 0),
   );
+
+  Map<String, double?> get coefficientValuesBySymbol => {
+    for (final coefficient in coefficients)
+      coefficient.symbol: coefficient.value,
+  };
+
+  WoodVolumeConversion get conversion =>
+      ForestVolumeCalculator.conversionForSpecies(option.species.name);
+
+  double get sampleVolumeM3 {
+    return plots.fold<double>(
+      0,
+      (total, plot) =>
+          total +
+          plot.trees.fold<double>(
+            0,
+            (plotTotal, tree) => plotTotal + treeVolumeM3(tree),
+          ),
+    );
+  }
+
+  double? get volumePerHaM3 =>
+      measuredAreaHa == 0 ? null : sampleVolumeM3 / measuredAreaHa;
+
+  double? get estimatedVolumeM3 =>
+      volumePerHaM3 == null ? null : volumePerHaM3! * option.stand.areaHa;
+
+  double? get convertedEstimatedVolume =>
+      estimatedVolumeM3 == null ? null : conversion.convert(estimatedVolumeM3!);
+
+  double? get convertedVolumePerHa =>
+      volumePerHaM3 == null ? null : conversion.convert(volumePerHaM3!);
+
+  double? get treesPerHa =>
+      measuredAreaHa == 0 ? null : treeCount / measuredAreaHa;
+
+  double treeVolumeM3(TreeRecord tree) {
+    return ForestVolumeCalculator.treeVolumeM3(
+      dapCm: tree.dapCm,
+      heightM: tree.heightM,
+      coefficients: coefficientValuesBySymbol,
+      formulaId: formula?.id,
+      formulaExpression: formula?.expression,
+    );
+  }
 
   double? get averageDapCm {
     final allTrees = [for (final plot in plots) ...plot.trees];
@@ -345,7 +411,8 @@ class DataExportRepository {
       final plots = await _plotsForTalhao(option.talhaoLevantamento.id);
       final formula = await _formulaById(option.talhaoLevantamento.formulaId);
       final coefficients = await _coefficientsForTalhao(
-        option.talhaoLevantamento.id,
+        talhaoLevantamentoId: option.talhaoLevantamento.id,
+        formulaId: option.talhaoLevantamento.formulaId,
       );
 
       stands.add(
@@ -396,9 +463,10 @@ class DataExportRepository {
     )..where((table) => table.id.equals(id))).getSingleOrNull();
   }
 
-  Future<List<DataExportCoefficient>> _coefficientsForTalhao(
-    String talhaoLevantamentoId,
-  ) async {
+  Future<List<DataExportCoefficient>> _coefficientsForTalhao({
+    required String talhaoLevantamentoId,
+    required String formulaId,
+  }) async {
     final rows = await _database
         .customSelect(
           '''
@@ -412,14 +480,68 @@ ORDER BY symbol
         )
         .get();
 
+    final globalValues = await _globalCoefficientValues(formulaId);
+    if (rows.isNotEmpty) {
+      return [
+        for (final row in rows)
+          DataExportCoefficient(
+            symbol: row.read<String>('symbol'),
+            label: row.read<String>('label'),
+            value: _effectiveCoefficientValue(
+              formulaId: formulaId,
+              symbol: row.read<String>('symbol'),
+              value: row.readNullable<double>('value'),
+              globalValues: globalValues,
+            ),
+          ),
+      ];
+    }
+
+    final coefficients =
+        await (_database.select(_database.formulaCoefficients)
+              ..where((table) => table.formulaId.equals(formulaId))
+              ..orderBy([(table) => OrderingTerm.asc(table.symbol)]))
+            .get();
+
     return [
-      for (final row in rows)
+      for (final coefficient in coefficients)
         DataExportCoefficient(
-          symbol: row.read<String>('symbol'),
-          label: row.read<String>('label'),
-          value: row.readNullable<double>('value'),
+          symbol: coefficient.symbol,
+          label: coefficient.label,
+          value: _effectiveCoefficientValue(
+            formulaId: formulaId,
+            symbol: coefficient.symbol,
+            value: coefficient.value,
+            globalValues: globalValues,
+          ),
         ),
     ];
+  }
+
+  Future<Map<String, double?>> _globalCoefficientValues(
+    String formulaId,
+  ) async {
+    final coefficients = await (_database.select(
+      _database.formulaCoefficients,
+    )..where((table) => table.formulaId.equals(formulaId))).get();
+    return {
+      for (final coefficient in coefficients)
+        coefficient.symbol: coefficient.value,
+    };
+  }
+
+  double? _effectiveCoefficientValue({
+    required String formulaId,
+    required String symbol,
+    required double? value,
+    required Map<String, double?> globalValues,
+  }) {
+    return value ??
+        globalValues[symbol] ??
+        ForestVolumeCalculator.defaultCoefficientValue(
+          formulaId: formulaId,
+          symbol: symbol,
+        );
   }
 
   Future<List<DataExportStandOption>> _standOptionsForRun({
@@ -710,6 +832,19 @@ Future<List<int>> _pdfBytes(DataExportDataset dataset) async {
           ['Parcelas coletadas', dataset.collectedPlotCount.toString()],
           ['Árvores medidas', dataset.treeCount.toString()],
           ['Área medida', '${_decimal(dataset.measuredAreaHa)} ha'],
+          ['Árvores/ha', _nullableDecimal(dataset.treesPerHa)],
+          [
+            'Volume amostrado',
+            '${_decimalPrecision(dataset.sampleVolumeM3, fractionDigits: 4)} m³',
+          ],
+          [
+            'Volume/ha',
+            _nullableDecimal(dataset.volumePerHaM3, suffix: ' m³/ha'),
+          ],
+          [
+            'Volume estimado total',
+            _nullableDecimal(dataset.estimatedVolumeM3, suffix: ' m³'),
+          ],
           ['DAP médio', _nullableDecimal(dataset.averageDapCm, suffix: ' cm')],
           [
             'Altura média',
@@ -735,6 +870,10 @@ Future<List<int>> _pdfBytes(DataExportDataset dataset) async {
             'Modelo',
             'Parcelas',
             'Árvores',
+            'N/ha',
+            'Vol./ha',
+            'Vol. estimado',
+            'Equiv.',
             'DAP médio',
             'Alt. média',
           ],
@@ -747,6 +886,10 @@ Future<List<int>> _pdfBytes(DataExportDataset dataset) async {
                 stand.formula?.name ?? 'Sem modelo',
                 '${stand.option.collectedPlotCount}/${stand.option.plotCount}',
                 stand.treeCount.toString(),
+                _nullableDecimal(stand.treesPerHa),
+                _nullableDecimal(stand.volumePerHaM3, suffix: ' m³/ha'),
+                _nullableDecimal(stand.estimatedVolumeM3, suffix: ' m³'),
+                _convertedStandVolumeLabel(stand),
                 _nullableDecimal(stand.averageDapCm, suffix: ' cm'),
                 _nullableDecimal(stand.averageHeightM, suffix: ' m'),
               ],
@@ -788,6 +931,7 @@ Future<List<int>> _pdfBytes(DataExportDataset dataset) async {
                 'Status',
                 'Área (ha)',
                 'Árvores',
+                'Vol. amostral',
                 'DAP médio',
                 'Alt. média',
                 'GPS',
@@ -799,6 +943,7 @@ Future<List<int>> _pdfBytes(DataExportDataset dataset) async {
                     _plotStatusLabel(plot.plot.status),
                     _nullableDecimal(plot.plot.areaHa),
                     plot.trees.length.toString(),
+                    _nullableDecimal(_plotVolumeM3(stand, plot), suffix: ' m³'),
                     _nullableDecimal(_averageDap(plot.trees), suffix: ' cm'),
                     _nullableDecimal(_averageHeight(plot.trees), suffix: ' m'),
                     plot.geoPoints.length.toString(),
@@ -833,6 +978,11 @@ List<int> _csvBytes(DataExportDataset dataset) {
         'Árvore',
         'DAP (cm)',
         'Altura (m)',
+        'Volume árvore (m³)',
+        'Volume/ha talhão (m³/ha)',
+        'Volume estimado talhão (m³)',
+        'Equivalente talhão',
+        'Unidade equivalente',
         'Tronco torto',
         'Latitude árvore',
         'Longitude árvore',
@@ -873,6 +1023,11 @@ List<int> _csvBytes(DataExportDataset dataset) {
             '',
             '',
             '',
+            '',
+            '',
+            '',
+            '',
+            '',
             _referenceLabel(firstPoint?.referencePosition),
             _nullableCoordinate(firstPoint?.latitude),
             _nullableCoordinate(firstPoint?.longitude),
@@ -906,6 +1061,11 @@ List<int> _csvBytes(DataExportDataset dataset) {
             'Árvore ${tree.number}',
             _decimal(tree.dapCm),
             _decimal(tree.heightM),
+            _decimalPrecision(stand.treeVolumeM3(tree), fractionDigits: 5),
+            _nullableDecimal(stand.volumePerHaM3),
+            _nullableDecimal(stand.estimatedVolumeM3),
+            _nullableDecimal(stand.convertedEstimatedVolume),
+            stand.conversion.unit,
             tree.hasTortuousStem ? 'Sim' : 'Não',
             _nullableCoordinate(tree.latitude),
             _nullableCoordinate(tree.longitude),
@@ -959,6 +1119,12 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
         'Parcelas coletadas',
         'Árvores',
         'Área medida (ha)',
+        'Árvores/ha',
+        'Volume amostrado (m³)',
+        'Volume/ha (m³/ha)',
+        'Volume estimado (m³)',
+        'Equivalente',
+        'Unidade equivalente',
         'DAP médio (cm)',
         'Altura média (m)',
       ]),
@@ -980,6 +1146,12 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
         stand.option.collectedPlotCount,
         stand.treeCount,
         stand.measuredAreaHa,
+        stand.treesPerHa,
+        stand.sampleVolumeM3,
+        stand.volumePerHaM3,
+        stand.estimatedVolumeM3,
+        stand.convertedEstimatedVolume,
+        stand.conversion.unit,
         stand.averageDapCm,
         stand.averageHeightM,
       ]),
@@ -996,6 +1168,7 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
       'Árvore',
       'DAP (cm)',
       'Altura (m)',
+      'Volume (m³)',
       'Tronco torto',
       'Latitude',
       'Longitude',
@@ -1031,6 +1204,7 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
             tree.number,
             tree.dapCm,
             tree.heightM,
+            stand.treeVolumeM3(tree),
             tree.hasTortuousStem ? 'Sim' : 'Não',
             tree.latitude,
             tree.longitude,
@@ -1154,7 +1328,7 @@ List<int> _kmlBytes(DataExportDataset dataset) {
 <Placemark>
   <name>${_xml('${stand.option.stand.identification} - ${plot.plot.identification} - Árvore ${tree.number}')}</name>
   <styleUrl>#treePoint</styleUrl>
-  <description>${_xml('DAP ${_decimal(tree.dapCm)} cm | Altura ${_decimal(tree.heightM)} m | ${tree.hasTortuousStem ? 'Tronco torto' : 'Tronco normal'}')}</description>
+  <description>${_xml('DAP ${_decimal(tree.dapCm)} cm | Altura ${_decimal(tree.heightM)} m | Volume ${_decimalPrecision(stand.treeVolumeM3(tree), fractionDigits: 5)} m³ | ${tree.hasTortuousStem ? 'Tronco torto' : 'Tronco normal'}')}</description>
   <Point><coordinates>${_coordinateValue(tree.longitude!)},${_coordinateValue(tree.latitude!)},0</coordinates></Point>
 </Placemark>
 ''');
@@ -1291,7 +1465,11 @@ String _dateTime(DateTime value) {
 }
 
 String _decimal(double value) {
-  return value.toStringAsFixed(2).replaceAll('.', ',');
+  return _decimalPrecision(value);
+}
+
+String _decimalPrecision(double value, {int fractionDigits = 2}) {
+  return value.toStringAsFixed(fractionDigits).replaceAll('.', ',');
 }
 
 String _nullableDecimal(double? value, {String suffix = ''}) {
@@ -1318,6 +1496,24 @@ double? _averageHeight(List<TreeRecord> trees) {
   if (trees.isEmpty) return null;
   return trees.fold<double>(0, (total, tree) => total + tree.heightM) /
       trees.length;
+}
+
+double? _plotVolumeM3(
+  DataExportStandDataset stand,
+  DataExportPlotDataset plot,
+) {
+  if (plot.trees.isEmpty) return null;
+  return plot.trees.fold<double>(
+    0,
+    (total, tree) => total + stand.treeVolumeM3(tree),
+  );
+}
+
+String _convertedStandVolumeLabel(DataExportStandDataset stand) {
+  if (stand.conversion.unit == 'm3') return '';
+  final value = stand.convertedEstimatedVolume;
+  if (value == null) return '';
+  return '${_decimal(value)} ${stand.conversion.unit}';
 }
 
 String _inventoryStatusLabel(InventoryRunStatus status) {

@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../forest/forest_volume_calculator.dart';
+
 part 'dendro_database.g.dart';
 
 enum InventoryRunStatus { planning, inProgress, completed }
@@ -272,7 +274,7 @@ class DendroDatabase extends _$DendroDatabase {
     : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -288,6 +290,9 @@ class DendroDatabase extends _$DendroDatabase {
       }
       if (from < 3) {
         await _createActivityLogsTable();
+      }
+      if (from < 4) {
+        await _applyEngineerFormulaDefaults();
       }
     },
   );
@@ -319,6 +324,51 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 ''');
   }
 
+  Future<void> _applyEngineerFormulaDefaults() async {
+    await customUpdate(
+      '''
+UPDATE formula_coefficients
+SET value = ?
+WHERE id = ?
+  AND value IS NULL
+''',
+      variables: [
+        const Variable<double>(ForestVolumeCalculator.defaultSpurrA),
+        const Variable<String>('formula_spurr_a'),
+      ],
+      updates: {formulaCoefficients},
+    );
+    await customUpdate(
+      '''
+UPDATE formula_coefficients
+SET value = ?
+WHERE id = ?
+  AND value IS NULL
+''',
+      variables: [
+        const Variable<double>(ForestVolumeCalculator.defaultSpurrB),
+        const Variable<String>('formula_spurr_b'),
+      ],
+      updates: {formulaCoefficients},
+    );
+    await customUpdate(
+      '''
+UPDATE formulas
+SET description = ?
+WHERE id = ?
+  AND (description IS NULL OR description = ?)
+''',
+      variables: [
+        const Variable<String>(
+          'Modelo volumétrico usado como padrão para Pinus e Eucalyptus no inventário de referência.',
+        ),
+        const Variable<String>('formula_spurr'),
+        const Variable<String>('Modelo volumétrico configurável.'),
+      ],
+      updates: {formulas},
+    );
+  }
+
   Future<void> seedInitialCatalogs() async {
     final now = DateTime.now();
 
@@ -348,7 +398,9 @@ CREATE TABLE IF NOT EXISTS activity_logs (
         FormulasCompanion.insert(
           id: 'formula_spurr',
           name: 'Modelo de Spurr',
-          description: const Value('Modelo volumétrico configurável.'),
+          description: const Value(
+            'Modelo volumétrico usado como padrão para Pinus e Eucalyptus no inventário de referência.',
+          ),
           expression: 'a + b * (D^2 * H)',
           createdAt: now,
           updatedAt: now,
@@ -408,12 +460,14 @@ CREATE TABLE IF NOT EXISTS activity_logs (
           formulaId: 'formula_spurr',
           symbol: 'a',
           label: 'Coeficiente a',
+          value: ForestVolumeCalculator.defaultSpurrA,
         ),
         _coefficient(
           id: 'formula_spurr_b',
           formulaId: 'formula_spurr',
           symbol: 'b',
           label: 'Coeficiente b',
+          value: ForestVolumeCalculator.defaultSpurrB,
         ),
         _coefficient(
           id: 'formula_schumacher_hall_a',
@@ -460,6 +514,8 @@ CREATE TABLE IF NOT EXISTS activity_logs (
         ),
       ]);
     });
+
+    await _applyEngineerFormulaDefaults();
   }
 }
 
@@ -488,12 +544,14 @@ FormulaCoefficientsCompanion _coefficient({
   required String formulaId,
   required String symbol,
   required String label,
+  double? value,
 }) {
   return FormulaCoefficientsCompanion.insert(
     id: id,
     formulaId: formulaId,
     symbol: symbol,
     label: label,
+    value: Value(value),
   );
 }
 

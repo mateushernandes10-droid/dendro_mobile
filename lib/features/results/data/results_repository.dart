@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/dendro_database.dart';
+import '../../../core/forest/forest_volume_calculator.dart';
 import '../../../core/providers/database_providers.dart';
 
 final resultsRepositoryProvider = Provider<ResultsRepository>((ref) {
@@ -94,6 +95,10 @@ class ResultsDashboard {
     required this.measuredAreaHa,
     required this.averageDapCm,
     required this.averageHeightM,
+    required this.sampleVolumeM3,
+    required this.volumePerHaM3,
+    required this.estimatedVolumeM3,
+    required this.treesPerHa,
     required this.diameterClasses,
     required this.stands,
   });
@@ -105,6 +110,10 @@ class ResultsDashboard {
   final double measuredAreaHa;
   final double? averageDapCm;
   final double? averageHeightM;
+  final double sampleVolumeM3;
+  final double? volumePerHaM3;
+  final double? estimatedVolumeM3;
+  final double? treesPerHa;
   final List<DiameterClassSummary> diameterClasses;
   final List<ResultsStandSummary> stands;
 
@@ -136,6 +145,13 @@ class ResultsStandSummary {
     required this.measuredAreaHa,
     required this.averageDapCm,
     required this.averageHeightM,
+    required this.sampleVolumeM3,
+    required this.volumePerHaM3,
+    required this.estimatedVolumeM3,
+    required this.convertedEstimatedVolume,
+    required this.convertedVolumePerHa,
+    required this.convertedUnit,
+    required this.treesPerHa,
   });
 
   final StandRecord stand;
@@ -147,6 +163,13 @@ class ResultsStandSummary {
   final double measuredAreaHa;
   final double? averageDapCm;
   final double? averageHeightM;
+  final double sampleVolumeM3;
+  final double? volumePerHaM3;
+  final double? estimatedVolumeM3;
+  final double? convertedEstimatedVolume;
+  final double? convertedVolumePerHa;
+  final String convertedUnit;
+  final double? treesPerHa;
 }
 
 class ResultsRepository {
@@ -238,6 +261,12 @@ class ResultsRepository {
               _database.talhaoLevantamentos.speciesId,
             ),
           ),
+          innerJoin(
+            _database.formulas,
+            _database.formulas.id.equalsExp(
+              _database.talhaoLevantamentos.formulaId,
+            ),
+          ),
           leftOuterJoin(
             _database.trees,
             _database.trees.plotId.equalsExp(_database.plots.id),
@@ -265,14 +294,15 @@ class ResultsRepository {
       query.where(conditions.reduce((value, element) => value & element));
     }
 
-    return query.watch().map(_dashboardFromRows);
+    return query.watch().asyncMap(_dashboardFromRows);
   }
 
-  ResultsDashboard _dashboardFromRows(List<TypedResult> rows) {
+  Future<ResultsDashboard> _dashboardFromRows(List<TypedResult> rows) async {
     final seenPlots = <String>{};
     final seenTrees = <String>{};
     final diameterBuckets = <int, int>{};
     final standsById = <String, _StandResultsAccumulator>{};
+    final coefficientCache = <String, Map<String, double?>>{};
 
     var plotCount = 0;
     var collectedPlotCount = 0;
@@ -281,16 +311,24 @@ class ResultsRepository {
     var measuredAreaHa = 0.0;
     var dapSum = 0.0;
     var heightSum = 0.0;
+    var sampleVolumeM3 = 0.0;
 
     for (final row in rows) {
       final plot = row.readTable(_database.plots);
+      final talhao = row.readTable(_database.talhaoLevantamentos);
       final stand = row.readTable(_database.stands);
       final species = row.readTable(_database.species);
+      final formula = row.readTable(_database.formulas);
       final tree = row.readTableOrNull(_database.trees);
 
       final standAccumulator = standsById.putIfAbsent(
-        stand.id,
-        () => _StandResultsAccumulator(stand: stand, species: species),
+        talhao.id,
+        () => _StandResultsAccumulator(
+          talhao: talhao,
+          stand: stand,
+          species: species,
+          formula: formula,
+        ),
       );
 
       if (seenPlots.add(plot.id)) {
@@ -311,7 +349,25 @@ class ResultsRepository {
       treeCount++;
       dapSum += tree.dapCm;
       heightSum += tree.heightM;
-      standAccumulator.addTree(tree);
+      final coefficients = coefficientCache.putIfAbsent(
+        talhao.id,
+        () => const <String, double?>{},
+      );
+      if (coefficients.isEmpty) {
+        coefficientCache[talhao.id] = await _coefficientsForTalhao(
+          talhaoLevantamentoId: talhao.id,
+          formulaId: talhao.formulaId,
+        );
+      }
+      final treeVolumeM3 = ForestVolumeCalculator.treeVolumeM3(
+        dapCm: tree.dapCm,
+        heightM: tree.heightM,
+        coefficients: coefficientCache[talhao.id]!,
+        formulaId: formula.id,
+        formulaExpression: formula.expression,
+      );
+      sampleVolumeM3 += treeVolumeM3;
+      standAccumulator.addTree(tree, treeVolumeM3);
 
       final bucketStart = (tree.dapCm ~/ 5) * 5;
       diameterBuckets[bucketStart] = (diameterBuckets[bucketStart] ?? 0) + 1;
@@ -332,6 +388,10 @@ class ResultsRepository {
       ..sort(
         (a, b) => a.stand.identification.compareTo(b.stand.identification),
       );
+    final estimatedVolumeM3 = stands.fold<double>(
+      0,
+      (total, stand) => total + (stand.estimatedVolumeM3 ?? 0),
+    );
 
     return ResultsDashboard(
       plotCount: plotCount,
@@ -341,17 +401,61 @@ class ResultsRepository {
       measuredAreaHa: measuredAreaHa,
       averageDapCm: treeCount == 0 ? null : dapSum / treeCount,
       averageHeightM: treeCount == 0 ? null : heightSum / treeCount,
+      sampleVolumeM3: sampleVolumeM3,
+      volumePerHaM3: measuredAreaHa == 0
+          ? null
+          : sampleVolumeM3 / measuredAreaHa,
+      estimatedVolumeM3: measuredAreaHa == 0 ? null : estimatedVolumeM3,
+      treesPerHa: measuredAreaHa == 0 ? null : treeCount / measuredAreaHa,
       diameterClasses: diameterClasses,
       stands: stands,
     );
   }
+
+  Future<Map<String, double?>> _coefficientsForTalhao({
+    required String talhaoLevantamentoId,
+    required String formulaId,
+  }) async {
+    final rows = await _database
+        .customSelect(
+          '''
+SELECT symbol, value
+FROM talhao_formula_coefficients
+WHERE talhao_levantamento_id = ?
+''',
+          variables: [Variable<String>(talhaoLevantamentoId)],
+          readsFrom: {_database.talhaoLevantamentos},
+        )
+        .get();
+
+    final values = {
+      for (final row in rows)
+        row.read<String>('symbol'): row.readNullable<double>('value'),
+    };
+    if (values.isNotEmpty) return values;
+
+    final globalRows = await (_database.select(
+      _database.formulaCoefficients,
+    )..where((table) => table.formulaId.equals(formulaId))).get();
+    return {
+      for (final coefficient in globalRows)
+        coefficient.symbol: coefficient.value,
+    };
+  }
 }
 
 class _StandResultsAccumulator {
-  _StandResultsAccumulator({required this.stand, required this.species});
+  _StandResultsAccumulator({
+    required this.talhao,
+    required this.stand,
+    required this.species,
+    required this.formula,
+  });
 
+  final TalhaoLevantamentoRecord talhao;
   final StandRecord stand;
   final SpeciesRecord species;
+  final FormulaRecord formula;
   int plotCount = 0;
   int collectedPlotCount = 0;
   int measuredPlotCount = 0;
@@ -359,6 +463,7 @@ class _StandResultsAccumulator {
   double measuredAreaHa = 0;
   double dapSum = 0;
   double heightSum = 0;
+  double sampleVolumeM3 = 0;
 
   void addPlot(PlotRecord plot) {
     plotCount++;
@@ -371,13 +476,23 @@ class _StandResultsAccumulator {
     }
   }
 
-  void addTree(TreeRecord tree) {
+  void addTree(TreeRecord tree, double volumeM3) {
     treeCount++;
     dapSum += tree.dapCm;
     heightSum += tree.heightM;
+    sampleVolumeM3 += volumeM3;
   }
 
   ResultsStandSummary toSummary() {
+    final volumePerHaM3 = measuredAreaHa == 0
+        ? null
+        : sampleVolumeM3 / measuredAreaHa;
+    final estimatedVolumeM3 = volumePerHaM3 == null
+        ? null
+        : volumePerHaM3 * stand.areaHa;
+    final conversion = ForestVolumeCalculator.conversionForSpecies(
+      species.name,
+    );
     return ResultsStandSummary(
       stand: stand,
       species: species,
@@ -388,6 +503,17 @@ class _StandResultsAccumulator {
       measuredAreaHa: measuredAreaHa,
       averageDapCm: treeCount == 0 ? null : dapSum / treeCount,
       averageHeightM: treeCount == 0 ? null : heightSum / treeCount,
+      sampleVolumeM3: sampleVolumeM3,
+      volumePerHaM3: volumePerHaM3,
+      estimatedVolumeM3: estimatedVolumeM3,
+      convertedEstimatedVolume: estimatedVolumeM3 == null
+          ? null
+          : conversion.convert(estimatedVolumeM3),
+      convertedVolumePerHa: volumePerHaM3 == null
+          ? null
+          : conversion.convert(volumePerHaM3),
+      convertedUnit: conversion.unit,
+      treesPerHa: measuredAreaHa == 0 ? null : treeCount / measuredAreaHa,
     );
   }
 }
