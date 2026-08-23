@@ -236,6 +236,8 @@ class StandsRepository {
     int? plantingYear,
     String? spacing,
     String? managementRegime,
+    double? plotWidthM,
+    double? plotLengthM,
     String? notes,
   }) async {
     final id = _uuid.v4();
@@ -256,6 +258,8 @@ class StandsRepository {
               plantingYear: Value(plantingYear),
               spacing: Value(_blankToNull(spacing)),
               managementRegime: Value(_blankToNull(managementRegime)),
+              plotWidthM: Value(plotWidthM),
+              plotLengthM: Value(plotLengthM),
               notes: Value(_blankToNull(notes)),
               createdAt: now,
               updatedAt: now,
@@ -283,6 +287,8 @@ class StandsRepository {
     int? plantingYear,
     String? spacing,
     String? managementRegime,
+    double? plotWidthM,
+    double? plotLengthM,
     String? notes,
   }) async {
     final current = await _standById(id);
@@ -303,6 +309,8 @@ class StandsRepository {
           plantingYear: Value(plantingYear),
           spacing: Value(_blankToNull(spacing)),
           managementRegime: Value(_blankToNull(managementRegime)),
+          plotWidthM: Value(plotWidthM),
+          plotLengthM: Value(plotLengthM),
           notes: Value(_blankToNull(notes)),
           updatedAt: Value(now),
         ),

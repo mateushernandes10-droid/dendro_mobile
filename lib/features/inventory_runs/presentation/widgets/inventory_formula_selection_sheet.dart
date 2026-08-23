@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/dendro_theme.dart';
 import '../../../../core/database/dendro_database.dart';
+import '../../../../core/forest/forest_volume_calculator.dart';
 import '../../../../shared/widgets/dendro_widgets.dart';
 import '../../../settings/data/settings_repository.dart';
 import '../../data/inventory_formula_selection.dart';
@@ -57,6 +58,9 @@ class _InventoryFormulaSelectionSheetState
   Widget build(BuildContext context) {
     final formulasAsync = ref.watch(settingsFormulasProvider);
     final linksAsync = ref.watch(settingsSpeciesFormulasProvider);
+    final speciesCoefficientsAsync = ref.watch(
+      settingsSpeciesFormulaCoefficientsProvider,
+    );
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Padding(
@@ -69,16 +73,29 @@ class _InventoryFormulaSelectionSheetState
               child: Center(child: CircularProgressIndicator()),
             );
           }
-          if (linksAsync.hasError) {
+          if (speciesCoefficientsAsync.isLoading &&
+              !speciesCoefficientsAsync.hasValue) {
+            return const Padding(
+              padding: EdgeInsets.fromLTRB(18, 0, 18, 18),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (linksAsync.hasError || speciesCoefficientsAsync.hasError) {
             return Padding(
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
               child: _FormulaSelectionError(
-                onRetry: () => ref.invalidate(settingsSpeciesFormulasProvider),
+                onRetry: () {
+                  ref.invalidate(settingsSpeciesFormulasProvider);
+                  ref.invalidate(settingsSpeciesFormulaCoefficientsProvider);
+                },
               ),
             );
           }
 
           final links = linksAsync.value ?? const [];
+          final speciesCoefficients =
+              speciesCoefficientsAsync.value ??
+              const <SpeciesFormulaCoefficientRecord>[];
           final linkedFormulaIds = links
               .where((link) => link.speciesId == widget.speciesId)
               .map((link) => link.formulaId)
@@ -93,7 +110,7 @@ class _InventoryFormulaSelectionSheetState
           _ensureSelectedFormula(availableFormulas, links);
 
           final selectedFormula = _selectedFormula(availableFormulas);
-          _prepareCoefficientControllers(selectedFormula);
+          _prepareCoefficientControllers(selectedFormula, speciesCoefficients);
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
@@ -232,7 +249,10 @@ class _InventoryFormulaSelectionSheetState
     return null;
   }
 
-  void _prepareCoefficientControllers(FormulaSummary? selectedFormula) {
+  void _prepareCoefficientControllers(
+    FormulaSummary? selectedFormula,
+    List<SpeciesFormulaCoefficientRecord> speciesCoefficients,
+  ) {
     if (selectedFormula == null) return;
     if (_lastPreparedFormulaId == selectedFormula.formula.id) return;
 
@@ -245,14 +265,25 @@ class _InventoryFormulaSelectionSheetState
         selectedFormula.formula.id == widget.initialSelection?.formulaId
         ? widget.initialSelection!.coefficientValuesBySymbol
         : const <String, double?>{};
+    final speciesValues = {
+      for (final coefficient in speciesCoefficients)
+        if (coefficient.speciesId == widget.speciesId &&
+            coefficient.formulaId == selectedFormula.formula.id)
+          coefficient.symbol: coefficient.value,
+    };
 
     for (final coefficient in selectedFormula.coefficients) {
       final value = initialValues.containsKey(coefficient.symbol)
           ? initialValues[coefficient.symbol]
-          : coefficient.value;
+          : speciesValues[coefficient.symbol] ??
+                coefficient.value ??
+                ForestVolumeCalculator.defaultCoefficientValue(
+                  formulaId: selectedFormula.formula.id,
+                  symbol: coefficient.symbol,
+                );
 
       _controllers[coefficient.symbol] = TextEditingController(
-        text: value == null ? '' : _formatNumber(value, decimals: 6),
+        text: value == null ? '' : _formatNumber(value),
       );
     }
 
@@ -479,8 +510,4 @@ Object? _parseOptionalDouble(String value) {
 
 const _invalidDouble = Object();
 
-String _formatNumber(double value, {int decimals = 2}) {
-  final fixed = value.toStringAsFixed(decimals);
-  final normalized = fixed.replaceFirst(RegExp(r'\.?0+$'), '');
-  return normalized.replaceAll('.', ',');
-}
+String _formatNumber(double value) => value.toString().replaceAll('.', ',');

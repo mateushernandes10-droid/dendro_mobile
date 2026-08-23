@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/database/dendro_database.dart';
+import '../../../core/forest/forest_volume_calculator.dart';
 import '../../../core/providers/database_providers.dart';
 import '../../activity_log/data/activity_log_repository.dart';
 
@@ -24,6 +25,13 @@ final settingsFormulasProvider =
 final settingsSpeciesFormulasProvider =
     StreamProvider.autoDispose<List<SpeciesFormulaRecord>>((ref) {
       return ref.watch(settingsRepositoryProvider).watchSpeciesFormulas();
+    });
+
+final settingsSpeciesFormulaCoefficientsProvider =
+    StreamProvider.autoDispose<List<SpeciesFormulaCoefficientRecord>>((ref) {
+      return ref
+          .watch(settingsRepositoryProvider)
+          .watchSpeciesFormulaCoefficients();
     });
 
 class FormulaSummary {
@@ -71,6 +79,16 @@ class SettingsRepository {
 
   Stream<List<SpeciesFormulaRecord>> watchSpeciesFormulas() {
     return _database.select(_database.speciesFormulas).watch();
+  }
+
+  Stream<List<SpeciesFormulaCoefficientRecord>>
+  watchSpeciesFormulaCoefficients() {
+    return (_database.select(_database.speciesFormulaCoefficients)..orderBy([
+          (table) => OrderingTerm.asc(table.speciesId),
+          (table) => OrderingTerm.asc(table.formulaId),
+          (table) => OrderingTerm.asc(table.symbol),
+        ]))
+        .watch();
   }
 
   Stream<List<FormulaSummary>> watchFormulas() {
@@ -311,6 +329,46 @@ class SettingsRepository {
     });
   }
 
+  Future<void> updateSpeciesFormulaCoefficientValues({
+    required String speciesId,
+    required String formulaId,
+    required Map<String, double?> valuesBySymbol,
+  }) {
+    return _database.transaction(() async {
+      await _ensureSpeciesFormulaCoefficientRows(
+        speciesId: speciesId,
+        formulaId: formulaId,
+      );
+
+      final now = DateTime.now();
+      final formula = await _formulaById(formulaId);
+
+      for (final entry in valuesBySymbol.entries) {
+        await (_database.update(_database.speciesFormulaCoefficients)..where(
+              (table) =>
+                  table.speciesId.equals(speciesId) &
+                  table.formulaId.equals(formulaId) &
+                  table.symbol.equals(entry.key),
+            ))
+            .write(
+              SpeciesFormulaCoefficientsCompanion(
+                value: Value(entry.value),
+                updatedAt: Value(now),
+              ),
+            );
+      }
+
+      await _activityLog.record(
+        type: ActivityLogType.formulaCoefficientsUpdated,
+        title: 'Coeficientes da especie atualizados',
+        subtitle: await _speciesFormulaSubtitle(speciesId, formulaId),
+        entityType: ActivityEntityType.formula,
+        entityId: formula?.id ?? formulaId,
+        occurredAt: now,
+      );
+    });
+  }
+
   Future<void> setSpeciesFormulaLinked({
     required String speciesId,
     required String formulaId,
@@ -324,6 +382,10 @@ class SettingsRepository {
 
       if (linked) {
         await _ensureSpeciesFormulaLinked(
+          speciesId: speciesId,
+          formulaId: formulaId,
+        );
+        await _ensureSpeciesFormulaCoefficientRows(
           speciesId: speciesId,
           formulaId: formulaId,
         );
@@ -473,6 +535,8 @@ class SettingsRepository {
         );
       }
     }
+
+    await _syncSpeciesFormulaCoefficientsForFormula(formulaId);
   }
 
   Future<void> _touchFormula(String formulaId) {
@@ -554,6 +618,109 @@ class SettingsRepository {
         );
   }
 
+  Future<void> _syncSpeciesFormulaCoefficientsForFormula(
+    String formulaId,
+  ) async {
+    final definitions = await _coefficientsForFormula(formulaId);
+    final definitionSymbols = definitions.map((item) => item.symbol).toSet();
+    final existing = await (_database.select(
+      _database.speciesFormulaCoefficients,
+    )..where((table) => table.formulaId.equals(formulaId))).get();
+
+    for (final coefficient in existing) {
+      if (!definitionSymbols.contains(coefficient.symbol)) {
+        await (_database.delete(
+          _database.speciesFormulaCoefficients,
+        )..where((table) => table.id.equals(coefficient.id))).go();
+      }
+    }
+
+    final links = await (_database.select(
+      _database.speciesFormulas,
+    )..where((table) => table.formulaId.equals(formulaId))).get();
+
+    for (final link in links) {
+      await _ensureSpeciesFormulaCoefficientRows(
+        speciesId: link.speciesId,
+        formulaId: formulaId,
+        definitions: definitions,
+      );
+    }
+  }
+
+  Future<void> _ensureSpeciesFormulaCoefficientRows({
+    required String speciesId,
+    required String formulaId,
+    List<FormulaCoefficientRecord>? definitions,
+  }) async {
+    final coefficientDefinitions =
+        definitions ?? await _coefficientsForFormula(formulaId);
+    final existing =
+        await (_database.select(_database.speciesFormulaCoefficients)..where(
+              (table) =>
+                  table.speciesId.equals(speciesId) &
+                  table.formulaId.equals(formulaId),
+            ))
+            .get();
+    final existingBySymbol = {
+      for (final coefficient in existing) coefficient.symbol: coefficient,
+    };
+    final definitionSymbols = coefficientDefinitions
+        .map((item) => item.symbol)
+        .toSet();
+    final now = DateTime.now();
+
+    for (final coefficient in existing) {
+      if (!definitionSymbols.contains(coefficient.symbol)) {
+        await (_database.delete(
+          _database.speciesFormulaCoefficients,
+        )..where((table) => table.id.equals(coefficient.id))).go();
+      }
+    }
+
+    for (final definition in coefficientDefinitions) {
+      final existing = existingBySymbol[definition.symbol];
+      final defaultValue =
+          definition.value ??
+          ForestVolumeCalculator.defaultCoefficientValue(
+            formulaId: formulaId,
+            symbol: definition.symbol,
+          );
+
+      if (existing == null) {
+        await _database
+            .into(_database.speciesFormulaCoefficients)
+            .insert(
+              SpeciesFormulaCoefficientsCompanion.insert(
+                id: _speciesFormulaCoefficientId(
+                  speciesId,
+                  formulaId,
+                  definition.symbol,
+                ),
+                speciesId: speciesId,
+                formulaId: formulaId,
+                symbol: definition.symbol,
+                label: definition.label,
+                value: Value(defaultValue),
+                updatedAt: now,
+              ),
+            );
+      } else {
+        await (_database.update(
+          _database.speciesFormulaCoefficients,
+        )..where((table) => table.id.equals(existing.id))).write(
+          SpeciesFormulaCoefficientsCompanion(
+            label: Value(definition.label),
+            value: existing.value == null
+                ? Value(defaultValue)
+                : const Value.absent(),
+            updatedAt: Value(now),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _ensureSpeciesHasDefaultFormula(String speciesId) async {
     final formulas =
         await (_database.select(_database.speciesFormulas)
@@ -570,6 +737,14 @@ class SettingsRepository {
         ))
         .write(const SpeciesFormulasCompanion(isDefault: Value(true)));
   }
+}
+
+String _speciesFormulaCoefficientId(
+  String speciesId,
+  String formulaId,
+  String symbol,
+) {
+  return '${speciesId}_${formulaId}_$symbol';
 }
 
 List<String> _normalizeSymbols(List<String> symbols) {

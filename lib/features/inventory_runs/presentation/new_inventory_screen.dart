@@ -845,6 +845,8 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
   final _plantingYearController = TextEditingController();
   final _spacingController = TextEditingController();
   final _managementRegimeController = TextEditingController();
+  final _plotWidthController = TextEditingController();
+  final _plotLengthController = TextEditingController();
   final _notesController = TextEditingController();
   InventoryFormulaSelection? _formulaSelection;
   String? _speciesId;
@@ -857,6 +859,8 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
     _plantingYearController.dispose();
     _spacingController.dispose();
     _managementRegimeController.dispose();
+    _plotWidthController.dispose();
+    _plotLengthController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -1005,6 +1009,21 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
                 ),
               ),
               const SizedBox(height: 12),
+              PlotDimensionsInput(
+                widthController: _plotWidthController,
+                lengthController: _plotLengthController,
+                widthValidator: (value) => _plotDimensionValidator(
+                  value,
+                  _plotLengthController.text,
+                  'primeira medida',
+                ),
+                lengthValidator: (value) => _plotDimensionValidator(
+                  value,
+                  _plotWidthController.text,
+                  'segunda medida',
+                ),
+              ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
                 minLines: 2,
@@ -1051,6 +1070,8 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
             plantingYear: _parseOptionalInt(_plantingYearController.text),
             spacing: _spacingController.text,
             managementRegime: _managementRegimeController.text,
+            plotWidthM: _parseOptionalArea(_plotWidthController.text),
+            plotLengthM: _parseOptionalArea(_plotLengthController.text),
             notes: _notesController.text,
           );
 
@@ -1127,6 +1148,21 @@ class _QuickStandFormSheetState extends ConsumerState<_QuickStandFormSheet> {
     if (year < 1900 || year > DateTime.now().year + 1) {
       return 'Confira o ano';
     }
+    return null;
+  }
+
+  String? _plotDimensionValidator(
+    String? value,
+    String pairedValue,
+    String label,
+  ) {
+    final hasValue = value != null && value.trim().isNotEmpty;
+    final hasPair = pairedValue.trim().isNotEmpty;
+    if (!hasValue && !hasPair) return null;
+    if (!hasValue) return 'Informe a $label';
+
+    final parsed = _parseOptionalArea(value);
+    if (parsed == null || parsed <= 0) return 'Valor inválido';
     return null;
   }
 }
@@ -1221,6 +1257,12 @@ String _formatArea(double value) {
 
 double? _parseArea(String value) {
   return double.tryParse(value.trim().replaceAll(',', '.'));
+}
+
+double? _parseOptionalArea(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) return null;
+  return _parseArea(trimmed);
 }
 
 int? _parseOptionalInt(String value) {

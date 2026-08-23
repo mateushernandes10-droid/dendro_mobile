@@ -198,6 +198,8 @@ void main() {
         areaHa: 45.2,
         plantingYear: 2012,
         spacing: '3 x 2 m',
+        plotWidthM: 20,
+        plotLengthM: 25,
       );
 
       final stands = await standsRepository.watchByProperty(propertyId).first;
@@ -206,6 +208,8 @@ void main() {
       expect(stands.single.stand.identification, 'Talhão 42-B');
       expect(stands.single.stand.areaHa, 45.2);
       expect(stands.single.stand.plantingYear, 2012);
+      expect(stands.single.stand.plotWidthM, 20);
+      expect(stands.single.stand.plotLengthM, 25);
       expect(stands.single.species.name, 'Pinus');
       expect(stands.single.hasActiveInventory, isFalse);
     },
@@ -230,6 +234,8 @@ void main() {
       identification: 'T-01',
       speciesId: pinus.id,
       areaHa: 12.5,
+      plotWidthM: 20,
+      plotLengthM: 20,
     );
 
     final initialState = await plotsRepository.watchStandPlots(standId).first;
@@ -237,7 +243,7 @@ void main() {
     expect(initialState.stand.identification, 'T-01');
     expect(await database.select(database.inventoryRuns).get(), isEmpty);
 
-    await plotsRepository.createPlannedPlot(standId: standId, areaHa: 0.04);
+    await plotsRepository.createPlannedPlot(standId: standId);
 
     final updatedState = await plotsRepository
         .watchStandPlots(standId)
@@ -409,6 +415,71 @@ ORDER BY symbol
             .singleWhere((coefficient) => coefficient.symbol == 'a')
             .value,
         closeTo(-9.87, 0.00001),
+      );
+    },
+  );
+
+  test(
+    'levantamento usa coeficientes vinculados a especie por padrao',
+    () async {
+      final settingsRepository = SettingsRepository(database);
+      final propertiesRepository = PropertiesRepository(database);
+      final standsRepository = StandsRepository(database);
+      final plotsRepository = PlotsRepository(database);
+
+      final species = await standsRepository.watchActiveSpecies().first;
+      final pinus = species.firstWhere((item) => item.name == 'Pinus');
+      await settingsRepository.updateSpeciesFormulaCoefficientValues(
+        speciesId: pinus.id,
+        formulaId: 'formula_spurr',
+        valuesBySymbol: const {
+          'a': 0.0175858265880592,
+          'b': 0.0000329326161133665,
+        },
+      );
+
+      final propertyId = await propertiesRepository.create(
+        name: 'Fazenda Coeficiente',
+        municipality: 'Vacaria',
+        totalAreaHa: 40,
+      );
+      final standId = await standsRepository.create(
+        propertyId: propertyId,
+        identification: 'C-01',
+        speciesId: pinus.id,
+        areaHa: 10,
+      );
+
+      final talhao = await plotsRepository.startNewInventoryForStand(standId);
+      final coefficients = await database
+          .customSelect(
+            '''
+SELECT symbol, value
+FROM talhao_formula_coefficients
+WHERE talhao_levantamento_id = ?
+ORDER BY symbol
+''',
+            variables: [drift.Variable<String>(talhao.id)],
+          )
+          .get();
+
+      expect(talhao.formulaId, 'formula_spurr');
+      expect(coefficients, hasLength(2));
+      expect(
+        coefficients
+            .singleWhere(
+              (coefficient) => coefficient.read<String>('symbol') == 'a',
+            )
+            .read<double>('value'),
+        closeTo(0.0175858265880592, 0.0000000000000001),
+      );
+      expect(
+        coefficients
+            .singleWhere(
+              (coefficient) => coefficient.read<String>('symbol') == 'b',
+            )
+            .read<double>('value'),
+        closeTo(0.0000329326161133665, 0.0000000000000001),
       );
     },
   );

@@ -432,6 +432,7 @@ class DataExportRepository {
       final formula = await _formulaById(option.talhaoLevantamento.formulaId);
       final coefficients = await _coefficientsForTalhao(
         talhaoLevantamentoId: option.talhaoLevantamento.id,
+        speciesId: option.talhaoLevantamento.speciesId,
         formulaId: option.talhaoLevantamento.formulaId,
       );
 
@@ -485,6 +486,7 @@ class DataExportRepository {
 
   Future<List<DataExportCoefficient>> _coefficientsForTalhao({
     required String talhaoLevantamentoId,
+    required String speciesId,
     required String formulaId,
   }) async {
     final rows = await _database
@@ -501,6 +503,10 @@ ORDER BY symbol
         .get();
 
     final globalValues = await _globalCoefficientValues(formulaId);
+    final speciesValues = await _speciesCoefficientValues(
+      speciesId: speciesId,
+      formulaId: formulaId,
+    );
     if (rows.isNotEmpty) {
       return [
         for (final row in rows)
@@ -511,6 +517,7 @@ ORDER BY symbol
               formulaId: formulaId,
               symbol: row.read<String>('symbol'),
               value: row.readNullable<double>('value'),
+              speciesValues: speciesValues,
               globalValues: globalValues,
             ),
           ),
@@ -532,10 +539,28 @@ ORDER BY symbol
             formulaId: formulaId,
             symbol: coefficient.symbol,
             value: coefficient.value,
+            speciesValues: speciesValues,
             globalValues: globalValues,
           ),
         ),
     ];
+  }
+
+  Future<Map<String, double?>> _speciesCoefficientValues({
+    required String speciesId,
+    required String formulaId,
+  }) async {
+    final coefficients =
+        await (_database.select(_database.speciesFormulaCoefficients)..where(
+              (table) =>
+                  table.speciesId.equals(speciesId) &
+                  table.formulaId.equals(formulaId),
+            ))
+            .get();
+    return {
+      for (final coefficient in coefficients)
+        coefficient.symbol: coefficient.value,
+    };
   }
 
   Future<Map<String, double?>> _globalCoefficientValues(
@@ -554,9 +579,11 @@ ORDER BY symbol
     required String formulaId,
     required String symbol,
     required double? value,
+    required Map<String, double?> speciesValues,
     required Map<String, double?> globalValues,
   }) {
     return value ??
+        speciesValues[symbol] ??
         globalValues[symbol] ??
         ForestVolumeCalculator.defaultCoefficientValue(
           formulaId: formulaId,
@@ -972,6 +999,9 @@ List<int> _csvBytes(DataExportDataset dataset) {
         'Idade',
         'Espaçamento',
         'Regime manejo',
+        'Largura parcela (m)',
+        'Comprimento parcela (m)',
+        'Área padrão parcela (ha)',
         'Modelo',
         'Parcela',
         'Status parcela',
@@ -1017,6 +1047,9 @@ List<int> _csvBytes(DataExportDataset dataset) {
             _standAge(stand, referenceDate)?.toString() ?? '',
             stand.option.stand.spacing ?? '',
             stand.option.stand.managementRegime ?? '',
+            _nullableDecimal(stand.option.stand.plotWidthM),
+            _nullableDecimal(stand.option.stand.plotLengthM),
+            _nullableDecimal(_standDefaultPlotAreaHa(stand)),
             stand.formula?.name ?? '',
             plot.plot.identification,
             _plotStatusLabel(plot.plot.status),
@@ -1063,6 +1096,9 @@ List<int> _csvBytes(DataExportDataset dataset) {
             _standAge(stand, referenceDate)?.toString() ?? '',
             stand.option.stand.spacing ?? '',
             stand.option.stand.managementRegime ?? '',
+            _nullableDecimal(stand.option.stand.plotWidthM),
+            _nullableDecimal(stand.option.stand.plotLengthM),
+            _nullableDecimal(_standDefaultPlotAreaHa(stand)),
             stand.formula?.name ?? '',
             plot.plot.identification,
             _plotStatusLabel(plot.plot.status),
@@ -1127,6 +1163,9 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
         'Idade',
         'Espaçamento',
         'Regime manejo',
+        'Largura parcela (m)',
+        'Comprimento parcela (m)',
+        'Área padrão parcela (ha)',
         'Modelo',
         'Coeficientes',
         'Parcelas',
@@ -1154,10 +1193,13 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
         _standAge(stand, referenceDate),
         stand.option.stand.spacing ?? '',
         stand.option.stand.managementRegime ?? '',
+        stand.option.stand.plotWidthM,
+        stand.option.stand.plotLengthM,
+        _standDefaultPlotAreaHa(stand),
         stand.formula?.name ?? '',
         stand.coefficients
             .map((coefficient) {
-              return '${coefficient.symbol}=${_nullableDecimal(coefficient.value)}';
+              return '${coefficient.symbol}=${_nullableCoefficient(coefficient.value)}';
             })
             .join(' | '),
         stand.option.plotCount,
@@ -1185,6 +1227,9 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
       'Idade',
       'Espaçamento',
       'Regime manejo',
+      'Largura parcela (m)',
+      'Comprimento parcela (m)',
+      'Área padrão parcela (ha)',
       'Parcela',
       'Status parcela',
       'Árvore',
@@ -1225,6 +1270,9 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
             _standAge(stand, referenceDate),
             stand.option.stand.spacing ?? '',
             stand.option.stand.managementRegime ?? '',
+            stand.option.stand.plotWidthM,
+            stand.option.stand.plotLengthM,
+            _standDefaultPlotAreaHa(stand),
             plot.plot.identification,
             _plotStatusLabel(plot.plot.status),
             tree.number,
@@ -1424,10 +1472,13 @@ String _objectiveText(DataExportDataset dataset, DateTime referenceDate) {
 }
 
 String _methodologyText(DataExportDataset dataset) {
+  final plotDimensionText = _plotDimensionPhrase(dataset);
   final plotArea = _averagePlotAreaHa(dataset);
-  final plotAreaText = plotArea == null
-      ? 'área fixa informada durante a coleta'
-      : 'área média de ${_decimalPrecision(plotArea, fractionDigits: 4)} ha (${_decimal(plotArea * 10000)} m²)';
+  final plotAreaText =
+      plotDimensionText ??
+      (plotArea == null
+          ? 'área fixa informada durante a coleta'
+          : 'área média de ${_decimalPrecision(plotArea, fractionDigits: 4)} ha (${_decimal(plotArea * 10000)} m²)');
   final spacingText = _spacingPhrase(dataset);
 
   return 'O levantamento foi realizado pelo método de amostragem sistemática com parcelas de área fixa, preferencialmente retangulares, com $plotAreaText.$spacingText Os dados foram registrados em campo pelo aplicativo, permitindo rastreabilidade das parcelas, árvores medidas e coordenadas GPS quando informadas.';
@@ -1703,6 +1754,11 @@ String _decimalPrecision(double value, {int fractionDigits = 2}) {
   return value.toStringAsFixed(fractionDigits).replaceAll('.', ',');
 }
 
+String _decimalCompact(double value) {
+  if (value == value.roundToDouble()) return value.toStringAsFixed(0);
+  return _decimalPrecision(value);
+}
+
 String _nullableDecimal(double? value, {String suffix = ''}) {
   if (value == null) return '';
   return '${_decimal(value)}$suffix';
@@ -1849,6 +1905,39 @@ double? _averagePlotAreaHa(DataExportDataset dataset) {
   return areas.fold<double>(0, (total, area) => total + area) / areas.length;
 }
 
+String? _plotDimensionPhrase(DataExportDataset dataset) {
+  final dimensions =
+      dataset.stands
+          .map(_standPlotDimensionLabel)
+          .whereType<String>()
+          .toSet()
+          .toList()
+        ..sort();
+  if (dimensions.isEmpty) return null;
+  if (dimensions.length == 1) {
+    return 'parcelas retangulares de ${dimensions.single} metros';
+  }
+  return 'parcelas retangulares com dimensões de ${_joinHumanList(dimensions)} metros';
+}
+
+String? _standPlotDimensionLabel(DataExportStandDataset stand) {
+  final width = stand.option.stand.plotWidthM;
+  final length = stand.option.stand.plotLengthM;
+  if (width == null || length == null || width <= 0 || length <= 0) {
+    return null;
+  }
+  return '${_decimalCompact(width)} x ${_decimalCompact(length)}';
+}
+
+double? _standDefaultPlotAreaHa(DataExportStandDataset stand) {
+  final width = stand.option.stand.plotWidthM;
+  final length = stand.option.stand.plotLengthM;
+  if (width == null || length == null || width <= 0 || length <= 0) {
+    return null;
+  }
+  return width * length / 10000;
+}
+
 String _joinHumanList(List<String> values) {
   if (values.isEmpty) return '';
   if (values.length == 1) return values.single;
@@ -1886,15 +1975,23 @@ String _conversionEquation(DataExportStandDataset stand) {
 String _coefficientValue(DataExportStandDataset stand, String symbol) {
   final value = stand.coefficientValuesBySymbol[symbol];
   if (value == null) return symbol;
-  return _decimalPrecision(value, fractionDigits: value.abs() < 0.001 ? 12 : 6);
+  return _coefficientNumber(value);
 }
 
 String _coefficientList(DataExportStandDataset stand) {
   if (stand.coefficients.isEmpty) return 'não informados';
   return stand.coefficients
-      .map((item) => '${item.symbol}=${_nullableDecimal(item.value)}')
+      .map((item) => '${item.symbol}=${_nullableCoefficient(item.value)}')
       .join(' | ');
 }
+
+String _nullableCoefficient(double? value) {
+  if (value == null) return '';
+  return _coefficientNumber(value);
+}
+
+String _coefficientNumber(double value) =>
+    value.toString().replaceAll('.', ',');
 
 List<String> _technicalNotes(DataExportDataset dataset) {
   final notes = <String>[
@@ -1917,9 +2014,11 @@ List<String> _technicalNotes(DataExportDataset dataset) {
       'Há parcelas coletadas sem área informada; elas permanecem no relatório, mas não contribuem para extrapolação por hectare.',
     );
   }
-  notes.add(
-    'O sistema registra a área da parcela em hectares. Para apresentar dimensões retangulares exatas, como 20 x 25 m, é recomendado cadastrar largura e comprimento da parcela em uma etapa futura.',
-  );
+  if (dataset.stands.any((stand) => _standPlotDimensionLabel(stand) == null)) {
+    notes.add(
+      'Há talhões sem largura e comprimento padrão da parcela; nesses casos, o relatório usa a área cadastrada nas parcelas coletadas.',
+    );
+  }
   return notes;
 }
 

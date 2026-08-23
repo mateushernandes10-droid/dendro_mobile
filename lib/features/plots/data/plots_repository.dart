@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/database/dendro_database.dart';
+import '../../../core/forest/forest_volume_calculator.dart';
 import '../../../core/providers/database_providers.dart';
 import '../../activity_log/data/activity_log_repository.dart';
 import '../../inventory_runs/data/inventory_formula_selection.dart';
@@ -471,6 +472,7 @@ class PlotsRepository {
     final now = DateTime.now();
     final identification = await nextPlotIdentification(talhaoLevantamentoId);
     final context = await _readTalhaoContext(talhaoLevantamentoId);
+    final resolvedAreaHa = areaHa ?? _defaultPlotAreaHa(context.stand);
 
     await _database.transaction(() async {
       await _database
@@ -481,7 +483,7 @@ class PlotsRepository {
               talhaoLevantamentoId: talhaoLevantamentoId,
               identification: identification,
               status: PlotStatus.pending,
-              areaHa: Value(areaHa),
+              areaHa: Value(resolvedAreaHa),
               createdAt: now,
               updatedAt: now,
             ),
@@ -498,6 +500,15 @@ class PlotsRepository {
       );
     });
     return id;
+  }
+
+  double? _defaultPlotAreaHa(StandRecord stand) {
+    final width = stand.plotWidthM;
+    final length = stand.plotLengthM;
+    if (width == null || length == null || width <= 0 || length <= 0) {
+      return null;
+    }
+    return width * length / 10000;
   }
 
   Future<_StandContext> _readStandContext(String standId) async {
@@ -661,6 +672,7 @@ class PlotsRepository {
 
     await _replaceTalhaoFormulaCoefficients(
       talhaoLevantamentoId: id,
+      speciesId: species.id,
       formulaId: formulaId,
       coefficientValuesBySymbol:
           formulaSelection?.coefficientValuesBySymbol ?? const {},
@@ -689,6 +701,7 @@ class PlotsRepository {
 
     await _replaceTalhaoFormulaCoefficients(
       talhaoLevantamentoId: talhaoLevantamentoId,
+      speciesId: talhaoLevantamento.speciesId,
       formulaId: formulaSelection.formulaId,
       coefficientValuesBySymbol: formulaSelection.coefficientValuesBySymbol,
     );
@@ -697,6 +710,7 @@ class PlotsRepository {
 
   Future<void> _replaceTalhaoFormulaCoefficients({
     required String talhaoLevantamentoId,
+    required String speciesId,
     required String formulaId,
     required Map<String, double?> coefficientValuesBySymbol,
   }) async {
@@ -710,6 +724,10 @@ class PlotsRepository {
               ..where((table) => table.formulaId.equals(formulaId))
               ..orderBy([(table) => OrderingTerm.asc(table.symbol)]))
             .get();
+    final speciesValues = await _speciesFormulaCoefficientValues(
+      speciesId: speciesId,
+      formulaId: formulaId,
+    );
 
     for (final coefficient in coefficients) {
       await _database.customStatement(
@@ -725,10 +743,32 @@ VALUES (?, ?, ?, ?, ?)
           coefficient.label,
           coefficientValuesBySymbol.containsKey(coefficient.symbol)
               ? coefficientValuesBySymbol[coefficient.symbol]
-              : coefficient.value,
+              : speciesValues[coefficient.symbol] ??
+                    coefficient.value ??
+                    ForestVolumeCalculator.defaultCoefficientValue(
+                      formulaId: formulaId,
+                      symbol: coefficient.symbol,
+                    ),
         ],
       );
     }
+  }
+
+  Future<Map<String, double?>> _speciesFormulaCoefficientValues({
+    required String speciesId,
+    required String formulaId,
+  }) async {
+    final rows =
+        await (_database.select(_database.speciesFormulaCoefficients)..where(
+              (table) =>
+                  table.speciesId.equals(speciesId) &
+                  table.formulaId.equals(formulaId),
+            ))
+            .get();
+
+    return {
+      for (final coefficient in rows) coefficient.symbol: coefficient.value,
+    };
   }
 
   Future<TalhaoLevantamentoRecord> _moveTalhaoLevantamentoToRun({

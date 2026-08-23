@@ -37,7 +37,7 @@ class SettingsScreen extends StatelessWidget {
         _SettingsOptionTile(
           icon: Icons.functions,
           title: 'Modelos matemáticos',
-          subtitle: 'Fórmulas, variáveis e coeficientes de cálculo.',
+          subtitle: 'Fórmulas, variáveis e símbolos dos coeficientes.',
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -59,6 +59,9 @@ class _SpeciesSettingsScreen extends ConsumerWidget {
     final speciesAsync = ref.watch(settingsSpeciesProvider);
     final formulasAsync = ref.watch(settingsFormulasProvider);
     final speciesFormulasAsync = ref.watch(settingsSpeciesFormulasProvider);
+    final speciesFormulaCoefficientsAsync = ref.watch(
+      settingsSpeciesFormulaCoefficientsProvider,
+    );
 
     return DendroScreen(
       title: 'Cadastro de espécies',
@@ -72,17 +75,26 @@ class _SpeciesSettingsScreen extends ConsumerWidget {
       children: [
         const SectionTitle(title: 'Espécies cadastradas'),
         _CatalogState(
-          asyncValues: [speciesAsync, formulasAsync, speciesFormulasAsync],
+          asyncValues: [
+            speciesAsync,
+            formulasAsync,
+            speciesFormulasAsync,
+            speciesFormulaCoefficientsAsync,
+          ],
           onRetry: () {
             ref.invalidate(settingsSpeciesProvider);
             ref.invalidate(settingsFormulasProvider);
             ref.invalidate(settingsSpeciesFormulasProvider);
+            ref.invalidate(settingsSpeciesFormulaCoefficientsProvider);
           },
           builder: () {
             final species = speciesAsync.value ?? const <SpeciesRecord>[];
             final formulas = formulasAsync.value ?? const <FormulaSummary>[];
             final links =
                 speciesFormulasAsync.value ?? const <SpeciesFormulaRecord>[];
+            final coefficients =
+                speciesFormulaCoefficientsAsync.value ??
+                const <SpeciesFormulaCoefficientRecord>[];
 
             if (species.isEmpty) {
               return _EmptyCatalogCard(
@@ -105,6 +117,11 @@ class _SpeciesSettingsScreen extends ConsumerWidget {
                       formulas: formulas,
                       links: links
                           .where((link) => link.speciesId == item.id)
+                          .toList(),
+                      coefficients: coefficients
+                          .where(
+                            (coefficient) => coefficient.speciesId == item.id,
+                          )
                           .toList(),
                       onEdit: () => _openSpeciesForm(context, species: item),
                       onDelete: () => _confirmDeleteSpecies(context, ref, item),
@@ -431,6 +448,7 @@ class _SpeciesCard extends ConsumerWidget {
     required this.species,
     required this.formulas,
     required this.links,
+    required this.coefficients,
     required this.onEdit,
     required this.onDelete,
   });
@@ -438,6 +456,7 @@ class _SpeciesCard extends ConsumerWidget {
   final SpeciesRecord species;
   final List<FormulaSummary> formulas;
   final List<SpeciesFormulaRecord> links;
+  final List<SpeciesFormulaCoefficientRecord> coefficients;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -539,8 +558,15 @@ class _SpeciesCard extends ConsumerWidget {
           else
             for (final formula in formulas)
               _SpeciesFormulaRow(
-                formula: formula.formula,
+                speciesId: species.id,
+                summary: formula,
                 link: _linkForFormula(links, formula.formula.id),
+                coefficients: coefficients
+                    .where(
+                      (coefficient) =>
+                          coefficient.formulaId == formula.formula.id,
+                    )
+                    .toList(),
                 onLinkedChanged: (linked) async {
                   try {
                     await ref
@@ -583,25 +609,60 @@ class _SpeciesCard extends ConsumerWidget {
   }
 }
 
-class _SpeciesFormulaRow extends StatelessWidget {
+class _SpeciesFormulaRow extends ConsumerStatefulWidget {
   const _SpeciesFormulaRow({
-    required this.formula,
+    required this.speciesId,
+    required this.summary,
     required this.link,
+    required this.coefficients,
     required this.onLinkedChanged,
     required this.onSetDefault,
   });
 
-  final FormulaRecord formula;
+  final String speciesId;
+  final FormulaSummary summary;
   final SpeciesFormulaRecord? link;
+  final List<SpeciesFormulaCoefficientRecord> coefficients;
   final ValueChanged<bool> onLinkedChanged;
   final VoidCallback onSetDefault;
 
-  bool get _linked => link != null;
-  bool get _isDefault => link?.isDefault ?? false;
+  @override
+  ConsumerState<_SpeciesFormulaRow> createState() => _SpeciesFormulaRowState();
+}
+
+class _SpeciesFormulaRowState extends ConsumerState<_SpeciesFormulaRow> {
+  final Map<String, TextEditingController> _controllers = {};
+  bool _expanded = false;
+  bool _saving = false;
+
+  bool get _linked => widget.link != null;
+  bool get _isDefault => widget.link?.isDefault ?? false;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncControllers();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SpeciesFormulaRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_linked) _expanded = false;
+    _syncControllers();
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final formula = widget.summary.formula;
     final backgroundColor = _isDefault
         ? (isDark
               ? DendroColors.darkReadableField
@@ -626,69 +687,238 @@ class _SpeciesFormulaRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: borderColor),
         ),
-        child: Row(
+        child: Column(
           children: [
-            Checkbox(
-              value: _linked,
-              onChanged: (value) => onLinkedChanged(value ?? false),
-              activeColor: DendroColors.primary,
-              checkColor: Colors.white,
-              side: BorderSide(color: checkboxBorderColor, width: 1.5),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      formula.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: DendroColors.text,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      formula.expression,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: DendroColors.textMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+            Row(
+              children: [
+                Checkbox(
+                  value: _linked,
+                  onChanged: (value) => widget.onLinkedChanged(value ?? false),
+                  activeColor: DendroColors.primary,
+                  checkColor: Colors.white,
+                  side: BorderSide(color: checkboxBorderColor, width: 1.5),
                 ),
-              ),
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _linked
+                        ? () => setState(() => _expanded = !_expanded)
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            formula.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: DendroColors.text,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            formula.expression,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: DendroColors.textMuted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: _linked ? widget.onSetDefault : null,
+                  tooltip: _isDefault
+                      ? 'Fórmula padrão'
+                      : 'Definir como padrão',
+                  style: IconButton.styleFrom(
+                    foregroundColor: _isDefault
+                        ? DendroColors.warning
+                        : DendroColors.textMuted,
+                  ),
+                  icon: Icon(
+                    _isDefault ? Icons.star : Icons.star_border,
+                    color: _isDefault
+                        ? DendroColors.warning
+                        : DendroColors.textMuted,
+                  ),
+                ),
+                IconButton(
+                  onPressed: _linked
+                      ? () => setState(() => _expanded = !_expanded)
+                      : null,
+                  tooltip: _expanded ? 'Recolher' : 'Editar coeficientes',
+                  icon: Icon(
+                    _expanded ? Icons.expand_less : Icons.expand_more,
+                    color: _linked
+                        ? DendroColors.primary
+                        : DendroColors.textMuted,
+                  ),
+                ),
+              ],
             ),
-            IconButton(
-              onPressed: onSetDefault,
-              tooltip: _isDefault ? 'Fórmula padrão' : 'Definir como padrão',
-              style: IconButton.styleFrom(
-                foregroundColor: _isDefault
-                    ? DendroColors.warning
-                    : DendroColors.textMuted,
-              ),
-              icon: Icon(
-                _isDefault ? Icons.star : Icons.star_border,
-                color: _isDefault
-                    ? DendroColors.warning
-                    : DendroColors.textMuted,
-              ),
-            ),
+            if (_expanded && _linked) _CoefficientFieldsForSpecies(row: this),
           ],
         ),
       ),
     );
   }
+
+  void _syncControllers() {
+    final symbols = widget.summary.coefficients
+        .map((item) => item.symbol)
+        .toSet();
+    final valuesBySymbol = {
+      for (final coefficient in widget.coefficients)
+        coefficient.symbol: coefficient.value,
+    };
+
+    for (final symbol in _controllers.keys.toList()) {
+      if (!symbols.contains(symbol)) {
+        _controllers.remove(symbol)?.dispose();
+      }
+    }
+
+    for (final coefficient in widget.summary.coefficients) {
+      final value = valuesBySymbol[coefficient.symbol] ?? coefficient.value;
+      final text = value == null ? '' : _formatNumber(value);
+      final controller = _controllers[coefficient.symbol];
+      if (controller == null) {
+        _controllers[coefficient.symbol] = TextEditingController(text: text);
+      } else if (controller.text != text) {
+        controller.text = text;
+      }
+    }
+  }
+
+  Future<void> _saveCoefficients() async {
+    final values = <String, double?>{};
+
+    for (final coefficient in widget.summary.coefficients) {
+      final parsed = _parseOptionalDouble(
+        _controllers[coefficient.symbol]?.text ?? '',
+      );
+      if (parsed == _invalidDouble) {
+        _showSnack(
+          context,
+          'Informe um valor válido para ${coefficient.label}.',
+          isError: true,
+        );
+        return;
+      }
+      values[coefficient.symbol] = parsed as double?;
+    }
+
+    setState(() => _saving = true);
+
+    try {
+      await ref
+          .read(settingsRepositoryProvider)
+          .updateSpeciesFormulaCoefficientValues(
+            speciesId: widget.speciesId,
+            formulaId: widget.summary.formula.id,
+            valuesBySymbol: values,
+          );
+      if (!mounted) return;
+      _showSnack(context, 'Coeficientes da espécie salvos.');
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(
+        context,
+        'Não foi possível salvar os coeficientes da espécie.',
+        isError: true,
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 }
 
-class _FormulaCard extends ConsumerStatefulWidget {
+class _CoefficientFieldsForSpecies extends StatelessWidget {
+  const _CoefficientFieldsForSpecies({required this.row});
+
+  final _SpeciesFormulaRowState row;
+
+  @override
+  Widget build(BuildContext context) {
+    final coefficients = row.widget.summary.coefficients;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+          if (coefficients.isEmpty)
+            const _MutedText('Este modelo não possui coeficientes definidos.')
+          else ...[
+            const Text(
+              'Coeficientes da espécie',
+              style: TextStyle(
+                color: DendroColors.textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Esses valores serão usados como padrão nos novos levantamentos desta espécie.',
+              style: TextStyle(
+                color: DendroColors.textMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            for (final coefficient in coefficients)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: TextField(
+                  controller: row._controllers[coefficient.symbol],
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[-0-9,.]')),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: '${coefficient.label} (${coefficient.symbol})',
+                    prefixIcon: const Icon(Icons.numbers),
+                  ),
+                ),
+              ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: row._saving ? null : row._saveCoefficients,
+                icon: row._saving
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_outlined),
+                label: const Text('Salvar coeficientes da espécie'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FormulaCard extends StatelessWidget {
   const _FormulaCard({
     required this.summary,
     required this.onEdit,
@@ -701,36 +931,8 @@ class _FormulaCard extends ConsumerStatefulWidget {
   final VoidCallback onDelete;
 
   @override
-  ConsumerState<_FormulaCard> createState() => _FormulaCardState();
-}
-
-class _FormulaCardState extends ConsumerState<_FormulaCard> {
-  final Map<String, TextEditingController> _coefficientControllers = {};
-  bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _syncControllers();
-  }
-
-  @override
-  void didUpdateWidget(covariant _FormulaCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _syncControllers();
-  }
-
-  @override
-  void dispose() {
-    for (final controller in _coefficientControllers.values) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final formula = widget.summary.formula;
+    final formula = summary.formula;
 
     return DendroCard(
       padding: EdgeInsets.zero,
@@ -782,9 +984,9 @@ class _FormulaCardState extends ConsumerState<_FormulaCard> {
           onSelected: (action) {
             switch (action) {
               case _FormulaAction.edit:
-                widget.onEdit();
+                onEdit();
               case _FormulaAction.delete:
-                widget.onDelete();
+                onDelete();
             }
           },
           itemBuilder: (context) => const [
@@ -811,11 +1013,11 @@ class _FormulaCardState extends ConsumerState<_FormulaCard> {
           ],
         ),
         children: [
-          if (widget.summary.formula.description != null) ...[
+          if (summary.formula.description != null) ...[
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                widget.summary.formula.description!,
+                summary.formula.description!,
                 style: const TextStyle(
                   color: DendroColors.textMuted,
                   fontSize: 12,
@@ -825,98 +1027,12 @@ class _FormulaCardState extends ConsumerState<_FormulaCard> {
             ),
             const SizedBox(height: 12),
           ],
-          _FormulaVariables(variables: widget.summary.variables),
+          _FormulaVariables(variables: summary.variables),
           const SizedBox(height: 12),
-          _CoefficientEditor(
-            coefficients: widget.summary.coefficients,
-            controllers: _coefficientControllers,
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _saving || widget.summary.coefficients.isEmpty
-                  ? null
-                  : _saveCoefficients,
-              icon: _saving
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save_outlined),
-              label: const Text('Salvar coeficientes'),
-            ),
-          ),
+          _FormulaCoefficientSymbols(coefficients: summary.coefficients),
         ],
       ),
     );
-  }
-
-  void _syncControllers() {
-    final currentIds = widget.summary.coefficients
-        .map((item) => item.id)
-        .toSet();
-
-    for (final id in _coefficientControllers.keys.toList()) {
-      if (!currentIds.contains(id)) {
-        _coefficientControllers.remove(id)?.dispose();
-      }
-    }
-
-    for (final coefficient in widget.summary.coefficients) {
-      final text = coefficient.value == null
-          ? ''
-          : _formatNumber(coefficient.value!, decimals: 6);
-      final controller = _coefficientControllers[coefficient.id];
-      if (controller == null) {
-        _coefficientControllers[coefficient.id] = TextEditingController(
-          text: text,
-        );
-      } else if (controller.text != text) {
-        controller.text = text;
-      }
-    }
-  }
-
-  Future<void> _saveCoefficients() async {
-    final values = <String, double?>{};
-
-    for (final coefficient in widget.summary.coefficients) {
-      final parsed = _parseOptionalDouble(
-        _coefficientControllers[coefficient.id]?.text ?? '',
-      );
-      if (parsed == _invalidDouble) {
-        _showSnack(
-          context,
-          'Informe um valor válido para ${coefficient.label}.',
-          isError: true,
-        );
-        return;
-      }
-      values[coefficient.id] = parsed as double?;
-    }
-
-    setState(() => _saving = true);
-
-    try {
-      await ref
-          .read(settingsRepositoryProvider)
-          .updateCoefficientValues(
-            formulaId: widget.summary.formula.id,
-            valuesByCoefficientId: values,
-          );
-      if (!mounted) return;
-      _showSnack(context, 'Coeficientes salvos.');
-    } catch (_) {
-      if (!mounted) return;
-      _showSnack(
-        context,
-        'Não foi possível salvar os coeficientes.',
-        isError: true,
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
   }
 }
 
@@ -953,14 +1069,10 @@ class _FormulaVariables extends StatelessWidget {
   }
 }
 
-class _CoefficientEditor extends StatelessWidget {
-  const _CoefficientEditor({
-    required this.coefficients,
-    required this.controllers,
-  });
+class _FormulaCoefficientSymbols extends StatelessWidget {
+  const _FormulaCoefficientSymbols({required this.coefficients});
 
   final List<FormulaCoefficientRecord> coefficients;
-  final Map<String, TextEditingController> controllers;
 
   @override
   Widget build(BuildContext context) {
@@ -975,7 +1087,7 @@ class _CoefficientEditor extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Coeficientes atuais',
+          'Símbolos dos coeficientes',
           style: TextStyle(
             color: DendroColors.textMuted,
             fontSize: 12,
@@ -983,24 +1095,22 @@ class _CoefficientEditor extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        for (final coefficient in coefficients)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: TextField(
-              controller: controllers[coefficient.id],
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-                signed: true,
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final coefficient in coefficients)
+              StatusPill(
+                label: '${coefficient.symbol} - ${coefficient.label}',
+                color: const Color(0xFFF3F4F3),
+                textColor: DendroColors.text,
               ),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[-0-9,.]')),
-              ],
-              decoration: InputDecoration(
-                labelText: '${coefficient.label} (${coefficient.symbol})',
-                prefixIcon: const Icon(Icons.numbers),
-              ),
-            ),
-          ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const _MutedText(
+          'Os valores de cada coeficiente são definidos no cadastro da espécie.',
+        ),
       ],
     );
   }
@@ -1264,8 +1374,10 @@ class _FormulaFormSheetState extends ConsumerState<_FormulaFormSheet> {
                 controller: _coefficientSymbolsController,
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
-                  labelText: 'Coeficientes',
+                  labelText: 'Símbolos dos coeficientes',
                   hintText: 'Ex.: a, b, c',
+                  helperText:
+                      'Os valores são configurados no cadastro da espécie.',
                   prefixIcon: Icon(Icons.numbers),
                 ),
                 validator: (value) {
@@ -1654,11 +1766,7 @@ Object? _parseOptionalDouble(String value) {
 
 const _invalidDouble = Object();
 
-String _formatNumber(double value, {int decimals = 2}) {
-  final fixed = value.toStringAsFixed(decimals);
-  final normalized = fixed.replaceFirst(RegExp(r'\.?0+$'), '');
-  return normalized.replaceAll('.', ',');
-}
+String _formatNumber(double value) => value.toString().replaceAll('.', ',');
 
 void _showSnack(BuildContext context, String message, {bool isError = false}) {
   ScaffoldMessenger.of(context).showSnackBar(

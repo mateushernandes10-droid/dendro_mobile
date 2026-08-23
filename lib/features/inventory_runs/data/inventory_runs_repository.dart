@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/dendro_database.dart';
+import '../../../core/forest/forest_volume_calculator.dart';
 import '../../../core/providers/database_providers.dart';
 import '../../activity_log/data/activity_log_repository.dart';
 import 'inventory_formula_selection.dart';
@@ -261,6 +262,8 @@ class InventoryRunsRepository {
     int? plantingYear,
     String? spacing,
     String? managementRegime,
+    double? plotWidthM,
+    double? plotLengthM,
     String? notes,
     InventoryFormulaSelection? formulaSelection,
   }) {
@@ -286,6 +289,8 @@ class InventoryRunsRepository {
           plantingYear: Value(plantingYear),
           spacing: Value(_blankToNull(spacing)),
           managementRegime: Value(_blankToNull(managementRegime)),
+          plotWidthM: Value(plotWidthM),
+          plotLengthM: Value(plotLengthM),
           notes: Value(_blankToNull(notes)),
           updatedAt: Value(now),
         ),
@@ -303,6 +308,7 @@ class InventoryRunsRepository {
 
       await _replaceTalhaoFormulaCoefficients(
         talhaoLevantamentoId: talhaoLevantamentoId,
+        speciesId: speciesId,
         formulaId: formulaId,
         coefficientValuesBySymbol:
             formulaSelection?.coefficientValuesBySymbol ?? const {},
@@ -325,6 +331,8 @@ class InventoryRunsRepository {
             plantingYear: plantingYear,
             spacing: _blankToNull(spacing),
             managementRegime: _blankToNull(managementRegime),
+            plotWidthM: plotWidthM,
+            plotLengthM: plotLengthM,
             notes: _blankToNull(notes),
             createdAt: now,
             updatedAt: now,
@@ -581,19 +589,30 @@ ORDER BY symbol
               )
               ..orderBy([(table) => OrderingTerm.asc(table.symbol)]))
             .get();
+    final speciesValues = await _speciesFormulaCoefficientValues(
+      speciesId: talhaoLevantamento.speciesId,
+      formulaId: talhaoLevantamento.formulaId,
+    );
 
     return [
       for (final coefficient in global)
         InventoryFormulaCoefficientValue(
           symbol: coefficient.symbol,
           label: coefficient.label,
-          value: coefficient.value,
+          value:
+              speciesValues[coefficient.symbol] ??
+              coefficient.value ??
+              ForestVolumeCalculator.defaultCoefficientValue(
+                formulaId: talhaoLevantamento.formulaId,
+                symbol: coefficient.symbol,
+              ),
         ),
     ];
   }
 
   Future<void> _replaceTalhaoFormulaCoefficients({
     required String talhaoLevantamentoId,
+    required String speciesId,
     required String formulaId,
     required Map<String, double?> coefficientValuesBySymbol,
   }) async {
@@ -607,6 +626,10 @@ ORDER BY symbol
               ..where((table) => table.formulaId.equals(formulaId))
               ..orderBy([(table) => OrderingTerm.asc(table.symbol)]))
             .get();
+    final speciesValues = await _speciesFormulaCoefficientValues(
+      speciesId: speciesId,
+      formulaId: formulaId,
+    );
 
     for (final coefficient in coefficients) {
       await _database.customStatement(
@@ -622,10 +645,32 @@ VALUES (?, ?, ?, ?, ?)
           coefficient.label,
           coefficientValuesBySymbol.containsKey(coefficient.symbol)
               ? coefficientValuesBySymbol[coefficient.symbol]
-              : coefficient.value,
+              : speciesValues[coefficient.symbol] ??
+                    coefficient.value ??
+                    ForestVolumeCalculator.defaultCoefficientValue(
+                      formulaId: formulaId,
+                      symbol: coefficient.symbol,
+                    ),
         ],
       );
     }
+  }
+
+  Future<Map<String, double?>> _speciesFormulaCoefficientValues({
+    required String speciesId,
+    required String formulaId,
+  }) async {
+    final rows =
+        await (_database.select(_database.speciesFormulaCoefficients)..where(
+              (table) =>
+                  table.speciesId.equals(speciesId) &
+                  table.formulaId.equals(formulaId),
+            ))
+            .get();
+
+    return {
+      for (final coefficient in rows) coefficient.symbol: coefficient.value,
+    };
   }
 
   Future<void> _deleteFormulaCoefficientSnapshots(

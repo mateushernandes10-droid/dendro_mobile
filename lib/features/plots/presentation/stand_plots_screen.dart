@@ -373,6 +373,7 @@ class _StandSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final stand = state.stand;
     final plantingYear = stand.plantingYear;
+    final plotDimension = _formatPlotDimension(stand);
 
     return DendroCard(
       backgroundColor: const Color(0xFFE0F2E8),
@@ -432,6 +433,12 @@ class _StandSummaryCard extends StatelessWidget {
                   icon: Icons.calendar_month,
                   label: plantingYear.toString(),
                   value: 'Plantio',
+                ),
+              if (plotDimension != null)
+                _SummaryChip(
+                  icon: Icons.crop_free,
+                  label: '$plotDimension m',
+                  value: 'Parcela padrão',
                 ),
               _SummaryChip(
                 icon: Icons.grid_view,
@@ -1277,6 +1284,18 @@ String _formatCoordinate(PlotGeoPointRecord point) {
 
 String _formatArea(double value) {
   return value.toStringAsFixed(2).replaceAll('.', ',');
+}
+
+String? _formatPlotDimension(StandRecord stand) {
+  final width = stand.plotWidthM;
+  final length = stand.plotLengthM;
+  if (width == null || length == null) return null;
+  return '${_formatCompactNumber(width)} x ${_formatCompactNumber(length)}';
+}
+
+String _formatCompactNumber(double value) {
+  if (value == value.roundToDouble()) return value.toStringAsFixed(0);
+  return _formatArea(value);
 }
 
 String _formatMeasure(double value) {

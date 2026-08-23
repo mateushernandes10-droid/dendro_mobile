@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../app/theme/dendro_theme.dart';
 import '../../core/constants/dendro_assets.dart';
@@ -137,6 +138,102 @@ class DendroLogoMark extends StatelessWidget {
         height: size,
         fit: BoxFit.cover,
       ),
+    );
+  }
+}
+
+class PlotDimensionsInput extends StatelessWidget {
+  const PlotDimensionsInput({
+    required this.widthController,
+    required this.lengthController,
+    this.widthValidator,
+    this.lengthValidator,
+    super.key,
+  });
+
+  final TextEditingController widthController;
+  final TextEditingController lengthController;
+  final String? Function(String?)? widthValidator;
+  final String? Function(String?)? lengthValidator;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final inputFormatters = [
+      FilteringTextInputFormatter.allow(RegExp('[0-9,.]')),
+    ];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 13),
+          child: Text(
+            'Parcela:',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: TextFormField(
+            controller: widthController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textAlign: TextAlign.center,
+            textInputAction: TextInputAction.next,
+            inputFormatters: inputFormatters,
+            decoration: const InputDecoration(
+              hintText: 'X',
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 12,
+              ),
+            ),
+            validator: widthValidator,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8).copyWith(top: 13),
+          child: Text(
+            'x',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        Expanded(
+          child: TextFormField(
+            controller: lengthController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textAlign: TextAlign.center,
+            textInputAction: TextInputAction.next,
+            inputFormatters: inputFormatters,
+            decoration: const InputDecoration(
+              hintText: 'X',
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 12,
+              ),
+            ),
+            validator: lengthValidator,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 8, top: 13),
+          child: Text(
+            'm',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -102,6 +102,27 @@ class SpeciesFormulas extends Table {
   Set<Column<Object>> get primaryKey => {speciesId, formulaId};
 }
 
+@DataClassName('SpeciesFormulaCoefficientRecord')
+class SpeciesFormulaCoefficients extends Table {
+  TextColumn get id => text()();
+  TextColumn get speciesId =>
+      text().references(Species, #id, onDelete: KeyAction.cascade)();
+  TextColumn get formulaId =>
+      text().references(Formulas, #id, onDelete: KeyAction.cascade)();
+  TextColumn get symbol => text()();
+  TextColumn get label => text()();
+  RealColumn get value => real().nullable()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(species_id, formula_id, symbol)',
+  ];
+}
+
 @DataClassName('StandRecord')
 class Stands extends Table {
   TextColumn get id => text()();
@@ -114,6 +135,8 @@ class Stands extends Table {
   IntColumn get plantingYear => integer().nullable()();
   TextColumn get spacing => text().nullable()();
   TextColumn get managementRegime => text().nullable()();
+  RealColumn get plotWidthM => real().nullable()();
+  RealColumn get plotLengthM => real().nullable()();
   TextColumn get notes => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -261,6 +284,7 @@ class Trees extends Table {
     FormulaVariables,
     FormulaCoefficients,
     SpeciesFormulas,
+    SpeciesFormulaCoefficients,
     Stands,
     InventoryRuns,
     TalhaoLevantamentos,
@@ -274,7 +298,7 @@ class DendroDatabase extends _$DendroDatabase {
     : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -296,6 +320,14 @@ class DendroDatabase extends _$DendroDatabase {
       }
       if (from < 5) {
         await _applyEngineerFormulaDefaults();
+      }
+      if (from < 6) {
+        await _addStandPlotDimensionColumns();
+      }
+      if (from < 7) {
+        await m.createTable(speciesFormulaCoefficients);
+        await _applyEngineerFormulaDefaults();
+        await _seedSpeciesFormulaCoefficientDefaults();
       }
     },
   );
@@ -325,6 +357,11 @@ CREATE TABLE IF NOT EXISTS activity_logs (
   occurred_at INTEGER NOT NULL
 )
 ''');
+  }
+
+  Future<void> _addStandPlotDimensionColumns() async {
+    await customStatement('ALTER TABLE stands ADD COLUMN plot_width_m REAL');
+    await customStatement('ALTER TABLE stands ADD COLUMN plot_length_m REAL');
   }
 
   Future<void> _applyEngineerFormulaDefaults() async {
@@ -579,6 +616,44 @@ WHERE id = ?
     });
 
     await _applyEngineerFormulaDefaults();
+    await _seedSpeciesFormulaCoefficientDefaults();
+  }
+
+  Future<void> _seedSpeciesFormulaCoefficientDefaults() async {
+    final now = DateTime.now();
+    final links = await select(speciesFormulas).get();
+
+    for (final link in links) {
+      final coefficients =
+          await (select(formulaCoefficients)
+                ..where((table) => table.formulaId.equals(link.formulaId))
+                ..orderBy([(table) => OrderingTerm.asc(table.symbol)]))
+              .get();
+
+      for (final coefficient in coefficients) {
+        await into(speciesFormulaCoefficients).insertOnConflictUpdate(
+          SpeciesFormulaCoefficientsCompanion.insert(
+            id: _speciesFormulaCoefficientId(
+              link.speciesId,
+              link.formulaId,
+              coefficient.symbol,
+            ),
+            speciesId: link.speciesId,
+            formulaId: link.formulaId,
+            symbol: coefficient.symbol,
+            label: coefficient.label,
+            value: Value(
+              coefficient.value ??
+                  ForestVolumeCalculator.defaultCoefficientValue(
+                    formulaId: link.formulaId,
+                    symbol: coefficient.symbol,
+                  ),
+            ),
+            updatedAt: now,
+          ),
+        );
+      }
+    }
   }
 }
 
@@ -616,6 +691,14 @@ FormulaCoefficientsCompanion _coefficient({
     label: label,
     value: Value(value),
   );
+}
+
+String _speciesFormulaCoefficientId(
+  String speciesId,
+  String formulaId,
+  String symbol,
+) {
+  return '${speciesId}_${formulaId}_$symbol';
 }
 
 QueryExecutor _openConnection() => driftDatabase(name: 'dendro_mobile');

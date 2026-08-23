@@ -356,6 +356,7 @@ class ResultsRepository {
       if (coefficients.isEmpty) {
         coefficientCache[talhao.id] = await _coefficientsForTalhao(
           talhaoLevantamentoId: talhao.id,
+          speciesId: talhao.speciesId,
           formulaId: talhao.formulaId,
         );
       }
@@ -414,6 +415,7 @@ class ResultsRepository {
 
   Future<Map<String, double?>> _coefficientsForTalhao({
     required String talhaoLevantamentoId,
+    required String speciesId,
     required String formulaId,
   }) async {
     final rows = await _database
@@ -437,9 +439,26 @@ WHERE talhao_levantamento_id = ?
     final globalRows = await (_database.select(
       _database.formulaCoefficients,
     )..where((table) => table.formulaId.equals(formulaId))).get();
+    final speciesRows =
+        await (_database.select(_database.speciesFormulaCoefficients)..where(
+              (table) =>
+                  table.speciesId.equals(speciesId) &
+                  table.formulaId.equals(formulaId),
+            ))
+            .get();
+    final speciesValues = {
+      for (final coefficient in speciesRows)
+        coefficient.symbol: coefficient.value,
+    };
     return {
       for (final coefficient in globalRows)
-        coefficient.symbol: coefficient.value,
+        coefficient.symbol:
+            speciesValues[coefficient.symbol] ??
+            coefficient.value ??
+            ForestVolumeCalculator.defaultCoefficientValue(
+              formulaId: formulaId,
+              symbol: coefficient.symbol,
+            ),
     };
   }
 }

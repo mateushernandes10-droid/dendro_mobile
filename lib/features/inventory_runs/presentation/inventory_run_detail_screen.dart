@@ -613,6 +613,8 @@ class _InventoryStandFormSheetState
   late final TextEditingController _plantingYearController;
   late final TextEditingController _spacingController;
   late final TextEditingController _managementRegimeController;
+  late final TextEditingController _plotWidthController;
+  late final TextEditingController _plotLengthController;
   late final TextEditingController _notesController;
   InventoryFormulaSelection? _formulaSelection;
   String? _speciesId;
@@ -636,6 +638,16 @@ class _InventoryStandFormSheetState
     _managementRegimeController = TextEditingController(
       text: stand.managementRegime ?? '',
     );
+    _plotWidthController = TextEditingController(
+      text: stand.plotWidthM == null
+          ? ''
+          : stand.plotWidthM!.toStringAsFixed(2).replaceAll('.', ','),
+    );
+    _plotLengthController = TextEditingController(
+      text: stand.plotLengthM == null
+          ? ''
+          : stand.plotLengthM!.toStringAsFixed(2).replaceAll('.', ','),
+    );
     _notesController = TextEditingController(text: stand.notes ?? '');
     _speciesId = widget.summary.talhaoLevantamento.speciesId;
     _formulaSelection = InventoryFormulaSelection(
@@ -655,6 +667,8 @@ class _InventoryStandFormSheetState
     _plantingYearController.dispose();
     _spacingController.dispose();
     _managementRegimeController.dispose();
+    _plotWidthController.dispose();
+    _plotLengthController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -803,6 +817,21 @@ class _InventoryStandFormSheetState
                 ),
               ),
               const SizedBox(height: 12),
+              PlotDimensionsInput(
+                widthController: _plotWidthController,
+                lengthController: _plotLengthController,
+                widthValidator: (value) => _plotDimensionValidator(
+                  value,
+                  _plotLengthController.text,
+                  'primeira medida',
+                ),
+                lengthValidator: (value) => _plotDimensionValidator(
+                  value,
+                  _plotWidthController.text,
+                  'segunda medida',
+                ),
+              ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
                 minLines: 2,
@@ -849,6 +878,8 @@ class _InventoryStandFormSheetState
             plantingYear: _parseOptionalInt(_plantingYearController.text),
             spacing: _spacingController.text,
             managementRegime: _managementRegimeController.text,
+            plotWidthM: _parseOptionalArea(_plotWidthController.text),
+            plotLengthM: _parseOptionalArea(_plotLengthController.text),
             notes: _notesController.text,
             formulaSelection: _formulaSelection,
           );
@@ -925,6 +956,21 @@ class _InventoryStandFormSheetState
     if (year < 1900 || year > DateTime.now().year + 1) {
       return 'Confira o ano';
     }
+    return null;
+  }
+
+  String? _plotDimensionValidator(
+    String? value,
+    String pairedValue,
+    String label,
+  ) {
+    final hasValue = value != null && value.trim().isNotEmpty;
+    final hasPair = pairedValue.trim().isNotEmpty;
+    if (!hasValue && !hasPair) return null;
+    if (!hasValue) return 'Informe a $label';
+
+    final parsed = _parseOptionalArea(value);
+    if (parsed == null || parsed <= 0) return 'Valor inválido';
     return null;
   }
 }
@@ -1122,6 +1168,12 @@ String _formatArea(double value) {
 
 double? _parseArea(String value) {
   return double.tryParse(value.trim().replaceAll(',', '.'));
+}
+
+double? _parseOptionalArea(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) return null;
+  return _parseArea(trimmed);
 }
 
 int? _parseOptionalInt(String value) {

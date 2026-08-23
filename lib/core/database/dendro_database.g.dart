@@ -2578,6 +2578,475 @@ class SpeciesFormulasCompanion extends UpdateCompanion<SpeciesFormulaRecord> {
   }
 }
 
+class $SpeciesFormulaCoefficientsTable extends SpeciesFormulaCoefficients
+    with
+        TableInfo<
+          $SpeciesFormulaCoefficientsTable,
+          SpeciesFormulaCoefficientRecord
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SpeciesFormulaCoefficientsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _speciesIdMeta = const VerificationMeta(
+    'speciesId',
+  );
+  @override
+  late final GeneratedColumn<String> speciesId = GeneratedColumn<String>(
+    'species_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES species (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _formulaIdMeta = const VerificationMeta(
+    'formulaId',
+  );
+  @override
+  late final GeneratedColumn<String> formulaId = GeneratedColumn<String>(
+    'formula_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES formulas (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<double> value = GeneratedColumn<double>(
+    'value',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    speciesId,
+    formulaId,
+    symbol,
+    label,
+    value,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'species_formula_coefficients';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SpeciesFormulaCoefficientRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('species_id')) {
+      context.handle(
+        _speciesIdMeta,
+        speciesId.isAcceptableOrUnknown(data['species_id']!, _speciesIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_speciesIdMeta);
+    }
+    if (data.containsKey('formula_id')) {
+      context.handle(
+        _formulaIdMeta,
+        formulaId.isAcceptableOrUnknown(data['formula_id']!, _formulaIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_formulaIdMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SpeciesFormulaCoefficientRecord map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SpeciesFormulaCoefficientRecord(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      speciesId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}species_id'],
+      )!,
+      formulaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}formula_id'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}value'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SpeciesFormulaCoefficientsTable createAlias(String alias) {
+    return $SpeciesFormulaCoefficientsTable(attachedDatabase, alias);
+  }
+}
+
+class SpeciesFormulaCoefficientRecord extends DataClass
+    implements Insertable<SpeciesFormulaCoefficientRecord> {
+  final String id;
+  final String speciesId;
+  final String formulaId;
+  final String symbol;
+  final String label;
+  final double? value;
+  final DateTime updatedAt;
+  const SpeciesFormulaCoefficientRecord({
+    required this.id,
+    required this.speciesId,
+    required this.formulaId,
+    required this.symbol,
+    required this.label,
+    this.value,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['species_id'] = Variable<String>(speciesId);
+    map['formula_id'] = Variable<String>(formulaId);
+    map['symbol'] = Variable<String>(symbol);
+    map['label'] = Variable<String>(label);
+    if (!nullToAbsent || value != null) {
+      map['value'] = Variable<double>(value);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  SpeciesFormulaCoefficientsCompanion toCompanion(bool nullToAbsent) {
+    return SpeciesFormulaCoefficientsCompanion(
+      id: Value(id),
+      speciesId: Value(speciesId),
+      formulaId: Value(formulaId),
+      symbol: Value(symbol),
+      label: Value(label),
+      value: value == null && nullToAbsent
+          ? const Value.absent()
+          : Value(value),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory SpeciesFormulaCoefficientRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SpeciesFormulaCoefficientRecord(
+      id: serializer.fromJson<String>(json['id']),
+      speciesId: serializer.fromJson<String>(json['speciesId']),
+      formulaId: serializer.fromJson<String>(json['formulaId']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+      label: serializer.fromJson<String>(json['label']),
+      value: serializer.fromJson<double?>(json['value']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'speciesId': serializer.toJson<String>(speciesId),
+      'formulaId': serializer.toJson<String>(formulaId),
+      'symbol': serializer.toJson<String>(symbol),
+      'label': serializer.toJson<String>(label),
+      'value': serializer.toJson<double?>(value),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  SpeciesFormulaCoefficientRecord copyWith({
+    String? id,
+    String? speciesId,
+    String? formulaId,
+    String? symbol,
+    String? label,
+    Value<double?> value = const Value.absent(),
+    DateTime? updatedAt,
+  }) => SpeciesFormulaCoefficientRecord(
+    id: id ?? this.id,
+    speciesId: speciesId ?? this.speciesId,
+    formulaId: formulaId ?? this.formulaId,
+    symbol: symbol ?? this.symbol,
+    label: label ?? this.label,
+    value: value.present ? value.value : this.value,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  SpeciesFormulaCoefficientRecord copyWithCompanion(
+    SpeciesFormulaCoefficientsCompanion data,
+  ) {
+    return SpeciesFormulaCoefficientRecord(
+      id: data.id.present ? data.id.value : this.id,
+      speciesId: data.speciesId.present ? data.speciesId.value : this.speciesId,
+      formulaId: data.formulaId.present ? data.formulaId.value : this.formulaId,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      label: data.label.present ? data.label.value : this.label,
+      value: data.value.present ? data.value.value : this.value,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SpeciesFormulaCoefficientRecord(')
+          ..write('id: $id, ')
+          ..write('speciesId: $speciesId, ')
+          ..write('formulaId: $formulaId, ')
+          ..write('symbol: $symbol, ')
+          ..write('label: $label, ')
+          ..write('value: $value, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, speciesId, formulaId, symbol, label, value, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SpeciesFormulaCoefficientRecord &&
+          other.id == this.id &&
+          other.speciesId == this.speciesId &&
+          other.formulaId == this.formulaId &&
+          other.symbol == this.symbol &&
+          other.label == this.label &&
+          other.value == this.value &&
+          other.updatedAt == this.updatedAt);
+}
+
+class SpeciesFormulaCoefficientsCompanion
+    extends UpdateCompanion<SpeciesFormulaCoefficientRecord> {
+  final Value<String> id;
+  final Value<String> speciesId;
+  final Value<String> formulaId;
+  final Value<String> symbol;
+  final Value<String> label;
+  final Value<double?> value;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const SpeciesFormulaCoefficientsCompanion({
+    this.id = const Value.absent(),
+    this.speciesId = const Value.absent(),
+    this.formulaId = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.label = const Value.absent(),
+    this.value = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SpeciesFormulaCoefficientsCompanion.insert({
+    required String id,
+    required String speciesId,
+    required String formulaId,
+    required String symbol,
+    required String label,
+    this.value = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       speciesId = Value(speciesId),
+       formulaId = Value(formulaId),
+       symbol = Value(symbol),
+       label = Value(label),
+       updatedAt = Value(updatedAt);
+  static Insertable<SpeciesFormulaCoefficientRecord> custom({
+    Expression<String>? id,
+    Expression<String>? speciesId,
+    Expression<String>? formulaId,
+    Expression<String>? symbol,
+    Expression<String>? label,
+    Expression<double>? value,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (speciesId != null) 'species_id': speciesId,
+      if (formulaId != null) 'formula_id': formulaId,
+      if (symbol != null) 'symbol': symbol,
+      if (label != null) 'label': label,
+      if (value != null) 'value': value,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SpeciesFormulaCoefficientsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? speciesId,
+    Value<String>? formulaId,
+    Value<String>? symbol,
+    Value<String>? label,
+    Value<double?>? value,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return SpeciesFormulaCoefficientsCompanion(
+      id: id ?? this.id,
+      speciesId: speciesId ?? this.speciesId,
+      formulaId: formulaId ?? this.formulaId,
+      symbol: symbol ?? this.symbol,
+      label: label ?? this.label,
+      value: value ?? this.value,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (speciesId.present) {
+      map['species_id'] = Variable<String>(speciesId.value);
+    }
+    if (formulaId.present) {
+      map['formula_id'] = Variable<String>(formulaId.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<double>(value.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SpeciesFormulaCoefficientsCompanion(')
+          ..write('id: $id, ')
+          ..write('speciesId: $speciesId, ')
+          ..write('formulaId: $formulaId, ')
+          ..write('symbol: $symbol, ')
+          ..write('label: $label, ')
+          ..write('value: $value, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $StandsTable extends Stands with TableInfo<$StandsTable, StandRecord> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -2673,6 +3142,28 @@ class $StandsTable extends Stands with TableInfo<$StandsTable, StandRecord> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _plotWidthMMeta = const VerificationMeta(
+    'plotWidthM',
+  );
+  @override
+  late final GeneratedColumn<double> plotWidthM = GeneratedColumn<double>(
+    'plot_width_m',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _plotLengthMMeta = const VerificationMeta(
+    'plotLengthM',
+  );
+  @override
+  late final GeneratedColumn<double> plotLengthM = GeneratedColumn<double>(
+    'plot_length_m',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -2714,6 +3205,8 @@ class $StandsTable extends Stands with TableInfo<$StandsTable, StandRecord> {
     plantingYear,
     spacing,
     managementRegime,
+    plotWidthM,
+    plotLengthM,
     notes,
     createdAt,
     updatedAt,
@@ -2794,6 +3287,24 @@ class $StandsTable extends Stands with TableInfo<$StandsTable, StandRecord> {
         ),
       );
     }
+    if (data.containsKey('plot_width_m')) {
+      context.handle(
+        _plotWidthMMeta,
+        plotWidthM.isAcceptableOrUnknown(
+          data['plot_width_m']!,
+          _plotWidthMMeta,
+        ),
+      );
+    }
+    if (data.containsKey('plot_length_m')) {
+      context.handle(
+        _plotLengthMMeta,
+        plotLengthM.isAcceptableOrUnknown(
+          data['plot_length_m']!,
+          _plotLengthMMeta,
+        ),
+      );
+    }
     if (data.containsKey('notes')) {
       context.handle(
         _notesMeta,
@@ -2857,6 +3368,14 @@ class $StandsTable extends Stands with TableInfo<$StandsTable, StandRecord> {
         DriftSqlType.string,
         data['${effectivePrefix}management_regime'],
       ),
+      plotWidthM: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}plot_width_m'],
+      ),
+      plotLengthM: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}plot_length_m'],
+      ),
       notes: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
@@ -2887,6 +3406,8 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
   final int? plantingYear;
   final String? spacing;
   final String? managementRegime;
+  final double? plotWidthM;
+  final double? plotLengthM;
   final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -2899,6 +3420,8 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
     this.plantingYear,
     this.spacing,
     this.managementRegime,
+    this.plotWidthM,
+    this.plotLengthM,
     this.notes,
     required this.createdAt,
     required this.updatedAt,
@@ -2919,6 +3442,12 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
     }
     if (!nullToAbsent || managementRegime != null) {
       map['management_regime'] = Variable<String>(managementRegime);
+    }
+    if (!nullToAbsent || plotWidthM != null) {
+      map['plot_width_m'] = Variable<double>(plotWidthM);
+    }
+    if (!nullToAbsent || plotLengthM != null) {
+      map['plot_length_m'] = Variable<double>(plotLengthM);
     }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
@@ -2944,6 +3473,12 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
       managementRegime: managementRegime == null && nullToAbsent
           ? const Value.absent()
           : Value(managementRegime),
+      plotWidthM: plotWidthM == null && nullToAbsent
+          ? const Value.absent()
+          : Value(plotWidthM),
+      plotLengthM: plotLengthM == null && nullToAbsent
+          ? const Value.absent()
+          : Value(plotLengthM),
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
@@ -2966,6 +3501,8 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
       plantingYear: serializer.fromJson<int?>(json['plantingYear']),
       spacing: serializer.fromJson<String?>(json['spacing']),
       managementRegime: serializer.fromJson<String?>(json['managementRegime']),
+      plotWidthM: serializer.fromJson<double?>(json['plotWidthM']),
+      plotLengthM: serializer.fromJson<double?>(json['plotLengthM']),
       notes: serializer.fromJson<String?>(json['notes']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -2983,6 +3520,8 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
       'plantingYear': serializer.toJson<int?>(plantingYear),
       'spacing': serializer.toJson<String?>(spacing),
       'managementRegime': serializer.toJson<String?>(managementRegime),
+      'plotWidthM': serializer.toJson<double?>(plotWidthM),
+      'plotLengthM': serializer.toJson<double?>(plotLengthM),
       'notes': serializer.toJson<String?>(notes),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -2998,6 +3537,8 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
     Value<int?> plantingYear = const Value.absent(),
     Value<String?> spacing = const Value.absent(),
     Value<String?> managementRegime = const Value.absent(),
+    Value<double?> plotWidthM = const Value.absent(),
+    Value<double?> plotLengthM = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -3012,6 +3553,8 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
     managementRegime: managementRegime.present
         ? managementRegime.value
         : this.managementRegime,
+    plotWidthM: plotWidthM.present ? plotWidthM.value : this.plotWidthM,
+    plotLengthM: plotLengthM.present ? plotLengthM.value : this.plotLengthM,
     notes: notes.present ? notes.value : this.notes,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -3034,6 +3577,12 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
       managementRegime: data.managementRegime.present
           ? data.managementRegime.value
           : this.managementRegime,
+      plotWidthM: data.plotWidthM.present
+          ? data.plotWidthM.value
+          : this.plotWidthM,
+      plotLengthM: data.plotLengthM.present
+          ? data.plotLengthM.value
+          : this.plotLengthM,
       notes: data.notes.present ? data.notes.value : this.notes,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -3051,6 +3600,8 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
           ..write('plantingYear: $plantingYear, ')
           ..write('spacing: $spacing, ')
           ..write('managementRegime: $managementRegime, ')
+          ..write('plotWidthM: $plotWidthM, ')
+          ..write('plotLengthM: $plotLengthM, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -3068,6 +3619,8 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
     plantingYear,
     spacing,
     managementRegime,
+    plotWidthM,
+    plotLengthM,
     notes,
     createdAt,
     updatedAt,
@@ -3084,6 +3637,8 @@ class StandRecord extends DataClass implements Insertable<StandRecord> {
           other.plantingYear == this.plantingYear &&
           other.spacing == this.spacing &&
           other.managementRegime == this.managementRegime &&
+          other.plotWidthM == this.plotWidthM &&
+          other.plotLengthM == this.plotLengthM &&
           other.notes == this.notes &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -3098,6 +3653,8 @@ class StandsCompanion extends UpdateCompanion<StandRecord> {
   final Value<int?> plantingYear;
   final Value<String?> spacing;
   final Value<String?> managementRegime;
+  final Value<double?> plotWidthM;
+  final Value<double?> plotLengthM;
   final Value<String?> notes;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -3111,6 +3668,8 @@ class StandsCompanion extends UpdateCompanion<StandRecord> {
     this.plantingYear = const Value.absent(),
     this.spacing = const Value.absent(),
     this.managementRegime = const Value.absent(),
+    this.plotWidthM = const Value.absent(),
+    this.plotLengthM = const Value.absent(),
     this.notes = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -3125,6 +3684,8 @@ class StandsCompanion extends UpdateCompanion<StandRecord> {
     this.plantingYear = const Value.absent(),
     this.spacing = const Value.absent(),
     this.managementRegime = const Value.absent(),
+    this.plotWidthM = const Value.absent(),
+    this.plotLengthM = const Value.absent(),
     this.notes = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -3145,6 +3706,8 @@ class StandsCompanion extends UpdateCompanion<StandRecord> {
     Expression<int>? plantingYear,
     Expression<String>? spacing,
     Expression<String>? managementRegime,
+    Expression<double>? plotWidthM,
+    Expression<double>? plotLengthM,
     Expression<String>? notes,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -3159,6 +3722,8 @@ class StandsCompanion extends UpdateCompanion<StandRecord> {
       if (plantingYear != null) 'planting_year': plantingYear,
       if (spacing != null) 'spacing': spacing,
       if (managementRegime != null) 'management_regime': managementRegime,
+      if (plotWidthM != null) 'plot_width_m': plotWidthM,
+      if (plotLengthM != null) 'plot_length_m': plotLengthM,
       if (notes != null) 'notes': notes,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -3175,6 +3740,8 @@ class StandsCompanion extends UpdateCompanion<StandRecord> {
     Value<int?>? plantingYear,
     Value<String?>? spacing,
     Value<String?>? managementRegime,
+    Value<double?>? plotWidthM,
+    Value<double?>? plotLengthM,
     Value<String?>? notes,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -3189,6 +3756,8 @@ class StandsCompanion extends UpdateCompanion<StandRecord> {
       plantingYear: plantingYear ?? this.plantingYear,
       spacing: spacing ?? this.spacing,
       managementRegime: managementRegime ?? this.managementRegime,
+      plotWidthM: plotWidthM ?? this.plotWidthM,
+      plotLengthM: plotLengthM ?? this.plotLengthM,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -3223,6 +3792,12 @@ class StandsCompanion extends UpdateCompanion<StandRecord> {
     if (managementRegime.present) {
       map['management_regime'] = Variable<String>(managementRegime.value);
     }
+    if (plotWidthM.present) {
+      map['plot_width_m'] = Variable<double>(plotWidthM.value);
+    }
+    if (plotLengthM.present) {
+      map['plot_length_m'] = Variable<double>(plotLengthM.value);
+    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -3249,6 +3824,8 @@ class StandsCompanion extends UpdateCompanion<StandRecord> {
           ..write('plantingYear: $plantingYear, ')
           ..write('spacing: $spacing, ')
           ..write('managementRegime: $managementRegime, ')
+          ..write('plotWidthM: $plotWidthM, ')
+          ..write('plotLengthM: $plotLengthM, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -6157,6 +6734,8 @@ abstract class _$DendroDatabase extends GeneratedDatabase {
   late final $SpeciesFormulasTable speciesFormulas = $SpeciesFormulasTable(
     this,
   );
+  late final $SpeciesFormulaCoefficientsTable speciesFormulaCoefficients =
+      $SpeciesFormulaCoefficientsTable(this);
   late final $StandsTable stands = $StandsTable(this);
   late final $InventoryRunsTable inventoryRuns = $InventoryRunsTable(this);
   late final $TalhaoLevantamentosTable talhaoLevantamentos =
@@ -6175,6 +6754,7 @@ abstract class _$DendroDatabase extends GeneratedDatabase {
     formulaVariables,
     formulaCoefficients,
     speciesFormulas,
+    speciesFormulaCoefficients,
     stands,
     inventoryRuns,
     talhaoLevantamentos,
@@ -6211,6 +6791,24 @@ abstract class _$DendroDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('species_formulas', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'species',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('species_formula_coefficients', kind: UpdateKind.delete),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'formulas',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('species_formula_coefficients', kind: UpdateKind.delete),
+      ],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -6751,6 +7349,31 @@ final class $$SpeciesTableReferences
     );
   }
 
+  static MultiTypedResultKey<
+    $SpeciesFormulaCoefficientsTable,
+    List<SpeciesFormulaCoefficientRecord>
+  >
+  _speciesFormulaCoefficientsRefsTable(_$DendroDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.speciesFormulaCoefficients,
+        aliasName: 'species__id__species_formula_coefficients__species_id',
+      );
+
+  $$SpeciesFormulaCoefficientsTableProcessedTableManager
+  get speciesFormulaCoefficientsRefs {
+    final manager = $$SpeciesFormulaCoefficientsTableTableManager(
+      $_db,
+      $_db.speciesFormulaCoefficients,
+    ).filter((f) => f.speciesId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _speciesFormulaCoefficientsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$StandsTable, List<StandRecord>> _standsRefsTable(
     _$DendroDatabase db,
   ) => MultiTypedResultKey.fromTable(
@@ -6861,6 +7484,33 @@ class $$SpeciesTableFilterComposer
                 $removeJoinBuilderFromRootComposer,
           ),
     );
+    return f(composer);
+  }
+
+  Expression<bool> speciesFormulaCoefficientsRefs(
+    Expression<bool> Function($$SpeciesFormulaCoefficientsTableFilterComposer f)
+    f,
+  ) {
+    final $$SpeciesFormulaCoefficientsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.speciesFormulaCoefficients,
+          getReferencedColumn: (t) => t.speciesId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SpeciesFormulaCoefficientsTableFilterComposer(
+                $db: $db,
+                $table: $db.speciesFormulaCoefficients,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
     return f(composer);
   }
 
@@ -7019,6 +7669,35 @@ class $$SpeciesTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> speciesFormulaCoefficientsRefs<T extends Object>(
+    Expression<T> Function(
+      $$SpeciesFormulaCoefficientsTableAnnotationComposer a,
+    )
+    f,
+  ) {
+    final $$SpeciesFormulaCoefficientsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.speciesFormulaCoefficients,
+          getReferencedColumn: (t) => t.speciesId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SpeciesFormulaCoefficientsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.speciesFormulaCoefficients,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> standsRefs<T extends Object>(
     Expression<T> Function($$StandsTableAnnotationComposer a) f,
   ) {
@@ -7086,6 +7765,7 @@ class $$SpeciesTableTableManager
           SpeciesRecord,
           PrefetchHooks Function({
             bool speciesFormulasRefs,
+            bool speciesFormulaCoefficientsRefs,
             bool standsRefs,
             bool talhaoLevantamentosRefs,
           })
@@ -7152,6 +7832,7 @@ class $$SpeciesTableTableManager
           prefetchHooksCallback:
               ({
                 speciesFormulasRefs = false,
+                speciesFormulaCoefficientsRefs = false,
                 standsRefs = false,
                 talhaoLevantamentosRefs = false,
               }) {
@@ -7159,6 +7840,8 @@ class $$SpeciesTableTableManager
                   db: db,
                   explicitlyWatchedTables: [
                     if (speciesFormulasRefs) db.speciesFormulas,
+                    if (speciesFormulaCoefficientsRefs)
+                      db.speciesFormulaCoefficients,
                     if (standsRefs) db.stands,
                     if (talhaoLevantamentosRefs) db.talhaoLevantamentos,
                   ],
@@ -7180,6 +7863,27 @@ class $$SpeciesTableTableManager
                                 table,
                                 p0,
                               ).speciesFormulasRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.speciesId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (speciesFormulaCoefficientsRefs)
+                        await $_getPrefetchedData<
+                          SpeciesRecord,
+                          $SpeciesTable,
+                          SpeciesFormulaCoefficientRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SpeciesTableReferences
+                              ._speciesFormulaCoefficientsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SpeciesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).speciesFormulaCoefficientsRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.speciesId == item.id,
@@ -7250,6 +7954,7 @@ typedef $$SpeciesTableProcessedTableManager =
       SpeciesRecord,
       PrefetchHooks Function({
         bool speciesFormulasRefs,
+        bool speciesFormulaCoefficientsRefs,
         bool standsRefs,
         bool talhaoLevantamentosRefs,
       })
@@ -7344,6 +8049,31 @@ final class $$FormulasTableReferences
 
     final cache = $_typedResult.readTableOrNull(
       _speciesFormulasRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $SpeciesFormulaCoefficientsTable,
+    List<SpeciesFormulaCoefficientRecord>
+  >
+  _speciesFormulaCoefficientsRefsTable(_$DendroDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.speciesFormulaCoefficients,
+        aliasName: 'formulas__id__species_formula_coefficients__formula_id',
+      );
+
+  $$SpeciesFormulaCoefficientsTableProcessedTableManager
+  get speciesFormulaCoefficientsRefs {
+    final manager = $$SpeciesFormulaCoefficientsTableTableManager(
+      $_db,
+      $_db.speciesFormulaCoefficients,
+    ).filter((f) => f.formulaId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _speciesFormulaCoefficientsRefsTable($_db),
     );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
@@ -7491,6 +8221,33 @@ class $$FormulasTableFilterComposer
                 $removeJoinBuilderFromRootComposer,
           ),
     );
+    return f(composer);
+  }
+
+  Expression<bool> speciesFormulaCoefficientsRefs(
+    Expression<bool> Function($$SpeciesFormulaCoefficientsTableFilterComposer f)
+    f,
+  ) {
+    final $$SpeciesFormulaCoefficientsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.speciesFormulaCoefficients,
+          getReferencedColumn: (t) => t.formulaId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SpeciesFormulaCoefficientsTableFilterComposer(
+                $db: $db,
+                $table: $db.speciesFormulaCoefficients,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
     return f(composer);
   }
 
@@ -7675,6 +8432,35 @@ class $$FormulasTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> speciesFormulaCoefficientsRefs<T extends Object>(
+    Expression<T> Function(
+      $$SpeciesFormulaCoefficientsTableAnnotationComposer a,
+    )
+    f,
+  ) {
+    final $$SpeciesFormulaCoefficientsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.speciesFormulaCoefficients,
+          getReferencedColumn: (t) => t.formulaId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SpeciesFormulaCoefficientsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.speciesFormulaCoefficients,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> talhaoLevantamentosRefs<T extends Object>(
     Expression<T> Function($$TalhaoLevantamentosTableAnnotationComposer a) f,
   ) {
@@ -7719,6 +8505,7 @@ class $$FormulasTableTableManager
             bool formulaVariablesRefs,
             bool formulaCoefficientsRefs,
             bool speciesFormulasRefs,
+            bool speciesFormulaCoefficientsRefs,
             bool talhaoLevantamentosRefs,
           })
         > {
@@ -7786,6 +8573,7 @@ class $$FormulasTableTableManager
                 formulaVariablesRefs = false,
                 formulaCoefficientsRefs = false,
                 speciesFormulasRefs = false,
+                speciesFormulaCoefficientsRefs = false,
                 talhaoLevantamentosRefs = false,
               }) {
                 return PrefetchHooks(
@@ -7794,6 +8582,8 @@ class $$FormulasTableTableManager
                     if (formulaVariablesRefs) db.formulaVariables,
                     if (formulaCoefficientsRefs) db.formulaCoefficients,
                     if (speciesFormulasRefs) db.speciesFormulas,
+                    if (speciesFormulaCoefficientsRefs)
+                      db.speciesFormulaCoefficients,
                     if (talhaoLevantamentosRefs) db.talhaoLevantamentos,
                   ],
                   addJoins: null,
@@ -7862,6 +8652,27 @@ class $$FormulasTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (speciesFormulaCoefficientsRefs)
+                        await $_getPrefetchedData<
+                          FormulaRecord,
+                          $FormulasTable,
+                          SpeciesFormulaCoefficientRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$FormulasTableReferences
+                              ._speciesFormulaCoefficientsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$FormulasTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).speciesFormulaCoefficientsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.formulaId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (talhaoLevantamentosRefs)
                         await $_getPrefetchedData<
                           FormulaRecord,
@@ -7907,6 +8718,7 @@ typedef $$FormulasTableProcessedTableManager =
         bool formulaVariablesRefs,
         bool formulaCoefficientsRefs,
         bool speciesFormulasRefs,
+        bool speciesFormulaCoefficientsRefs,
         bool talhaoLevantamentosRefs,
       })
     >;
@@ -9019,6 +9831,477 @@ typedef $$SpeciesFormulasTableProcessedTableManager =
       SpeciesFormulaRecord,
       PrefetchHooks Function({bool speciesId, bool formulaId})
     >;
+typedef $$SpeciesFormulaCoefficientsTableCreateCompanionBuilder =
+    SpeciesFormulaCoefficientsCompanion Function({
+      required String id,
+      required String speciesId,
+      required String formulaId,
+      required String symbol,
+      required String label,
+      Value<double?> value,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$SpeciesFormulaCoefficientsTableUpdateCompanionBuilder =
+    SpeciesFormulaCoefficientsCompanion Function({
+      Value<String> id,
+      Value<String> speciesId,
+      Value<String> formulaId,
+      Value<String> symbol,
+      Value<String> label,
+      Value<double?> value,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+final class $$SpeciesFormulaCoefficientsTableReferences
+    extends
+        BaseReferences<
+          _$DendroDatabase,
+          $SpeciesFormulaCoefficientsTable,
+          SpeciesFormulaCoefficientRecord
+        > {
+  $$SpeciesFormulaCoefficientsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $SpeciesTable _speciesIdTable(_$DendroDatabase db) => db.species
+      .createAlias('species_formula_coefficients__species_id__species__id');
+
+  $$SpeciesTableProcessedTableManager get speciesId {
+    final $_column = $_itemColumn<String>('species_id')!;
+
+    final manager = $$SpeciesTableTableManager(
+      $_db,
+      $_db.species,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_speciesIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $FormulasTable _formulaIdTable(_$DendroDatabase db) => db.formulas
+      .createAlias('species_formula_coefficients__formula_id__formulas__id');
+
+  $$FormulasTableProcessedTableManager get formulaId {
+    final $_column = $_itemColumn<String>('formula_id')!;
+
+    final manager = $$FormulasTableTableManager(
+      $_db,
+      $_db.formulas,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_formulaIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SpeciesFormulaCoefficientsTableFilterComposer
+    extends Composer<_$DendroDatabase, $SpeciesFormulaCoefficientsTable> {
+  $$SpeciesFormulaCoefficientsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SpeciesTableFilterComposer get speciesId {
+    final $$SpeciesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.speciesId,
+      referencedTable: $db.species,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SpeciesTableFilterComposer(
+            $db: $db,
+            $table: $db.species,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$FormulasTableFilterComposer get formulaId {
+    final $$FormulasTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.formulaId,
+      referencedTable: $db.formulas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FormulasTableFilterComposer(
+            $db: $db,
+            $table: $db.formulas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SpeciesFormulaCoefficientsTableOrderingComposer
+    extends Composer<_$DendroDatabase, $SpeciesFormulaCoefficientsTable> {
+  $$SpeciesFormulaCoefficientsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SpeciesTableOrderingComposer get speciesId {
+    final $$SpeciesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.speciesId,
+      referencedTable: $db.species,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SpeciesTableOrderingComposer(
+            $db: $db,
+            $table: $db.species,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$FormulasTableOrderingComposer get formulaId {
+    final $$FormulasTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.formulaId,
+      referencedTable: $db.formulas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FormulasTableOrderingComposer(
+            $db: $db,
+            $table: $db.formulas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SpeciesFormulaCoefficientsTableAnnotationComposer
+    extends Composer<_$DendroDatabase, $SpeciesFormulaCoefficientsTable> {
+  $$SpeciesFormulaCoefficientsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<double> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$SpeciesTableAnnotationComposer get speciesId {
+    final $$SpeciesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.speciesId,
+      referencedTable: $db.species,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SpeciesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.species,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$FormulasTableAnnotationComposer get formulaId {
+    final $$FormulasTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.formulaId,
+      referencedTable: $db.formulas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FormulasTableAnnotationComposer(
+            $db: $db,
+            $table: $db.formulas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SpeciesFormulaCoefficientsTableTableManager
+    extends
+        RootTableManager<
+          _$DendroDatabase,
+          $SpeciesFormulaCoefficientsTable,
+          SpeciesFormulaCoefficientRecord,
+          $$SpeciesFormulaCoefficientsTableFilterComposer,
+          $$SpeciesFormulaCoefficientsTableOrderingComposer,
+          $$SpeciesFormulaCoefficientsTableAnnotationComposer,
+          $$SpeciesFormulaCoefficientsTableCreateCompanionBuilder,
+          $$SpeciesFormulaCoefficientsTableUpdateCompanionBuilder,
+          (
+            SpeciesFormulaCoefficientRecord,
+            $$SpeciesFormulaCoefficientsTableReferences,
+          ),
+          SpeciesFormulaCoefficientRecord,
+          PrefetchHooks Function({bool speciesId, bool formulaId})
+        > {
+  $$SpeciesFormulaCoefficientsTableTableManager(
+    _$DendroDatabase db,
+    $SpeciesFormulaCoefficientsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SpeciesFormulaCoefficientsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$SpeciesFormulaCoefficientsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$SpeciesFormulaCoefficientsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> speciesId = const Value.absent(),
+                Value<String> formulaId = const Value.absent(),
+                Value<String> symbol = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<double?> value = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SpeciesFormulaCoefficientsCompanion(
+                id: id,
+                speciesId: speciesId,
+                formulaId: formulaId,
+                symbol: symbol,
+                label: label,
+                value: value,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String speciesId,
+                required String formulaId,
+                required String symbol,
+                required String label,
+                Value<double?> value = const Value.absent(),
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SpeciesFormulaCoefficientsCompanion.insert(
+                id: id,
+                speciesId: speciesId,
+                formulaId: formulaId,
+                symbol: symbol,
+                label: label,
+                value: value,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$SpeciesFormulaCoefficientsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({speciesId = false, formulaId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (speciesId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.speciesId,
+                                referencedTable:
+                                    $$SpeciesFormulaCoefficientsTableReferences
+                                        ._speciesIdTable(db),
+                                referencedColumn:
+                                    $$SpeciesFormulaCoefficientsTableReferences
+                                        ._speciesIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+                    if (formulaId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.formulaId,
+                                referencedTable:
+                                    $$SpeciesFormulaCoefficientsTableReferences
+                                        ._formulaIdTable(db),
+                                referencedColumn:
+                                    $$SpeciesFormulaCoefficientsTableReferences
+                                        ._formulaIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SpeciesFormulaCoefficientsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$DendroDatabase,
+      $SpeciesFormulaCoefficientsTable,
+      SpeciesFormulaCoefficientRecord,
+      $$SpeciesFormulaCoefficientsTableFilterComposer,
+      $$SpeciesFormulaCoefficientsTableOrderingComposer,
+      $$SpeciesFormulaCoefficientsTableAnnotationComposer,
+      $$SpeciesFormulaCoefficientsTableCreateCompanionBuilder,
+      $$SpeciesFormulaCoefficientsTableUpdateCompanionBuilder,
+      (
+        SpeciesFormulaCoefficientRecord,
+        $$SpeciesFormulaCoefficientsTableReferences,
+      ),
+      SpeciesFormulaCoefficientRecord,
+      PrefetchHooks Function({bool speciesId, bool formulaId})
+    >;
 typedef $$StandsTableCreateCompanionBuilder =
     StandsCompanion Function({
       required String id,
@@ -9029,6 +10312,8 @@ typedef $$StandsTableCreateCompanionBuilder =
       Value<int?> plantingYear,
       Value<String?> spacing,
       Value<String?> managementRegime,
+      Value<double?> plotWidthM,
+      Value<double?> plotLengthM,
       Value<String?> notes,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -9044,6 +10329,8 @@ typedef $$StandsTableUpdateCompanionBuilder =
       Value<int?> plantingYear,
       Value<String?> spacing,
       Value<String?> managementRegime,
+      Value<double?> plotWidthM,
+      Value<double?> plotLengthM,
       Value<String?> notes,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -9149,6 +10436,16 @@ class $$StandsTableFilterComposer
 
   ColumnFilters<String> get managementRegime => $composableBuilder(
     column: $table.managementRegime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get plotWidthM => $composableBuilder(
+    column: $table.plotWidthM,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get plotLengthM => $composableBuilder(
+    column: $table.plotLengthM,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9278,6 +10575,16 @@ class $$StandsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get plotWidthM => $composableBuilder(
+    column: $table.plotWidthM,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get plotLengthM => $composableBuilder(
+    column: $table.plotLengthM,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get notes => $composableBuilder(
     column: $table.notes,
     builder: (column) => ColumnOrderings(column),
@@ -9370,6 +10677,16 @@ class $$StandsTableAnnotationComposer
 
   GeneratedColumn<String> get managementRegime => $composableBuilder(
     column: $table.managementRegime,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get plotWidthM => $composableBuilder(
+    column: $table.plotWidthM,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get plotLengthM => $composableBuilder(
+    column: $table.plotLengthM,
     builder: (column) => column,
   );
 
@@ -9495,6 +10812,8 @@ class $$StandsTableTableManager
                 Value<int?> plantingYear = const Value.absent(),
                 Value<String?> spacing = const Value.absent(),
                 Value<String?> managementRegime = const Value.absent(),
+                Value<double?> plotWidthM = const Value.absent(),
+                Value<double?> plotLengthM = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -9508,6 +10827,8 @@ class $$StandsTableTableManager
                 plantingYear: plantingYear,
                 spacing: spacing,
                 managementRegime: managementRegime,
+                plotWidthM: plotWidthM,
+                plotLengthM: plotLengthM,
                 notes: notes,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -9523,6 +10844,8 @@ class $$StandsTableTableManager
                 Value<int?> plantingYear = const Value.absent(),
                 Value<String?> spacing = const Value.absent(),
                 Value<String?> managementRegime = const Value.absent(),
+                Value<double?> plotWidthM = const Value.absent(),
+                Value<double?> plotLengthM = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -9536,6 +10859,8 @@ class $$StandsTableTableManager
                 plantingYear: plantingYear,
                 spacing: spacing,
                 managementRegime: managementRegime,
+                plotWidthM: plotWidthM,
+                plotLengthM: plotLengthM,
                 notes: notes,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -12361,6 +13686,12 @@ class $DendroDatabaseManager {
       $$FormulaCoefficientsTableTableManager(_db, _db.formulaCoefficients);
   $$SpeciesFormulasTableTableManager get speciesFormulas =>
       $$SpeciesFormulasTableTableManager(_db, _db.speciesFormulas);
+  $$SpeciesFormulaCoefficientsTableTableManager
+  get speciesFormulaCoefficients =>
+      $$SpeciesFormulaCoefficientsTableTableManager(
+        _db,
+        _db.speciesFormulaCoefficients,
+      );
   $$StandsTableTableManager get stands =>
       $$StandsTableTableManager(_db, _db.stands);
   $$InventoryRunsTableTableManager get inventoryRuns =>

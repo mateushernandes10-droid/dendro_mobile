@@ -308,6 +308,11 @@ class _StandItem extends StatelessWidget {
                             icon: Icons.calendar_month,
                             label: 'Plantio ${stand.plantingYear}',
                           ),
+                        if (_formatPlotDimension(stand) != null)
+                          _MetaText(
+                            icon: Icons.crop_free,
+                            label: 'Parcela ${_formatPlotDimension(stand)} m',
+                          ),
                       ],
                     ),
                   ],
@@ -372,6 +377,8 @@ class _StandFormSheetState extends ConsumerState<_StandFormSheet> {
   late final TextEditingController _plantingYearController;
   late final TextEditingController _spacingController;
   late final TextEditingController _managementRegimeController;
+  late final TextEditingController _plotWidthController;
+  late final TextEditingController _plotLengthController;
   late final TextEditingController _notesController;
   String? _speciesId;
   bool _saving = false;
@@ -396,6 +403,12 @@ class _StandFormSheetState extends ConsumerState<_StandFormSheet> {
     _managementRegimeController = TextEditingController(
       text: stand?.managementRegime ?? '',
     );
+    _plotWidthController = TextEditingController(
+      text: stand?.plotWidthM == null ? '' : _formatArea(stand!.plotWidthM!),
+    );
+    _plotLengthController = TextEditingController(
+      text: stand?.plotLengthM == null ? '' : _formatArea(stand!.plotLengthM!),
+    );
     _notesController = TextEditingController(text: stand?.notes ?? '');
     _speciesId = stand?.speciesId;
   }
@@ -407,6 +420,8 @@ class _StandFormSheetState extends ConsumerState<_StandFormSheet> {
     _plantingYearController.dispose();
     _spacingController.dispose();
     _managementRegimeController.dispose();
+    _plotWidthController.dispose();
+    _plotLengthController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -531,6 +546,21 @@ class _StandFormSheetState extends ConsumerState<_StandFormSheet> {
                 ),
               ),
               const SizedBox(height: 12),
+              PlotDimensionsInput(
+                widthController: _plotWidthController,
+                lengthController: _plotLengthController,
+                widthValidator: (value) => _plotDimensionValidator(
+                  value,
+                  _plotLengthController.text,
+                  'primeira medida',
+                ),
+                lengthValidator: (value) => _plotDimensionValidator(
+                  value,
+                  _plotWidthController.text,
+                  'segunda medida',
+                ),
+              ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
                 minLines: 2,
@@ -580,6 +610,8 @@ class _StandFormSheetState extends ConsumerState<_StandFormSheet> {
           plantingYear: plantingYear,
           spacing: _spacingController.text,
           managementRegime: _managementRegimeController.text,
+          plotWidthM: _parseOptionalArea(_plotWidthController.text),
+          plotLengthM: _parseOptionalArea(_plotLengthController.text),
           notes: _notesController.text,
         );
       } else {
@@ -591,6 +623,8 @@ class _StandFormSheetState extends ConsumerState<_StandFormSheet> {
           plantingYear: plantingYear,
           spacing: _spacingController.text,
           managementRegime: _managementRegimeController.text,
+          plotWidthM: _parseOptionalArea(_plotWidthController.text),
+          plotLengthM: _parseOptionalArea(_plotLengthController.text),
           notes: _notesController.text,
         );
       }
@@ -638,6 +672,21 @@ class _StandFormSheetState extends ConsumerState<_StandFormSheet> {
     if (year < 1900 || year > DateTime.now().year + 1) {
       return 'Confira o ano';
     }
+    return null;
+  }
+
+  String? _plotDimensionValidator(
+    String? value,
+    String pairedValue,
+    String label,
+  ) {
+    final hasValue = value != null && value.trim().isNotEmpty;
+    final hasPair = pairedValue.trim().isNotEmpty;
+    if (!hasValue && !hasPair) return null;
+    if (!hasValue) return 'Informe a $label';
+
+    final parsed = _parseOptionalArea(value);
+    if (parsed == null || parsed <= 0) return 'Valor inválido';
     return null;
   }
 }
@@ -790,8 +839,26 @@ String _formatArea(double value) {
   return value.toStringAsFixed(2).replaceAll('.', ',');
 }
 
+String? _formatPlotDimension(StandRecord stand) {
+  final width = stand.plotWidthM;
+  final length = stand.plotLengthM;
+  if (width == null || length == null) return null;
+  return '${_formatCompactNumber(width)} x ${_formatCompactNumber(length)}';
+}
+
+String _formatCompactNumber(double value) {
+  if (value == value.roundToDouble()) return value.toStringAsFixed(0);
+  return _formatArea(value);
+}
+
 double? _parseArea(String value) {
   return double.tryParse(value.trim().replaceAll(',', '.'));
+}
+
+double? _parseOptionalArea(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) return null;
+  return _parseArea(trimmed);
 }
 
 int? _parseOptionalInt(String value) {
