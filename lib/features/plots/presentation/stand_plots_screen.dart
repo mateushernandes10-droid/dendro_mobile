@@ -7,7 +7,7 @@ import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
 import '../../inventory_runs/data/inventory_runs_repository.dart';
 import '../../inventory_runs/presentation/inventory_run_detail_screen.dart';
-import '../../results/presentation/results_screen.dart';
+import '../../shell/presentation/dendro_shell_navigation.dart';
 import '../../tree_collection/presentation/tree_collection_screen.dart';
 import '../data/plots_repository.dart';
 
@@ -186,14 +186,10 @@ class StandPlotsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openResults(BuildContext context, StandPlotsState state) {
-    return Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => ResultsScreen(
-          initialPropertyId: state.stand.propertyId,
-          initialStandIds: {state.stand.id},
-        ),
-      ),
+  void _openResults(BuildContext context, StandPlotsState state) {
+    DendroShellNavigation.of(context).openResults(
+      propertyId: state.stand.propertyId,
+      standIds: {state.stand.id},
     );
   }
 

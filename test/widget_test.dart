@@ -505,6 +505,53 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1));
   });
 
+  testWidgets('atalho de resultados troca a aba selecionada', (tester) async {
+    final database = DendroDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    tester.view.physicalSize = const Size(360, 780);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.runAsync(() async {
+      final propertiesRepository = PropertiesRepository(database);
+
+      await propertiesRepository.create(
+        name: 'Fazenda Resultado',
+        municipality: 'Vacaria',
+        totalAreaHa: 42,
+      );
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dendroDatabaseProvider.overrideWithValue(database)],
+        child: MaterialApp(theme: DendroTheme.light, home: const DendroShell()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Propr.'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Fazenda Resultado'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Resultados'));
+    await tester.pumpAndSettle();
+
+    final navigationBar = tester.widget<NavigationBar>(
+      find.byType(NavigationBar),
+    );
+    expect(navigationBar.selectedIndex, 3);
+    expect(find.text('Filtros'), findsOneWidget);
+    expect(find.text('Fazenda Resultado'), findsWidgets);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
+
   testWidgets('ajustes navega para especies e modelos do catalogo', (
     tester,
   ) async {

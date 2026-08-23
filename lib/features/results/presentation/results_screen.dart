@@ -168,6 +168,7 @@ class _FilterCard extends ConsumerWidget {
           DropdownButtonFormField<String>(
             key: ValueKey('property_$propertyId'),
             initialValue: propertyId ?? _allFilterValue,
+            isExpanded: true,
             style: const TextStyle(
               color: DendroColors.text,
               fontWeight: FontWeight.w700,
@@ -199,7 +200,7 @@ class _FilterCard extends ConsumerWidget {
               for (final property in options.properties)
                 DropdownMenuItem(
                   value: property.id,
-                  child: Text(property.name),
+                  child: Text(property.name, overflow: TextOverflow.ellipsis),
                 ),
             ],
             onChanged: (value) {
@@ -212,6 +213,7 @@ class _FilterCard extends ConsumerWidget {
           DropdownButtonFormField<String>(
             key: ValueKey('species_$speciesId'),
             initialValue: speciesId ?? _allFilterValue,
+            isExpanded: true,
             style: const TextStyle(
               color: DendroColors.text,
               fontWeight: FontWeight.w700,
@@ -241,7 +243,10 @@ class _FilterCard extends ConsumerWidget {
                 child: Text('Todas as espécies'),
               ),
               for (final species in options.species)
-                DropdownMenuItem(value: species.id, child: Text(species.name)),
+                DropdownMenuItem(
+                  value: species.id,
+                  child: Text(species.name, overflow: TextOverflow.ellipsis),
+                ),
             ],
             onChanged: (value) {
               ref.read(resultsSpeciesFilterProvider.notifier).state =

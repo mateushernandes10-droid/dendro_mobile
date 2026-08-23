@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../app/theme/dendro_theme.dart';
 import '../../../core/database/dendro_database.dart';
+import '../../../core/platform/android_file_saver.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
 import '../data/data_export_repository.dart';
 
@@ -30,7 +31,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
   DataExportFormat _format = DataExportFormat.pdf;
   Set<String>? _selectedTalhaoIds;
   String? _selectionSyncKey;
-  bool _exporting = false;
+  _ExportAction? _currentAction;
 
   @override
   void initState() {
@@ -133,19 +134,44 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed:
-                        _exporting ||
+                        _currentAction != null ||
                             state.property == null ||
                             selectedTalhaoIds.isEmpty
                         ? null
-                        : () => _prepareExport(state),
-                    icon: _exporting
+                        : () => _prepareExport(state, _ExportAction.share),
+                    icon: _currentAction == _ExportAction.share
                         ? const SizedBox.square(
                             dimension: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.ios_share),
                     label: Text(
-                      _exporting ? 'Preparando...' : 'Compartilhar relatório',
+                      _currentAction == _ExportAction.share
+                          ? 'Preparando...'
+                          : 'Compartilhar relatório',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed:
+                        _currentAction != null ||
+                            state.property == null ||
+                            selectedTalhaoIds.isEmpty
+                        ? null
+                        : () => _prepareExport(state, _ExportAction.save),
+                    icon: _currentAction == _ExportAction.save
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_alt_outlined),
+                    label: Text(
+                      _currentAction == _ExportAction.save
+                          ? 'Salvando...'
+                          : 'Salvar no aparelho',
                     ),
                   ),
                 ),
@@ -227,12 +253,15 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
     setState(() => _selectedTalhaoIds = next);
   }
 
-  Future<void> _prepareExport(DataExportState state) async {
+  Future<void> _prepareExport(
+    DataExportState state,
+    _ExportAction action,
+  ) async {
     final property = state.property;
     final selectedTalhaoIds = _selectedTalhaoIds ?? const <String>{};
     if (property == null || selectedTalhaoIds.isEmpty) return;
 
-    setState(() => _exporting = true);
+    setState(() => _currentAction = action);
 
     try {
       final request = DataExportRequest(
@@ -246,6 +275,32 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
         format: _format,
         talhaoLevantamentoIds: selectedTalhaoIds,
       );
+
+      if (action == _ExportAction.save) {
+        final saved = await AndroidFileSaver.saveFile(
+          path: file.path,
+          fileName: file.fileName,
+          mimeType: file.mimeType,
+        );
+        if (!mounted) return;
+        if (!saved) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Salvamento cancelado.')),
+          );
+          return;
+        }
+
+        await repository.recordExport(
+          formats: [_format.label],
+          property: property,
+          standCount: selectedTalhaoIds.length,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${file.fileName} salvo no aparelho.')),
+        );
+        return;
+      }
 
       final result = await SharePlus.instance.share(
         ShareParams(
@@ -280,14 +335,20 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red.shade700,
-          content: const Text('Não foi possível preparar a exportação.'),
+          content: Text(
+            action == _ExportAction.save
+                ? 'Não foi possível salvar a exportação.'
+                : 'Não foi possível preparar a exportação.',
+          ),
         ),
       );
     } finally {
-      if (mounted) setState(() => _exporting = false);
+      if (mounted) setState(() => _currentAction = null);
     }
   }
 }
+
+enum _ExportAction { share, save }
 
 extension _DataExportFormatUi on DataExportFormat {
   String get title {

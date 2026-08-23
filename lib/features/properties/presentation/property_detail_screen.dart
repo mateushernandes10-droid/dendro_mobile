@@ -6,7 +6,7 @@ import '../../../app/theme/dendro_theme.dart';
 import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
 import '../../data_export/presentation/data_export_screen.dart';
-import '../../results/presentation/results_screen.dart';
+import '../../shell/presentation/dendro_shell_navigation.dart';
 import '../data/properties_repository.dart';
 import '../../stands/data/stands_repository.dart';
 import '../../plots/presentation/stand_plots_screen.dart';
@@ -107,12 +107,8 @@ class PropertyDetailScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openResults(BuildContext context) {
-    return Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => ResultsScreen(initialPropertyId: property.id),
-      ),
-    );
+  void _openResults(BuildContext context) {
+    DendroShellNavigation.of(context).openResults(propertyId: property.id);
   }
 
   Future<void> _openStandPlots(BuildContext context, StandSummary summary) {

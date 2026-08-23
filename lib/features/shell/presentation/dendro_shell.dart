@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../home/presentation/home_screen.dart';
 import '../../inventory_runs/presentation/inventory_runs_screen.dart';
 import '../../properties/presentation/properties_screen.dart';
+import '../../results/data/results_repository.dart';
 import '../../results/presentation/results_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
+import 'dendro_shell_navigation.dart';
 
-class DendroShell extends StatefulWidget {
+class DendroShell extends ConsumerStatefulWidget {
   const DendroShell({super.key});
 
   @override
-  State<DendroShell> createState() => _DendroShellState();
+  ConsumerState<DendroShell> createState() => _DendroShellState();
 }
 
-class _DendroShellState extends State<DendroShell> {
+class _DendroShellState extends ConsumerState<DendroShell> {
+  static const _resultsTabIndex = 3;
+
   int _selectedIndex = 0;
   bool _compactNavigation = false;
 
@@ -45,60 +50,86 @@ class _DendroShellState extends State<DendroShell> {
       MediaQuery.sizeOf(context).width,
     );
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        _handleSystemBack(didPop);
-      },
-      child: Scaffold(
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: [
-            for (var index = 0; index < _pages.length; index++)
-              _TabNavigator(
-                navigatorKey: _navigatorKeys[index],
-                observer: _navigatorObservers[index],
-                child: _pages[index],
+    return DendroShellNavigation(
+      openResults: _openResultsTab,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          _handleSystemBack(didPop);
+        },
+        child: Scaffold(
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: [
+              for (var index = 0; index < _pages.length; index++)
+                _TabNavigator(
+                  navigatorKey: _navigatorKeys[index],
+                  observer: _navigatorObservers[index],
+                  child: _pages[index],
+                ),
+            ],
+          ),
+          bottomNavigationBar: NavigationBar(
+            height: _compactNavigation ? 62 : null,
+            labelBehavior: _compactNavigation
+                ? NavigationDestinationLabelBehavior.alwaysHide
+                : NavigationDestinationLabelBehavior.alwaysShow,
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _selectTab,
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.home_outlined),
+                selectedIcon: const Icon(Icons.home),
+                label: navigationLabels[0],
               ),
-          ],
-        ),
-        bottomNavigationBar: NavigationBar(
-          height: _compactNavigation ? 62 : null,
-          labelBehavior: _compactNavigation
-              ? NavigationDestinationLabelBehavior.alwaysHide
-              : NavigationDestinationLabelBehavior.alwaysShow,
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: _selectTab,
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.home_outlined),
-              selectedIcon: const Icon(Icons.home),
-              label: navigationLabels[0],
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.assignment_outlined),
-              selectedIcon: const Icon(Icons.assignment),
-              label: navigationLabels[1],
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.map_outlined),
-              selectedIcon: const Icon(Icons.map),
-              label: navigationLabels[2],
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.bar_chart_outlined),
-              selectedIcon: const Icon(Icons.bar_chart),
-              label: navigationLabels[3],
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.settings_outlined),
-              selectedIcon: const Icon(Icons.settings),
-              label: navigationLabels[4],
-            ),
-          ],
+              NavigationDestination(
+                icon: const Icon(Icons.assignment_outlined),
+                selectedIcon: const Icon(Icons.assignment),
+                label: navigationLabels[1],
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.map_outlined),
+                selectedIcon: const Icon(Icons.map),
+                label: navigationLabels[2],
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.bar_chart_outlined),
+                selectedIcon: const Icon(Icons.bar_chart),
+                label: navigationLabels[3],
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.settings_outlined),
+                selectedIcon: const Icon(Icons.settings),
+                label: navigationLabels[4],
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  void _openResultsTab({
+    String? propertyId,
+    Set<String>? standIds,
+    String? speciesId,
+  }) {
+    ref.read(resultsPropertyFilterProvider.notifier).state = propertyId;
+    ref.read(resultsStandFilterProvider.notifier).state = {...?standIds};
+    ref.read(resultsSpeciesFilterProvider.notifier).state = speciesId;
+
+    final resultsNavigator = _navigatorKeys[_resultsTabIndex].currentState;
+    if (resultsNavigator != null && resultsNavigator.canPop()) {
+      resultsNavigator.popUntil((route) => route.isFirst);
+    }
+
+    if (_selectedIndex != _resultsTabIndex) {
+      setState(() => _selectedIndex = _resultsTabIndex);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateNavigationMode();
+    });
   }
 
   void _selectTab(int index) {
