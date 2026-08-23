@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
 import 'package:excel/excel.dart' as excel;
@@ -250,6 +251,25 @@ class DataExportStandDataset {
 
   double? get treesPerHa =>
       measuredAreaHa == 0 ? null : treeCount / measuredAreaHa;
+
+  double get basalAreaSampleM2 {
+    return plots.fold<double>(
+      0,
+      (total, plot) =>
+          total +
+          plot.trees.fold<double>(
+            0,
+            (plotTotal, tree) =>
+                plotTotal + math.pi * (tree.dapCm / 200) * (tree.dapCm / 200),
+          ),
+    );
+  }
+
+  double? get basalAreaPerHa =>
+      measuredAreaHa == 0 ? null : basalAreaSampleM2 / measuredAreaHa;
+
+  double? get averageVolumePerTreeM3 =>
+      treeCount == 0 ? null : sampleVolumeM3 / treeCount;
 
   double treeVolumeM3(TreeRecord tree) {
     return ForestVolumeCalculator.treeVolumeM3(
@@ -798,40 +818,58 @@ Future<List<int>> _pdfBytes(DataExportDataset dataset) async {
         ),
       ),
       build: (context) => [
-        pw.Text(
-          'DENDRO Mobile',
-          style: pw.TextStyle(
-            color: PdfColors.green900,
-            fontSize: 22,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-        pw.Text(
-          'Relatório de Inventário Florestal',
-          style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-        ),
-        pw.SizedBox(height: 12),
+        _pdfHeader(dataset, generatedAt),
+        pw.SizedBox(height: 14),
+        _pdfSectionTitle('1. Identificação do levantamento'),
         _pdfInfoGrid([
           ['Propriedade', dataset.property.name],
           [
             'Município',
             '${dataset.property.municipality}-${dataset.property.state}',
           ],
-          ['Área cadastrada', '${_decimal(dataset.property.totalAreaHa)} ha'],
+          [
+            'Área total da propriedade',
+            '${_decimal(dataset.property.totalAreaHa)} ha',
+          ],
+          [
+            'Área inventariada selecionada',
+            '${_decimal(dataset.standAreaHa)} ha',
+          ],
           ['Gerado em', _dateTime(generatedAt)],
           if (dataset.inventoryRun != null)
-            ['Levantamento', _dateTime(dataset.inventoryRun!.startedAt)],
+            [
+              'Data do levantamento',
+              _dateTime(dataset.inventoryRun!.startedAt),
+            ],
           if (dataset.inventoryRun != null)
             ['Status', _inventoryStatusLabel(dataset.inventoryRun!.status)],
         ]),
-        pw.SizedBox(height: 14),
-        _pdfSectionTitle('Resumo geral'),
+        pw.SizedBox(height: 12),
+        _pdfSectionTitle('2. Objetivo'),
+        _pdfParagraph(_objectiveText(dataset, generatedAt)),
+        pw.SizedBox(height: 12),
+        _pdfSectionTitle('3. Metodologia'),
+        _pdfParagraph(_methodologyText(dataset)),
+        _pdfBulletList([
+          'Intensidade amostral: ${dataset.plotCount} parcelas, sendo ${dataset.collectedPlotCount} coletadas, totalizando ${_decimal(dataset.measuredAreaHa)} ha de área medida.',
+          'Diâmetro à Altura do Peito (DAP): medido a 1,30 m do solo em todas as árvores da amostra.',
+          'Altura total (h): informada em metros para estimativa do volume individual.',
+          'As coordenadas GPS registradas no aplicativo são incluídas nos arquivos de coordenadas e na conferência das parcelas.',
+        ]),
+        pw.SizedBox(height: 12),
+        _pdfSectionTitle('4. Modelos matemáticos utilizados'),
+        _pdfParagraph(
+          'A partir dos dados dendrométricos coletados em campo, foram aplicados os modelos matemáticos configurados no DENDRO Mobile para estimativa de altura e volume de madeira.',
+        ),
+        _pdfFormulaTable(dataset),
+        pw.SizedBox(height: 12),
+        _pdfSectionTitle('5. Resultados do inventário'),
         _pdfInfoGrid([
-          ['Talhões', dataset.stands.length.toString()],
-          ['Parcelas', dataset.plotCount.toString()],
-          ['Parcelas coletadas', dataset.collectedPlotCount.toString()],
-          ['Árvores medidas', dataset.treeCount.toString()],
-          ['Área medida', '${_decimal(dataset.measuredAreaHa)} ha'],
+          ['Talhões inventariados', dataset.stands.length.toString()],
+          ['Parcelas avaliadas', dataset.plotCount.toString()],
+          ['Árvores amostradas', dataset.treeCount.toString()],
+          ['Área total inventariada', '${_decimal(dataset.standAreaHa)} ha'],
+          ['Área total medida', '${_decimal(dataset.measuredAreaHa)} ha'],
           ['Árvores/ha', _nullableDecimal(dataset.treesPerHa)],
           [
             'Volume amostrado',
@@ -852,63 +890,19 @@ Future<List<int>> _pdfBytes(DataExportDataset dataset) async {
           ],
         ]),
         pw.SizedBox(height: 14),
-        _pdfSectionTitle('Talhões selecionados'),
-        pw.TableHelper.fromTextArray(
-          border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-          headerDecoration: const pw.BoxDecoration(color: PdfColors.green900),
-          headerStyle: pw.TextStyle(
-            color: PdfColors.white,
-            fontSize: 9,
-            fontWeight: pw.FontWeight.bold,
-          ),
-          cellStyle: const pw.TextStyle(fontSize: 8),
-          cellAlignment: pw.Alignment.centerLeft,
-          headers: [
-            'Talhão',
-            'Espécie',
-            'Área (ha)',
-            'Modelo',
-            'Parcelas',
-            'Árvores',
-            'N/ha',
-            'Vol./ha',
-            'Vol. estimado',
-            'Equiv.',
-            'DAP médio',
-            'Alt. média',
-          ],
-          data: [
-            for (final stand in dataset.stands)
-              [
-                stand.option.stand.identification,
-                stand.option.species.name,
-                _decimal(stand.option.stand.areaHa),
-                stand.formula?.name ?? 'Sem modelo',
-                '${stand.option.collectedPlotCount}/${stand.option.plotCount}',
-                stand.treeCount.toString(),
-                _nullableDecimal(stand.treesPerHa),
-                _nullableDecimal(stand.volumePerHaM3, suffix: ' m³/ha'),
-                _nullableDecimal(stand.estimatedVolumeM3, suffix: ' m³'),
-                _convertedStandVolumeLabel(stand),
-                _nullableDecimal(stand.averageDapCm, suffix: ' cm'),
-                _nullableDecimal(stand.averageHeightM, suffix: ' m'),
-              ],
-          ],
-        ),
+        _pdfSectionTitle('5.1 Área e volume por espécie'),
+        _pdfSpeciesResultsTable(dataset),
+        pw.SizedBox(height: 14),
+        _pdfSectionTitle('5.2 Dados dendrométricos por talhão'),
+        _pdfDendrometricTable(dataset, generatedAt),
         pw.SizedBox(height: 16),
         for (final stand in dataset.stands) ...[
-          _pdfSectionTitle('Parcelas - ${stand.option.stand.identification}'),
-          if (stand.coefficients.isNotEmpty)
-            pw.Padding(
-              padding: const pw.EdgeInsets.only(bottom: 6),
-              child: pw.Text(
-                'Coeficientes: ${stand.coefficients.map((item) => '${item.symbol}=${_nullableDecimal(item.value)}').join(' | ')}',
-                style: const pw.TextStyle(
-                  fontSize: 8,
-                  color: PdfColors.grey700,
-                ),
-              ),
-            ),
+          _pdfSectionTitle(
+            '5.3 Parcelas - ${stand.option.stand.identification}',
+          ),
+          _pdfParagraph(
+            'Espécie: ${stand.option.species.name}. Modelo: ${stand.formula?.name ?? 'sem modelo'}. Coeficientes: ${_coefficientList(stand)}.',
+          ),
           if (stand.plots.isEmpty)
             pw.Text(
               'Nenhuma parcela cadastrada para este talhão.',
@@ -952,6 +946,8 @@ Future<List<int>> _pdfBytes(DataExportDataset dataset) async {
             ),
           pw.SizedBox(height: 12),
         ],
+        _pdfSectionTitle('6. Observações técnicas'),
+        _pdfBulletList(_technicalNotes(dataset)),
       ],
     ),
   );
@@ -960,6 +956,7 @@ Future<List<int>> _pdfBytes(DataExportDataset dataset) async {
 }
 
 List<int> _csvBytes(DataExportDataset dataset) {
+  final referenceDate = dataset.inventoryRun?.startedAt ?? DateTime.now();
   final buffer = StringBuffer()
     ..writeln(
       _csvLine([
@@ -971,6 +968,10 @@ List<int> _csvBytes(DataExportDataset dataset) {
         'Talhão',
         'Espécie',
         'Área talhão (ha)',
+        'Ano plantio',
+        'Idade',
+        'Espaçamento',
+        'Regime manejo',
         'Modelo',
         'Parcela',
         'Status parcela',
@@ -1012,6 +1013,10 @@ List<int> _csvBytes(DataExportDataset dataset) {
             stand.option.stand.identification,
             stand.option.species.name,
             _decimal(stand.option.stand.areaHa),
+            stand.option.stand.plantingYear?.toString() ?? '',
+            _standAge(stand, referenceDate)?.toString() ?? '',
+            stand.option.stand.spacing ?? '',
+            stand.option.stand.managementRegime ?? '',
             stand.formula?.name ?? '',
             plot.plot.identification,
             _plotStatusLabel(plot.plot.status),
@@ -1054,6 +1059,10 @@ List<int> _csvBytes(DataExportDataset dataset) {
             stand.option.stand.identification,
             stand.option.species.name,
             _decimal(stand.option.stand.areaHa),
+            stand.option.stand.plantingYear?.toString() ?? '',
+            _standAge(stand, referenceDate)?.toString() ?? '',
+            stand.option.stand.spacing ?? '',
+            stand.option.stand.managementRegime ?? '',
             stand.formula?.name ?? '',
             plot.plot.identification,
             _plotStatusLabel(plot.plot.status),
@@ -1084,6 +1093,7 @@ List<int> _csvBytes(DataExportDataset dataset) {
 }
 
 List<int> _xlsxBytes(DataExportDataset dataset) {
+  final referenceDate = dataset.inventoryRun?.startedAt ?? DateTime.now();
   final workbook = excel.Excel.createExcel();
   final summary = workbook['Resumo'];
   final trees = workbook['Árvores'];
@@ -1113,6 +1123,10 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
         'Talhão',
         'Espécie',
         'Área talhão (ha)',
+        'Ano plantio',
+        'Idade',
+        'Espaçamento',
+        'Regime manejo',
         'Modelo',
         'Coeficientes',
         'Parcelas',
@@ -1136,6 +1150,10 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
         stand.option.stand.identification,
         stand.option.species.name,
         stand.option.stand.areaHa,
+        stand.option.stand.plantingYear,
+        _standAge(stand, referenceDate),
+        stand.option.stand.spacing ?? '',
+        stand.option.stand.managementRegime ?? '',
         stand.formula?.name ?? '',
         stand.coefficients
             .map((coefficient) {
@@ -1163,6 +1181,10 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
       'Propriedade',
       'Talhão',
       'Espécie',
+      'Ano plantio',
+      'Idade',
+      'Espaçamento',
+      'Regime manejo',
       'Parcela',
       'Status parcela',
       'Árvore',
@@ -1199,6 +1221,10 @@ List<int> _xlsxBytes(DataExportDataset dataset) {
             dataset.property.name,
             stand.option.stand.identification,
             stand.option.species.name,
+            stand.option.stand.plantingYear,
+            _standAge(stand, referenceDate),
+            stand.option.stand.spacing ?? '',
+            stand.option.stand.managementRegime ?? '',
             plot.plot.identification,
             _plotStatusLabel(plot.plot.status),
             tree.number,
@@ -1347,6 +1373,211 @@ List<int> _kmlBytes(DataExportDataset dataset) {
     ..writeln('</kml>');
 
   return utf8.encode(buffer.toString());
+}
+
+pw.Widget _pdfHeader(DataExportDataset dataset, DateTime generatedAt) {
+  return pw.Container(
+    width: double.infinity,
+    padding: const pw.EdgeInsets.all(14),
+    decoration: pw.BoxDecoration(
+      color: PdfColors.green900,
+      borderRadius: pw.BorderRadius.circular(4),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'DENDRO Mobile',
+          style: pw.TextStyle(
+            color: PdfColors.white,
+            fontSize: 22,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.SizedBox(height: 3),
+        pw.Text(
+          'Relatório de Inventário Florestal',
+          style: pw.TextStyle(
+            color: PdfColors.green100,
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.SizedBox(height: 8),
+        pw.Text(
+          '${dataset.property.name} - ${dataset.property.municipality}/${dataset.property.state}',
+          style: const pw.TextStyle(color: PdfColors.white, fontSize: 10),
+        ),
+        pw.Text(
+          'Emitido em ${_dateTime(generatedAt)}',
+          style: const pw.TextStyle(color: PdfColors.green100, fontSize: 9),
+        ),
+      ],
+    ),
+  );
+}
+
+String _objectiveText(DataExportDataset dataset, DateTime referenceDate) {
+  final species = _speciesPhrase(dataset);
+  final age = _agePhrase(dataset, referenceDate);
+  return 'O objetivo deste levantamento é apresentar uma análise quantitativa e qualitativa da floresta de $species$age, localizada na propriedade ${dataset.property.name}, município de ${dataset.property.municipality}/${dataset.property.state}, com área total cadastrada de ${_decimal(dataset.property.totalAreaHa)} hectares. O relatório consolida os dados coletados nas parcelas selecionadas e estima o volume de madeira para a área inventariada.';
+}
+
+String _methodologyText(DataExportDataset dataset) {
+  final plotArea = _averagePlotAreaHa(dataset);
+  final plotAreaText = plotArea == null
+      ? 'área fixa informada durante a coleta'
+      : 'área média de ${_decimalPrecision(plotArea, fractionDigits: 4)} ha (${_decimal(plotArea * 10000)} m²)';
+  final spacingText = _spacingPhrase(dataset);
+
+  return 'O levantamento foi realizado pelo método de amostragem sistemática com parcelas de área fixa, preferencialmente retangulares, com $plotAreaText.$spacingText Os dados foram registrados em campo pelo aplicativo, permitindo rastreabilidade das parcelas, árvores medidas e coordenadas GPS quando informadas.';
+}
+
+pw.Widget _pdfParagraph(String value) {
+  return pw.Padding(
+    padding: const pw.EdgeInsets.only(bottom: 6),
+    child: pw.Text(
+      value,
+      textAlign: pw.TextAlign.justify,
+      style: const pw.TextStyle(fontSize: 9, lineSpacing: 2),
+    ),
+  );
+}
+
+pw.Widget _pdfBulletList(List<String> items) {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      for (final item in items)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(left: 8, bottom: 3),
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('- ', style: const pw.TextStyle(fontSize: 9)),
+              pw.Expanded(
+                child: pw.Text(
+                  item,
+                  style: const pw.TextStyle(fontSize: 9, lineSpacing: 2),
+                ),
+              ),
+            ],
+          ),
+        ),
+    ],
+  );
+}
+
+pw.Widget _pdfFormulaTable(DataExportDataset dataset) {
+  return pw.TableHelper.fromTextArray(
+    border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+    headerDecoration: const pw.BoxDecoration(color: PdfColors.green900),
+    headerStyle: pw.TextStyle(
+      color: PdfColors.white,
+      fontSize: 7,
+      fontWeight: pw.FontWeight.bold,
+    ),
+    cellStyle: const pw.TextStyle(fontSize: 6.5),
+    cellAlignment: pw.Alignment.centerLeft,
+    headers: ['Espécie', 'Modelo', 'Altura', 'Volume', 'Conversão'],
+    data: [
+      for (final stand in _uniqueFormulaUses(dataset))
+        [
+          stand.option.species.name,
+          stand.formula?.name ?? 'Sem modelo',
+          'h = 6,4229 * Ln(DAP) + 0,8203',
+          _volumeEquationWithValues(stand),
+          _conversionEquation(stand),
+        ],
+    ],
+  );
+}
+
+pw.Widget _pdfSpeciesResultsTable(DataExportDataset dataset) {
+  return pw.TableHelper.fromTextArray(
+    border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+    headerDecoration: const pw.BoxDecoration(color: PdfColors.green900),
+    headerStyle: pw.TextStyle(
+      color: PdfColors.white,
+      fontSize: 8,
+      fontWeight: pw.FontWeight.bold,
+    ),
+    cellStyle: const pw.TextStyle(fontSize: 7.5),
+    cellAlignment: pw.Alignment.centerLeft,
+    headers: [
+      'Espécie',
+      'Área (ha)',
+      'Talhões',
+      'Parcelas',
+      'Árvores',
+      'Vol./ha',
+      'Vol. total',
+      'Equiv.',
+    ],
+    data: [
+      for (final summary in _speciesSummaries(dataset))
+        [
+          summary.speciesName,
+          _decimal(summary.areaHa),
+          summary.standCount.toString(),
+          summary.plotCount.toString(),
+          summary.treeCount.toString(),
+          _nullableDecimal(summary.volumePerHaM3, suffix: ' m³/ha'),
+          _nullableDecimal(summary.estimatedVolumeM3, suffix: ' m³'),
+          summary.convertedEstimatedVolume == null
+              ? ''
+              : '${_decimal(summary.convertedEstimatedVolume!)} ${summary.conversion.unit}',
+        ],
+    ],
+  );
+}
+
+pw.Widget _pdfDendrometricTable(
+  DataExportDataset dataset,
+  DateTime referenceDate,
+) {
+  return pw.TableHelper.fromTextArray(
+    border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.4),
+    headerDecoration: const pw.BoxDecoration(color: PdfColors.green900),
+    headerStyle: pw.TextStyle(
+      color: PdfColors.white,
+      fontSize: 6,
+      fontWeight: pw.FontWeight.bold,
+    ),
+    cellStyle: const pw.TextStyle(fontSize: 5.8),
+    cellAlignment: pw.Alignment.centerLeft,
+    headers: [
+      'Talhão',
+      'Espécie',
+      'Área',
+      'Ano',
+      'Idade',
+      'N/ha',
+      'DAP',
+      'H',
+      'G',
+      'v/arv',
+      'V/ha',
+      'Vol. ${referenceDate.year}',
+    ],
+    data: [
+      for (final stand in dataset.stands)
+        [
+          stand.option.stand.identification,
+          stand.option.species.name,
+          _decimal(stand.option.stand.areaHa),
+          stand.option.stand.plantingYear?.toString() ?? '',
+          _standAge(stand, referenceDate)?.toString() ?? '',
+          _nullableDecimal(stand.treesPerHa),
+          _nullableDecimal(stand.averageDapCm, suffix: ' cm'),
+          _nullableDecimal(stand.averageHeightM, suffix: ' m'),
+          _nullableDecimal(stand.basalAreaPerHa, suffix: ' m²/ha'),
+          _nullableDecimal(stand.averageVolumePerTreeM3, suffix: ' m³'),
+          _nullableDecimal(stand.volumePerHaM3, suffix: ' m³/ha'),
+          _nullableDecimal(stand.estimatedVolumeM3, suffix: ' m³'),
+        ],
+    ],
+  );
 }
 
 pw.Widget _pdfSectionTitle(String value) {
@@ -1509,11 +1740,187 @@ double? _plotVolumeM3(
   );
 }
 
-String _convertedStandVolumeLabel(DataExportStandDataset stand) {
-  if (stand.conversion.unit == 'm3') return '';
-  final value = stand.convertedEstimatedVolume;
-  if (value == null) return '';
-  return '${_decimal(value)} ${stand.conversion.unit}';
+List<DataExportStandDataset> _uniqueFormulaUses(DataExportDataset dataset) {
+  final byKey = <String, DataExportStandDataset>{};
+  for (final stand in dataset.stands) {
+    final key = [
+      stand.option.species.id,
+      stand.formula?.id ?? '',
+      _coefficientList(stand),
+    ].join('|');
+    byKey.putIfAbsent(key, () => stand);
+  }
+  return byKey.values.toList()
+    ..sort((a, b) => a.option.species.name.compareTo(b.option.species.name));
+}
+
+List<_SpeciesExportSummary> _speciesSummaries(DataExportDataset dataset) {
+  final bySpecies = <String, List<DataExportStandDataset>>{};
+  for (final stand in dataset.stands) {
+    bySpecies.putIfAbsent(stand.option.species.id, () => []).add(stand);
+  }
+
+  final summaries = [
+    for (final stands in bySpecies.values) _SpeciesExportSummary(stands),
+  ]..sort((a, b) => a.speciesName.compareTo(b.speciesName));
+
+  return summaries;
+}
+
+class _SpeciesExportSummary {
+  _SpeciesExportSummary(this.stands);
+
+  final List<DataExportStandDataset> stands;
+
+  String get speciesName => stands.first.option.species.name;
+
+  WoodVolumeConversion get conversion => stands.first.conversion;
+
+  int get standCount => stands.length;
+
+  int get plotCount =>
+      stands.fold(0, (total, stand) => total + stand.plots.length);
+
+  int get treeCount =>
+      stands.fold(0, (total, stand) => total + stand.treeCount);
+
+  double get areaHa =>
+      stands.fold(0, (total, stand) => total + stand.option.stand.areaHa);
+
+  double get measuredAreaHa =>
+      stands.fold(0, (total, stand) => total + stand.measuredAreaHa);
+
+  double get sampleVolumeM3 =>
+      stands.fold(0, (total, stand) => total + stand.sampleVolumeM3);
+
+  double? get volumePerHaM3 =>
+      areaHa == 0 ? null : (estimatedVolumeM3 ?? 0) / areaHa;
+
+  double? get estimatedVolumeM3 {
+    if (stands.every((stand) => stand.estimatedVolumeM3 == null)) return null;
+    return stands.fold<double>(
+      0,
+      (total, stand) => total + (stand.estimatedVolumeM3 ?? 0),
+    );
+  }
+
+  double? get convertedEstimatedVolume =>
+      estimatedVolumeM3 == null ? null : conversion.convert(estimatedVolumeM3!);
+}
+
+String _speciesPhrase(DataExportDataset dataset) {
+  final names = _speciesSummaries(dataset).map((item) => item.speciesName);
+  return _joinHumanList(names.toList());
+}
+
+String _agePhrase(DataExportDataset dataset, DateTime referenceDate) {
+  final ages = <int>{};
+  for (final stand in dataset.stands) {
+    final age = _standAge(stand, referenceDate);
+    if (age != null) ages.add(age);
+  }
+  if (ages.isEmpty) return '';
+  final sorted = ages.toList()..sort();
+  if (sorted.length == 1) return ', com ${sorted.single} anos de idade';
+  return ', com idades entre ${sorted.first} e ${sorted.last} anos';
+}
+
+String _spacingPhrase(DataExportDataset dataset) {
+  final spacings =
+      dataset.stands
+          .map((stand) => stand.option.stand.spacing?.trim())
+          .whereType<String>()
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+  if (spacings.isEmpty) return '';
+  return ' O espaçamento original do plantio informado foi ${_joinHumanList(spacings)}.';
+}
+
+double? _averagePlotAreaHa(DataExportDataset dataset) {
+  final areas = [
+    for (final stand in dataset.stands)
+      for (final plot in stand.plots)
+        if (plot.plot.status != PlotStatus.pending && plot.plot.areaHa != null)
+          plot.plot.areaHa!,
+  ];
+  if (areas.isEmpty) return null;
+  return areas.fold<double>(0, (total, area) => total + area) / areas.length;
+}
+
+String _joinHumanList(List<String> values) {
+  if (values.isEmpty) return '';
+  if (values.length == 1) return values.single;
+  if (values.length == 2) return '${values.first} e ${values.last}';
+  return '${values.take(values.length - 1).join(', ')} e ${values.last}';
+}
+
+int? _standAge(DataExportStandDataset stand, DateTime referenceDate) {
+  final plantingYear = stand.option.stand.plantingYear;
+  if (plantingYear == null || plantingYear <= 0) return null;
+  final age = referenceDate.year - plantingYear;
+  return age < 0 ? null : age;
+}
+
+String _volumeEquationWithValues(DataExportStandDataset stand) {
+  final expression = (stand.formula?.expression ?? '').toLowerCase();
+  if (expression.contains('exp(') ||
+      (stand.formula?.id ?? '').contains('schumacher')) {
+    return 'v = exp(${_coefficientValue(stand, 'a')} + ${_coefficientValue(stand, 'b')} * Ln(DAP) + ${_coefficientValue(stand, 'c')} * Ln(h))';
+  }
+
+  return 'v = ${_coefficientValue(stand, 'a')} + ${_coefficientValue(stand, 'b')} * DAP² * h';
+}
+
+String _conversionEquation(DataExportStandDataset stand) {
+  if (stand.conversion.unit == 'ton') {
+    return '1 m³ = ${_decimalPrecision(stand.conversion.factor, fractionDigits: 4)} ton';
+  }
+  if (stand.conversion.unit == 'mst') {
+    return '1 m³ = ${_decimalPrecision(stand.conversion.factor, fractionDigits: 1)} mst';
+  }
+  return 'Sem conversão adicional';
+}
+
+String _coefficientValue(DataExportStandDataset stand, String symbol) {
+  final value = stand.coefficientValuesBySymbol[symbol];
+  if (value == null) return symbol;
+  return _decimalPrecision(value, fractionDigits: value.abs() < 0.001 ? 12 : 6);
+}
+
+String _coefficientList(DataExportStandDataset stand) {
+  if (stand.coefficients.isEmpty) return 'não informados';
+  return stand.coefficients
+      .map((item) => '${item.symbol}=${_nullableDecimal(item.value)}')
+      .join(' | ');
+}
+
+List<String> _technicalNotes(DataExportDataset dataset) {
+  final notes = <String>[
+    'Os volumes foram calculados com os modelos e coeficientes vinculados ao talhão no momento do levantamento.',
+    'A extrapolação para hectare e talhão considera o volume médio por unidade de área amostrada e a área cadastrada de cada talhão.',
+  ];
+
+  if (dataset.stands.any((stand) => stand.option.stand.plantingYear == null)) {
+    notes.add(
+      'Há talhões sem ano de plantio informado; nesses casos, idade e IMA não são apresentados.',
+    );
+  }
+  if (dataset.stands.any(
+    (stand) => stand.plots.any(
+      (plot) =>
+          plot.plot.status != PlotStatus.pending && plot.plot.areaHa == null,
+    ),
+  )) {
+    notes.add(
+      'Há parcelas coletadas sem área informada; elas permanecem no relatório, mas não contribuem para extrapolação por hectare.',
+    );
+  }
+  notes.add(
+    'O sistema registra a área da parcela em hectares. Para apresentar dimensões retangulares exatas, como 20 x 25 m, é recomendado cadastrar largura e comprimento da parcela em uma etapa futura.',
+  );
+  return notes;
 }
 
 String _inventoryStatusLabel(InventoryRunStatus status) {
