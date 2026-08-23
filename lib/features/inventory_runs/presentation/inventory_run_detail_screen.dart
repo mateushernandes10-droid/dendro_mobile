@@ -410,8 +410,6 @@ class _RunSummaryCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             summary.property.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: DendroColors.primary,
               fontSize: 22,

@@ -419,8 +419,6 @@ class _ActiveCollectionCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             subtitle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: DendroColors.textMuted,
               fontSize: 13,

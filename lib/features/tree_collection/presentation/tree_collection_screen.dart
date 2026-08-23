@@ -24,6 +24,8 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _dapController = TextEditingController();
   final _heightController = TextEditingController();
+  final _dapFocusNode = FocusNode();
+  final _heightFocusNode = FocusNode();
 
   bool _formOpen = false;
   bool _saving = false;
@@ -39,6 +41,8 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
 
   @override
   void dispose() {
+    _dapFocusNode.dispose();
+    _heightFocusNode.dispose();
     _dapController.dispose();
     _heightController.dispose();
     super.dispose();
@@ -96,6 +100,8 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
             isEditing: _editingTree != null,
             dapController: _dapController,
             heightController: _heightController,
+            dapFocusNode: _dapFocusNode,
+            heightFocusNode: _heightFocusNode,
             hasTortuousStem: _hasTortuousStem,
             latitude: _latitude,
             longitude: _longitude,
@@ -108,6 +114,7 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
                 setState(() => _hasTortuousStem = value),
             onCaptureLocation: () => _captureLocation(state),
             onClearLocation: _clearLocation,
+            onDapSubmitted: _focusHeightField,
             onSave: () => _saveTree(state, keepOpen: false),
             onNext: () => _saveTree(state, keepOpen: true),
           ),
@@ -143,6 +150,7 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
       _locationCapturedAt = null;
       _formOpen = true;
     });
+    _focusDapField();
   }
 
   void _openEditTreeForm(TreeRecord tree) {
@@ -159,6 +167,7 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
       _locationCapturedAt = tree.locationCapturedAt;
       _formOpen = true;
     });
+    _focusDapField();
   }
 
   void _closeForm() {
@@ -166,6 +175,19 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
       _formOpen = false;
       _editingTree = null;
     });
+    _dapFocusNode.unfocus();
+    _heightFocusNode.unfocus();
+  }
+
+  void _focusDapField() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_formOpen) return;
+      _dapFocusNode.requestFocus();
+    });
+  }
+
+  void _focusHeightField() {
+    _heightFocusNode.requestFocus();
   }
 
   void _clearLocation() {
@@ -330,6 +352,7 @@ class _TreeCollectionScreenState extends ConsumerState<TreeCollectionScreen> {
           _accuracyMeters = null;
           _locationCapturedAt = null;
         });
+        _focusDapField();
       } else {
         _closeForm();
       }
@@ -574,6 +597,8 @@ class _TreeFormCard extends StatelessWidget {
     required this.isEditing,
     required this.dapController,
     required this.heightController,
+    required this.dapFocusNode,
+    required this.heightFocusNode,
     required this.hasTortuousStem,
     required this.latitude,
     required this.longitude,
@@ -585,6 +610,7 @@ class _TreeFormCard extends StatelessWidget {
     required this.onTortuousChanged,
     required this.onCaptureLocation,
     required this.onClearLocation,
+    required this.onDapSubmitted,
     required this.onSave,
     required this.onNext,
   });
@@ -594,6 +620,8 @@ class _TreeFormCard extends StatelessWidget {
   final bool isEditing;
   final TextEditingController dapController;
   final TextEditingController heightController;
+  final FocusNode dapFocusNode;
+  final FocusNode heightFocusNode;
   final bool hasTortuousStem;
   final double? latitude;
   final double? longitude;
@@ -605,6 +633,7 @@ class _TreeFormCard extends StatelessWidget {
   final ValueChanged<bool> onTortuousChanged;
   final VoidCallback onCaptureLocation;
   final VoidCallback onClearLocation;
+  final VoidCallback onDapSubmitted;
   final VoidCallback onSave;
   final VoidCallback onNext;
 
@@ -657,15 +686,20 @@ class _TreeFormCard extends StatelessWidget {
             const SizedBox(height: 12),
             _MeasureField(
               controller: dapController,
+              focusNode: dapFocusNode,
               label: 'DAP (cm)',
               helper: 'Diâmetro a 1,30 m',
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) => onDapSubmitted(),
               validator: (value) => _measureValidator(value, 'DAP'),
             ),
             const SizedBox(height: 12),
             _MeasureField(
               controller: heightController,
+              focusNode: heightFocusNode,
               label: 'Altura (m)',
               helper: 'Medida ou estimada',
+              textInputAction: TextInputAction.done,
               validator: (value) => _measureValidator(value, 'altura'),
             ),
             const SizedBox(height: 12),
@@ -738,15 +772,21 @@ class _TreeFormCard extends StatelessWidget {
 class _MeasureField extends StatelessWidget {
   const _MeasureField({
     required this.controller,
+    required this.focusNode,
     required this.label,
     required this.helper,
+    required this.textInputAction,
     required this.validator,
+    this.onFieldSubmitted,
   });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final String label;
   final String helper;
+  final TextInputAction textInputAction;
   final FormFieldValidator<String> validator;
+  final ValueChanged<String>? onFieldSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -765,12 +805,15 @@ class _MeasureField extends StatelessWidget {
         Expanded(
           child: TextFormField(
             controller: controller,
+            focusNode: focusNode,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: DendroColors.text,
               fontWeight: FontWeight.w800,
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: textInputAction,
+            onFieldSubmitted: onFieldSubmitted,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp('[0-9,.]')),
             ],

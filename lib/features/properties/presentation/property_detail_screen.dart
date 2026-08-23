@@ -22,7 +22,8 @@ class PropertyDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(property.name),
+        toolbarHeight: 72,
+        title: Text(property.name, maxLines: 2),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 12),
@@ -188,8 +189,6 @@ class _PropertySummaryCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   property.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: DendroColors.primary,
                     fontSize: 22,

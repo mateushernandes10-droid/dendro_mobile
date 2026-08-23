@@ -495,8 +495,6 @@ class _PropertyItem extends StatelessWidget {
                   children: [
                     Text(
                       property.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,

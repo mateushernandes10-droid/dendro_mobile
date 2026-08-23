@@ -129,8 +129,6 @@ class _RunCard extends StatelessWidget {
                     const SizedBox(height: 7),
                     Text(
                       summary.property.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
