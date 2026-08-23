@@ -50,6 +50,24 @@ void main() {
       coefficients.singleWhere((item) => item.id == 'formula_spurr_b').value,
       closeTo(ForestVolumeCalculator.defaultSpurrB, 0.0000000001),
     );
+    expect(
+      coefficients
+          .singleWhere((item) => item.id == 'formula_schumacher_hall_a')
+          .value,
+      closeTo(ForestVolumeCalculator.defaultSchumacherHallA, 0.0000000001),
+    );
+    expect(
+      coefficients
+          .singleWhere((item) => item.id == 'formula_schumacher_hall_b')
+          .value,
+      closeTo(ForestVolumeCalculator.defaultSchumacherHallB, 0.0000000001),
+    );
+    expect(
+      coefficients
+          .singleWhere((item) => item.id == 'formula_schumacher_hall_c')
+          .value,
+      closeTo(ForestVolumeCalculator.defaultSchumacherHallC, 0.0000000001),
+    );
   });
 
   test('repositorio de ajustes mantem especies formulas e vinculos', () async {

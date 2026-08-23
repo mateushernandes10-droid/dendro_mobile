@@ -7,6 +7,9 @@ class ForestVolumeCalculator {
   static const defaultHeightSlope = 6.4229;
   static const defaultSpurrA = 0.0175858265880592;
   static const defaultSpurrB = 0.0000329326161133665;
+  static const defaultSchumacherHallA = -11.584059201173265;
+  static const defaultSchumacherHallB = 1.8114471288118603;
+  static const defaultSchumacherHallC = 1.6187968875426328;
   static const pinusTonPerM3 = 0.9367;
   static const eucalyptusMstPerM3 = 1.4;
 
@@ -70,6 +73,14 @@ class ForestVolumeCalculator {
     required String symbol,
   }) {
     final normalizedFormulaId = formulaId?.toLowerCase() ?? '';
+    if (normalizedFormulaId.contains('schumacher')) {
+      return switch (symbol.toLowerCase()) {
+        'a' => defaultSchumacherHallA,
+        'b' => defaultSchumacherHallB,
+        'c' => defaultSchumacherHallC,
+        _ => null,
+      };
+    }
     if (!normalizedFormulaId.contains('spurr')) return null;
 
     return switch (symbol.toLowerCase()) {
@@ -94,9 +105,9 @@ class ForestVolumeCalculator {
     required double heightM,
     required Map<String, double?> coefficients,
   }) {
-    final a = _coefficient(coefficients, 'a', 0);
-    final b = _coefficient(coefficients, 'b', 0);
-    final c = _coefficient(coefficients, 'c', 0);
+    final a = _coefficient(coefficients, 'a', defaultSchumacherHallA);
+    final b = _coefficient(coefficients, 'b', defaultSchumacherHallB);
+    final c = _coefficient(coefficients, 'c', defaultSchumacherHallC);
     return math.exp(a + b * math.log(dapCm) + c * math.log(heightM));
   }
 

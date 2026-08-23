@@ -274,7 +274,7 @@ class DendroDatabase extends _$DendroDatabase {
     : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -292,6 +292,9 @@ class DendroDatabase extends _$DendroDatabase {
         await _createActivityLogsTable();
       }
       if (from < 4) {
+        await _applyEngineerFormulaDefaults();
+      }
+      if (from < 5) {
         await _applyEngineerFormulaDefaults();
       }
     },
@@ -367,6 +370,61 @@ WHERE id = ?
       ],
       updates: {formulas},
     );
+    await customUpdate(
+      '''
+UPDATE formulas
+SET description = ?
+WHERE id = ?
+  AND (description IS NULL OR description = ?)
+''',
+      variables: [
+        const Variable<String>(
+          'Modelo volumétrico ajustado a partir dos dados de cubagem do inventário de referência.',
+        ),
+        const Variable<String>('formula_schumacher_hall'),
+        const Variable<String>('Modelo volumétrico logarítmico.'),
+      ],
+      updates: {formulas},
+    );
+    await customUpdate(
+      '''
+UPDATE formula_coefficients
+SET value = ?
+WHERE id = ?
+  AND value IS NULL
+''',
+      variables: [
+        const Variable<double>(ForestVolumeCalculator.defaultSchumacherHallA),
+        const Variable<String>('formula_schumacher_hall_a'),
+      ],
+      updates: {formulaCoefficients},
+    );
+    await customUpdate(
+      '''
+UPDATE formula_coefficients
+SET value = ?
+WHERE id = ?
+  AND value IS NULL
+''',
+      variables: [
+        const Variable<double>(ForestVolumeCalculator.defaultSchumacherHallB),
+        const Variable<String>('formula_schumacher_hall_b'),
+      ],
+      updates: {formulaCoefficients},
+    );
+    await customUpdate(
+      '''
+UPDATE formula_coefficients
+SET value = ?
+WHERE id = ?
+  AND value IS NULL
+''',
+      variables: [
+        const Variable<double>(ForestVolumeCalculator.defaultSchumacherHallC),
+        const Variable<String>('formula_schumacher_hall_c'),
+      ],
+      updates: {formulaCoefficients},
+    );
   }
 
   Future<void> seedInitialCatalogs() async {
@@ -408,7 +466,9 @@ WHERE id = ?
         FormulasCompanion.insert(
           id: 'formula_schumacher_hall',
           name: 'Schumacher-Hall',
-          description: const Value('Modelo volumétrico logarítmico.'),
+          description: const Value(
+            'Modelo volumétrico ajustado a partir dos dados de cubagem do inventário de referência.',
+          ),
           expression: 'exp(a + b * ln(D) + c * ln(H))',
           createdAt: now,
           updatedAt: now,
@@ -474,18 +534,21 @@ WHERE id = ?
           formulaId: 'formula_schumacher_hall',
           symbol: 'a',
           label: 'Coeficiente a',
+          value: ForestVolumeCalculator.defaultSchumacherHallA,
         ),
         _coefficient(
           id: 'formula_schumacher_hall_b',
           formulaId: 'formula_schumacher_hall',
           symbol: 'b',
           label: 'Coeficiente b',
+          value: ForestVolumeCalculator.defaultSchumacherHallB,
         ),
         _coefficient(
           id: 'formula_schumacher_hall_c',
           formulaId: 'formula_schumacher_hall',
           symbol: 'c',
           label: 'Coeficiente c',
+          value: ForestVolumeCalculator.defaultSchumacherHallC,
         ),
       ]);
 
