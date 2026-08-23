@@ -26,6 +26,15 @@ class ResultsScreen extends ConsumerStatefulWidget {
 
 class _ResultsScreenState extends ConsumerState<ResultsScreen> {
   bool _appliedInitialFilters = false;
+  bool _restorePreviousFilters = false;
+  String? _previousPropertyId;
+  Set<String> _previousStandIds = const {};
+  String? _previousSpeciesId;
+
+  bool get _hasInitialFilters =>
+      widget.initialPropertyId != null ||
+      widget.initialStandIds.isNotEmpty ||
+      widget.initialSpeciesId != null;
 
   @override
   void initState() {
@@ -33,26 +42,43 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
     _applyInitialFilters();
   }
 
+  @override
+  void dispose() {
+    if (_restorePreviousFilters) {
+      ref.read(resultsPropertyFilterProvider.notifier).state =
+          _previousPropertyId;
+      ref.read(resultsStandFilterProvider.notifier).state = _previousStandIds;
+      ref.read(resultsSpeciesFilterProvider.notifier).state =
+          _previousSpeciesId;
+    }
+    super.dispose();
+  }
+
   void _applyInitialFilters() {
     if (_appliedInitialFilters) return;
     _appliedInitialFilters = true;
 
-    if (widget.initialPropertyId != null) {
-      ref.read(resultsPropertyFilterProvider.notifier).state =
-          widget.initialPropertyId;
-    }
-    if (widget.initialStandIds.isNotEmpty) {
-      ref.read(resultsStandFilterProvider.notifier).state =
-          widget.initialStandIds;
-    }
-    if (widget.initialSpeciesId != null) {
-      ref.read(resultsSpeciesFilterProvider.notifier).state =
-          widget.initialSpeciesId;
-    }
+    if (!_hasInitialFilters) return;
+
+    _restorePreviousFilters = true;
+    _previousPropertyId = ref.read(resultsPropertyFilterProvider);
+    _previousStandIds = {...ref.read(resultsStandFilterProvider)};
+    _previousSpeciesId = ref.read(resultsSpeciesFilterProvider);
+
+    ref.read(resultsPropertyFilterProvider.notifier).state =
+        widget.initialPropertyId;
+    ref.read(resultsStandFilterProvider.notifier).state = {
+      ...widget.initialStandIds,
+    };
+    ref.read(resultsSpeciesFilterProvider.notifier).state =
+        widget.initialSpeciesId;
   }
 
   @override
   Widget build(BuildContext context) {
+    final propertyId = ref.watch(resultsPropertyFilterProvider);
+    final speciesId = ref.watch(resultsSpeciesFilterProvider);
+    final hasBaseFilter = _hasBaseFilter(propertyId, speciesId);
     final options = ref.watch(resultsFilterOptionsProvider);
     final dashboard = ref.watch(resultsDashboardProvider);
 
@@ -75,17 +101,20 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
           ),
         ),
         const SizedBox(height: 14),
-        dashboard.when(
-          data: (data) => _ResultsDashboardView(dashboard: data),
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: 36),
-            child: Center(child: CircularProgressIndicator()),
+        if (!hasBaseFilter)
+          const _NoResultsFilterCard()
+        else
+          dashboard.when(
+            data: (data) => _ResultsDashboardView(dashboard: data),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 36),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, stackTrace) => _LoadErrorCard(
+              message: 'Não foi possível carregar os resultados.',
+              onRetry: () => ref.invalidate(resultsDashboardProvider),
+            ),
           ),
-          error: (error, stackTrace) => _LoadErrorCard(
-            message: 'Não foi possível carregar os resultados.',
-            onRetry: () => ref.invalidate(resultsDashboardProvider),
-          ),
-        ),
       ],
     );
   }
@@ -117,6 +146,7 @@ class _FilterCard extends ConsumerWidget {
     final propertyId = ref.watch(resultsPropertyFilterProvider);
     final speciesId = ref.watch(resultsSpeciesFilterProvider);
     final selectedStands = ref.watch(resultsStandFilterProvider);
+    final hasBaseFilter = _hasBaseFilter(propertyId, speciesId);
     final visibleStands = options.visibleStands(
       propertyId: propertyId,
       speciesId: speciesId,
@@ -250,7 +280,16 @@ class _FilterCard extends ConsumerWidget {
                 ),
             ],
           ),
-          if (visibleStands.isEmpty)
+          if (!hasBaseFilter)
+            const Text(
+              'Selecione uma propriedade ou espécie para carregar os talhões e os resultados.',
+              style: TextStyle(
+                color: DendroColors.textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            )
+          else if (visibleStands.isEmpty)
             const Text(
               'Nenhum talhão disponível para os filtros selecionados.',
               style: TextStyle(
@@ -662,6 +701,31 @@ class _EmptyResultsCard extends StatelessWidget {
   }
 }
 
+class _NoResultsFilterCard extends StatelessWidget {
+  const _NoResultsFilterCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DendroCard(
+      backgroundColor: Color(0xFFF3F4F3),
+      child: Column(
+        children: [
+          Icon(Icons.filter_alt_outlined, color: DendroColors.primary),
+          SizedBox(height: 10),
+          Text(
+            'Selecione uma propriedade ou espécie para visualizar os resultados.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: DendroColors.textMuted,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LoadErrorCard extends StatelessWidget {
   const _LoadErrorCard({required this.message, required this.onRetry});
 
@@ -690,6 +754,10 @@ class _LoadErrorCard extends StatelessWidget {
       ),
     );
   }
+}
+
+bool _hasBaseFilter(String? propertyId, String? speciesId) {
+  return propertyId != null || speciesId != null;
 }
 
 bool _hasActiveFilters(

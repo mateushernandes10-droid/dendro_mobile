@@ -50,6 +50,8 @@ class ResultsFilters {
   final String? propertyId;
   final Set<String> standIds;
   final String? speciesId;
+
+  bool get hasBaseFilter => propertyId != null || speciesId != null;
 }
 
 class ResultsFilterOptions {
@@ -67,6 +69,10 @@ class ResultsFilterOptions {
     String? propertyId,
     String? speciesId,
   }) {
+    if (propertyId == null && speciesId == null) {
+      return const [];
+    }
+
     return stands.where((option) {
       if (propertyId != null && option.stand.propertyId != propertyId) {
         return false;
@@ -118,6 +124,24 @@ class ResultsDashboard {
   final List<ResultsStandSummary> stands;
 
   bool get hasMeasurements => treeCount > 0;
+
+  factory ResultsDashboard.empty() {
+    return const ResultsDashboard(
+      plotCount: 0,
+      collectedPlotCount: 0,
+      measuredPlotCount: 0,
+      treeCount: 0,
+      measuredAreaHa: 0,
+      averageDapCm: null,
+      averageHeightM: null,
+      sampleVolumeM3: 0,
+      volumePerHaM3: null,
+      estimatedVolumeM3: null,
+      treesPerHa: null,
+      diameterClasses: [],
+      stands: [],
+    );
+  }
 }
 
 class DiameterClassSummary {
@@ -231,6 +255,10 @@ class ResultsRepository {
   }
 
   Stream<ResultsDashboard> watchDashboard(ResultsFilters filters) {
+    if (!filters.hasBaseFilter) {
+      return Stream.value(ResultsDashboard.empty());
+    }
+
     final query =
         _database.select(_database.plots).join([
           innerJoin(

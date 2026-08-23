@@ -7,6 +7,7 @@ import '../../../core/database/dendro_database.dart';
 import '../../../shared/widgets/dendro_widgets.dart';
 import '../../inventory_runs/data/inventory_runs_repository.dart';
 import '../../inventory_runs/presentation/inventory_run_detail_screen.dart';
+import '../../results/presentation/results_screen.dart';
 import '../../tree_collection/presentation/tree_collection_screen.dart';
 import '../data/plots_repository.dart';
 
@@ -59,6 +60,7 @@ class StandPlotsScreen extends ConsumerWidget {
             onStartInventory: () => _startInventory(context, ref, data),
             onCompleteInventory: () =>
                 _confirmCompleteInventory(context, ref, data),
+            onOpenResults: () => _openResults(context, data),
             onOpenPlot: (summary) => _openPlot(context, ref, summary),
             onEditPlot: (summary) =>
                 _openPlotForm(context, ref, data, summary: summary),
@@ -184,6 +186,17 @@ class StandPlotsScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _openResults(BuildContext context, StandPlotsState state) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => ResultsScreen(
+          initialPropertyId: state.stand.propertyId,
+          initialStandIds: {state.stand.id},
+        ),
+      ),
+    );
+  }
+
   Future<void> _openPlot(
     BuildContext context,
     WidgetRef ref,
@@ -301,6 +314,7 @@ class _PlotsBody extends StatelessWidget {
     required this.onAdd,
     required this.onStartInventory,
     required this.onCompleteInventory,
+    required this.onOpenResults,
     required this.onOpenPlot,
     required this.onEditPlot,
     required this.onDeletePlot,
@@ -311,6 +325,7 @@ class _PlotsBody extends StatelessWidget {
   final VoidCallback onAdd;
   final VoidCallback onStartInventory;
   final VoidCallback onCompleteInventory;
+  final VoidCallback onOpenResults;
   final ValueChanged<PlotSummary> onOpenPlot;
   final ValueChanged<PlotSummary> onEditPlot;
   final ValueChanged<PlotSummary> onDeletePlot;
@@ -324,6 +339,7 @@ class _PlotsBody extends StatelessWidget {
       children: [
         _StandSummaryCard(
           state: state,
+          onOpenResults: onOpenResults,
           onCompleteInventory:
               state.currentInventoryRun?.status == InventoryRunStatus.inProgress
               ? onCompleteInventory
@@ -364,9 +380,14 @@ class _PlotsBody extends StatelessWidget {
 }
 
 class _StandSummaryCard extends StatelessWidget {
-  const _StandSummaryCard({required this.state, this.onCompleteInventory});
+  const _StandSummaryCard({
+    required this.state,
+    required this.onOpenResults,
+    this.onCompleteInventory,
+  });
 
   final StandPlotsState state;
+  final VoidCallback onOpenResults;
   final VoidCallback? onCompleteInventory;
 
   @override
@@ -394,6 +415,13 @@ class _StandSummaryCard extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
+              ),
+              const SizedBox(width: 10),
+              IconButton.filledTonal(
+                onPressed: onOpenResults,
+                icon: const Icon(Icons.bar_chart),
+                tooltip: 'Resultados',
+                visualDensity: VisualDensity.compact,
               ),
               if (onCompleteInventory != null) ...[
                 const SizedBox(width: 10),

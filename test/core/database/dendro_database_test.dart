@@ -913,6 +913,20 @@ ORDER BY symbol
       options.species.map((item) => item.name),
       containsAll(['Pinus', 'Eucalyptus']),
     );
+    expect(options.visibleStands(), isEmpty);
+    expect(
+      options.visibleStands(speciesId: pinus.id).single.stand.id,
+      pinusStandId,
+    );
+
+    final noFilter = await resultsRepository
+        .watchDashboard(
+          const ResultsFilters(propertyId: null, standIds: {}, speciesId: null),
+        )
+        .first;
+
+    expect(noFilter.treeCount, 0);
+    expect(noFilter.stands, isEmpty);
 
     final dashboard = await resultsRepository
         .watchDashboard(
@@ -949,6 +963,19 @@ ORDER BY symbol
     expect(pinusOnly.treeCount, 2);
     expect(pinusOnly.stands.single.stand.identification, 'P-01');
     expect(pinusOnly.averageDapCm, closeTo(22.5, 0.0001));
+
+    final pinusAcrossProperties = await resultsRepository
+        .watchDashboard(
+          ResultsFilters(
+            propertyId: null,
+            standIds: const {},
+            speciesId: pinus.id,
+          ),
+        )
+        .first;
+
+    expect(pinusAcrossProperties.treeCount, 2);
+    expect(pinusAcrossProperties.stands.single.stand.id, pinusStandId);
   });
 
   test('repositorios registram historico de atividades', () async {
