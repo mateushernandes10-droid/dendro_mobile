@@ -8,6 +8,18 @@ import '../../../shared/widgets/dendro_widgets.dart';
 import '../data/properties_repository.dart';
 import 'property_detail_screen.dart';
 
+Future<bool?> showPropertyFormSheet(
+  BuildContext context, {
+  PropertyRecord? property,
+}) {
+  return showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (context) => _PropertyFormSheet(property: property),
+  );
+}
+
 class PropertiesScreen extends ConsumerStatefulWidget {
   const PropertiesScreen({super.key});
 
@@ -109,13 +121,8 @@ class _PropertiesScreenState extends ConsumerState<PropertiesScreen> {
   Future<void> _openPropertyForm(
     BuildContext context, {
     PropertyRecord? property,
-  }) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => _PropertyFormSheet(property: property),
-    );
+  }) async {
+    await showPropertyFormSheet(context, property: property);
   }
 
   Future<void> _openFilters(
@@ -768,7 +775,7 @@ class _PropertyFormSheetState extends ConsumerState<_PropertyFormSheet> {
       }
 
       if (!mounted) return;
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

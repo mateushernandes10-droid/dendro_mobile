@@ -1,5 +1,31 @@
 # DECISIONS.md
 
+## D-042 — Fator de Forma: nome e unidade no cálculo
+
+Substitui a nomenclatura e a regra de unidades de D-041, conforme orientação
+do engenheiro transmitida pelo usuário. Nome do modelo: **Fator de Forma**.
+Expressão: `pi * (D / 100)^2 * H * ff`. DAP continua cadastrado em centímetros
+e é convertido para metros apenas no cálculo; altura em metros. Mantém-se a
+expressão sem divisão por 4. `ff` continua informado pelo usuário.
+Banco v9 atualiza o modelo existente e os rótulos dos coeficientes sem alterar
+valores de ff, medições, vínculos ou modelos padrão. Resultados desse modelo
+são recalculados pela expressão corrigida; exportações brutas mantêm DAP em cm.
+
+## D-041 — Volume por fator de fórmula (2026-09-10)
+
+**Histórico: nomenclatura e unidades substituídas pela D-042.**
+
+Modelo cadastrado: **Calcular Volume - Fator de Fórmula**.
+Expressão solicitada: `pi * D^2 * H * ff`, com DAP (`D`) em centímetros
+e altura (`H`) em metros, sem conversão de DAP e sem divisão por 4,
+conforme confirmação do usuário. `pi` usa a constante `dart:math`.
+O `ff` é informado pelo usuário, sem valor padrão, nos coeficientes da espécie
+ou na seleção do modelo para a coleta. A opção também aparece no cadastro
+de fórmulas. A adequação de `ff` à expressão e às unidades é responsabilidade
+da configuração técnica; não presumir que seja um fator adimensional.
+O banco v8 adiciona o modelo a Pinus e Eucalyptus sem substituir o modelo
+padrão nem os coeficientes dos modelos existentes.
+
 Registro de decisões arquiteturais e de escopo. Atualizar este arquivo quando uma escolha relevante for consolidada.
 
 ## D-001 — Aplicação mobile

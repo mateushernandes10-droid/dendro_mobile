@@ -298,7 +298,7 @@ class DendroDatabase extends _$DendroDatabase {
     : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -328,6 +328,12 @@ class DendroDatabase extends _$DendroDatabase {
         await m.createTable(speciesFormulaCoefficients);
         await _applyEngineerFormulaDefaults();
         await _seedSpeciesFormulaCoefficientDefaults();
+      }
+      if (from < 8) {
+        await _seedFormFactorModel();
+      }
+      if (from < 9) {
+        await _updateFormFactorModel();
       }
     },
   );
@@ -617,6 +623,110 @@ WHERE id = ?
 
     await _applyEngineerFormulaDefaults();
     await _seedSpeciesFormulaCoefficientDefaults();
+    await _seedFormFactorModel();
+  }
+
+  Future<void> _seedFormFactorModel() async {
+    const formulaId = ForestVolumeCalculator.formFactorFormulaId;
+    final now = DateTime.now();
+    await into(formulas).insert(
+      FormulasCompanion.insert(
+        id: formulaId,
+        name: 'Fator de Forma',
+        expression: ForestVolumeCalculator.formFactorExpression,
+        description: const Value(
+          'DAP informado em centímetros, convertido para metros no cálculo '
+          '(D / 100). Altura em metros e fator de forma (ff) informado pelo usuário.',
+        ),
+        createdAt: now,
+        updatedAt: now,
+      ),
+      mode: InsertMode.insertOrIgnore,
+    );
+    for (final variable in [
+      _variable(
+        id: '${formulaId}_dap',
+        formulaId: formulaId,
+        symbol: 'D',
+        label: 'DAP',
+        unit: 'cm',
+        valueSource: 'Medição da árvore',
+        variableKey: FormulaVariableKey.dap,
+      ),
+      _variable(
+        id: '${formulaId}_height',
+        formulaId: formulaId,
+        symbol: 'H',
+        label: 'Altura',
+        unit: 'm',
+        valueSource: 'Medição da árvore',
+        variableKey: FormulaVariableKey.height,
+      ),
+    ]) {
+      await into(
+        formulaVariables,
+      ).insert(variable, mode: InsertMode.insertOrIgnore);
+    }
+    await into(formulaCoefficients).insert(
+      _coefficient(
+        id: '${formulaId}_ff',
+        formulaId: formulaId,
+        symbol: 'ff',
+        label: 'Fator de forma',
+      ),
+      mode: InsertMode.insertOrIgnore,
+    );
+    final baseSpecies =
+        await (select(species)..where(
+              (table) => table.id.isIn(['species_pinus', 'species_eucalyptus']),
+            ))
+            .get();
+    for (final item in baseSpecies) {
+      await into(speciesFormulas).insert(
+        SpeciesFormulasCompanion.insert(
+          speciesId: item.id,
+          formulaId: formulaId,
+          createdAt: now,
+        ),
+        mode: InsertMode.insertOrIgnore,
+      );
+      await into(speciesFormulaCoefficients).insert(
+        SpeciesFormulaCoefficientsCompanion.insert(
+          id: _speciesFormulaCoefficientId(item.id, formulaId, 'ff'),
+          speciesId: item.id,
+          formulaId: formulaId,
+          symbol: 'ff',
+          label: 'Fator de forma',
+          updatedAt: now,
+        ),
+        mode: InsertMode.insertOrIgnore,
+      );
+    }
+  }
+
+  Future<void> _updateFormFactorModel() async {
+    const id = ForestVolumeCalculator.formFactorFormulaId;
+    await (update(formulas)..where((table) => table.id.equals(id))).write(
+      FormulasCompanion(
+        name: const Value('Fator de Forma'),
+        expression: const Value(ForestVolumeCalculator.formFactorExpression),
+        description: const Value(
+          'DAP informado em centímetros, convertido para metros no cálculo '
+          '(D / 100). Altura em metros e fator de forma (ff) informado pelo usuário.',
+        ),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+    for (final table in [
+      'formula_coefficients',
+      'species_formula_coefficients',
+      'talhao_formula_coefficients',
+    ]) {
+      await customStatement(
+        'UPDATE $table SET label = ? WHERE symbol = ? AND label = ?',
+        ['Fator de forma', 'ff', 'Fator de fórmula'],
+      );
+    }
   }
 
   Future<void> _seedSpeciesFormulaCoefficientDefaults() async {

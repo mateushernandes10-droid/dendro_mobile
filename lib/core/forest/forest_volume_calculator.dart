@@ -3,6 +3,9 @@ import 'dart:math' as math;
 class ForestVolumeCalculator {
   const ForestVolumeCalculator._();
 
+  static const formFactorFormulaId = 'formula_form_factor';
+  static const formFactorExpression = 'pi * (D / 100)^2 * H * ff';
+
   static const defaultHeightIntercept = 0.8203;
   static const defaultHeightSlope = 6.4229;
   static const defaultSpurrA = 0.0175858265880592;
@@ -30,6 +33,16 @@ class ForestVolumeCalculator {
 
     final normalizedFormulaId = formulaId?.toLowerCase() ?? '';
     final normalizedExpression = _normalize(formulaExpression ?? '');
+
+    if (normalizedFormulaId == formFactorFormulaId ||
+        normalizedExpression.replaceAll('dap', 'd').replaceAll('π', 'pi') ==
+            _normalize(formFactorExpression)) {
+      final ff = coefficients['ff'] ?? coefficients['FF'];
+      if (ff == null || !ff.isFinite || ff <= 0) return 0;
+      final dapM = dapCm / 100;
+      final volume = math.pi * dapM * dapM * resolvedHeightM * ff;
+      return volume.isFinite && volume >= 0 ? volume : 0;
+    }
 
     final volume =
         normalizedFormulaId.contains('schumacher') ||

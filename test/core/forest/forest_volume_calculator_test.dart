@@ -2,6 +2,42 @@ import 'package:dendro_mobile/core/forest/forest_volume_calculator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('fator de forma converte DAP de cm para m no calculo', () {
+    expect(
+      ForestVolumeCalculator.treeVolumeM3(
+        dapCm: 20,
+        heightM: 10,
+        coefficients: const {'ff': 0.5},
+        formulaId: ForestVolumeCalculator.formFactorFormulaId,
+      ),
+      closeTo(0.6283185307179586, 1e-12),
+    );
+    expect(
+      ForestVolumeCalculator.treeVolumeM3(
+        dapCm: 20,
+        heightM: 10,
+        coefficients: const {'ff': 0.25},
+        formulaId: 'custom_factor',
+        formulaExpression: 'pi * (dap / 100)^2 * h * ff',
+      ),
+      closeTo(0.3141592653589793, 1e-12),
+    );
+  });
+
+  test('fator ausente ou invalido nao usa Spurr nem um fator padrao', () {
+    for (final ff in [null, 0.0, -1.0, double.nan, double.infinity]) {
+      expect(
+        ForestVolumeCalculator.treeVolumeM3(
+          dapCm: 20,
+          heightM: 10,
+          coefficients: {'ff': ff},
+          formulaId: ForestVolumeCalculator.formFactorFormulaId,
+        ),
+        0,
+      );
+    }
+  });
+
   test('calcula o volume de Spurr conforme inventario de referencia', () {
     const rows = [
       (dapCm: 28.0, heightM: 23.8),

@@ -18,6 +18,49 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('novo levantamento cadastra propriedade pelo botao flutuante', (
+    tester,
+  ) async {
+    final database = DendroDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dendroDatabaseProvider.overrideWithValue(database)],
+        child: MaterialApp(
+          theme: DendroTheme.light,
+          home: const NewInventoryScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Nova propriedade'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Nome da propriedade'),
+      'Fazenda Nova Coleta',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Município'),
+      'Vacaria',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Área total (ha)'),
+      '25,5',
+    );
+    await tester.ensureVisible(find.text('Cadastrar'));
+    await tester.tap(find.text('Cadastrar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Novo levantamento'), findsOneWidget);
+    expect(find.text('Fazenda Nova Coleta'), findsOneWidget);
+    expect(find.text('Nome da propriedade'), findsNothing);
+    final properties = await tester.runAsync(
+      () => database.select(database.properties).get(),
+    );
+    expect(properties!.single.totalAreaHa, 25.5);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
+
   testWidgets('abre a tela inicial do DENDRO Mobile', (tester) async {
     final database = DendroDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -596,8 +639,26 @@ void main() {
     expect(find.text('Fórmulas cadastradas'), findsOneWidget);
     expect(find.text('Modelo de Spurr'), findsOneWidget);
     expect(find.text('Schumacher-Hall'), findsOneWidget);
+    expect(find.text('Fator de Forma'), findsOneWidget);
     expect(find.byTooltip('Voltar'), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+    final factor = find.widgetWithText(CheckboxListTile, 'Fator de forma (ff)');
+    await tester.ensureVisible(factor);
+    await tester.tap(factor);
+    await tester.pumpAndSettle();
+    expect(tester.widget<CheckboxListTile>(factor).value, isTrue);
+    final coefficientField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.labelText == 'Símbolos dos coeficientes',
+    );
+    expect(
+      tester.widget<TextField>(coefficientField).controller!.text,
+      'a, b, ff',
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));

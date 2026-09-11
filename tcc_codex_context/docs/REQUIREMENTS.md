@@ -155,6 +155,14 @@ Os registros devem permanecer disponíveis após fechar/reabrir o aplicativo, ut
 A interface deve facilitar a navegação hierárquica entre propriedade, talhão, parcela e árvore e permitir ao usuário identificar o que já foi registrado.
 
 ### RF-016 — Exportar dados/resultados
+
+A tela deve oferecer exportação de **dados brutos em XLSX e CSV**, com identificação da propriedade, talhão, parcela e árvore, além do
+DAP em centímetros e altura em metros exatamente como registrados. Incluir
+todas as árvores dos talhões selecionados do levantamento, independentemente
+de a parcela estar concluída, sem substituir medições por estimativas ou resultados.
+O CSV usa uma linha por árvore. O XLSX organiza uma aba por talhão, com parcelas
+lado a lado em A6, E6, I6 etc., e suas árvores desde a linha 7 nas três colunas
+de identificação, DAP e altura. Propriedade e talhão aparecem no topo da aba.
 Requisito desejado para a aplicação prática: permitir exportar informações coletadas e/ou resultados, preferencialmente em formato de planilha (ex.: CSV/XLSX) e, se viável, relatório PDF.
 
 A prioridade e o formato final devem ser definidos durante o desenvolvimento. Não é requisito central explicitado no objetivo do TCC, portanto não deve bloquear o MVP inicial.

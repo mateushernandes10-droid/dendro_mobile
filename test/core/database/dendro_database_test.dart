@@ -38,10 +38,14 @@ void main() {
     );
     expect(
       formulas.map((item) => item.name),
-      containsAll(['Modelo de Spurr', 'Schumacher-Hall']),
+      containsAll(['Modelo de Spurr', 'Schumacher-Hall', 'Fator de Forma']),
     );
-    expect(variables, hasLength(4));
-    expect(coefficients, hasLength(5));
+    expect(variables, hasLength(6));
+    expect(coefficients, hasLength(6));
+    expect(
+      coefficients.singleWhere((item) => item.symbol == 'ff').value,
+      isNull,
+    );
     expect(
       coefficients.singleWhere((item) => item.id == 'formula_spurr_a').value,
       closeTo(ForestVolumeCalculator.defaultSpurrA, 0.0000000001),
@@ -68,6 +72,53 @@ void main() {
           .value,
       closeTo(ForestVolumeCalculator.defaultSchumacherHallC, 0.0000000001),
     );
+  });
+
+  test('coleta usa ff informado sem alterar o ff da especie', () async {
+    const formulaId = ForestVolumeCalculator.formFactorFormulaId;
+    await SettingsRepository(database).updateSpeciesFormulaCoefficientValues(
+      speciesId: 'species_pinus',
+      formulaId: formulaId,
+      valuesBySymbol: {'ff': 0.5},
+    );
+    final propertyId = await PropertiesRepository(
+      database,
+    ).create(name: 'Fazenda FF', municipality: 'Vacaria', totalAreaHa: 10);
+    final standId = await StandsRepository(database).create(
+      propertyId: propertyId,
+      identification: 'FF-01',
+      speciesId: 'species_pinus',
+      areaHa: 10,
+    );
+    final plots = PlotsRepository(database);
+    final runStand = await plots.startNewInventoryForStand(
+      standId,
+      formulaSelection: const InventoryFormulaSelection(
+        formulaId: formulaId,
+        formulaName: 'Fator de Forma',
+        coefficientValuesBySymbol: {'ff': 0.25},
+      ),
+    );
+    final plotId = await plots.createPlotForTalhaoLevantamento(
+      talhaoLevantamentoId: runStand.id,
+      areaHa: 0.04,
+    );
+    await TreesRepository(database).createTree(
+      plotId: plotId,
+      draft: const TreeDraft(dapCm: 20, heightM: 10, hasTortuousStem: false),
+    );
+    final summary = await InventoryRunsRepository(
+      database,
+    ).watchById(runStand.inventoryRunId).first;
+    expect(summary!.stands.single.formulaCoefficients.single.value, 0.25);
+    final speciesValues =
+        await (database.select(database.speciesFormulaCoefficients)..where(
+              (t) =>
+                  t.formulaId.equals(formulaId) &
+                  t.speciesId.equals('species_pinus'),
+            ))
+            .getSingle();
+    expect(speciesValues.value, 0.5);
   });
 
   test('repositorio de ajustes mantem especies formulas e vinculos', () async {

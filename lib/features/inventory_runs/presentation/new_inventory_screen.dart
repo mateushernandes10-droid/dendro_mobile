@@ -9,6 +9,7 @@ import '../data/inventory_formula_selection.dart';
 import '../data/inventory_runs_repository.dart';
 import 'widgets/inventory_formula_selection_sheet.dart';
 import '../../plots/data/plots_repository.dart';
+import '../../properties/presentation/properties_screen.dart';
 import '../../stands/data/stands_repository.dart';
 
 class NewInventoryScreen extends ConsumerStatefulWidget {
@@ -48,6 +49,12 @@ class _NewInventoryScreenState extends ConsumerState<NewInventoryScreen> {
     final species = ref.watch(activeSpeciesProvider);
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'new_inventory_new_property',
+        onPressed: _savingStandId == null ? _createProperty : null,
+        tooltip: 'Nova propriedade',
+        child: const Icon(Icons.add_home_work),
+      ),
       appBar: AppBar(
         title: const Text('Novo levantamento'),
         actions: const [
@@ -65,7 +72,7 @@ class _NewInventoryScreenState extends ConsumerState<NewInventoryScreen> {
 
             return ListView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
               children: [
                 _InventoryStartFilters(
                   searchController: _searchController,
@@ -143,6 +150,13 @@ class _NewInventoryScreenState extends ConsumerState<NewInventoryScreen> {
       _searchController.text.trim().isNotEmpty ||
       _cityFilter != null ||
       _speciesIdFilter != null;
+
+  Future<void> _createProperty() async {
+    final saved = await showPropertyFormSheet(context);
+    if (saved != true || !mounted) return;
+    _clearFilters();
+    ref.invalidate(inventoryStartOptionsProvider);
+  }
 
   void _onSearchChanged() {
     setState(() => _errorMessage = null);

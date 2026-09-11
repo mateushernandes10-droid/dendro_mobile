@@ -524,14 +524,20 @@ class SettingsRepository {
                 id: _uuid.v4(),
                 formulaId: formulaId,
                 symbol: symbol,
-                label: 'Coeficiente $symbol',
+                label: symbol == 'ff'
+                    ? 'Fator de forma'
+                    : 'Coeficiente $symbol',
               ),
             );
       } else {
         await (_database.update(
           _database.formulaCoefficients,
         )..where((table) => table.id.equals(existingCoefficient.id))).write(
-          FormulaCoefficientsCompanion(label: Value('Coeficiente $symbol')),
+          FormulaCoefficientsCompanion(
+            label: Value(
+              symbol == 'ff' ? 'Fator de forma' : 'Coeficiente $symbol',
+            ),
+          ),
         );
       }
     }

@@ -148,7 +148,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                     label: Text(
                       _currentAction == _ExportAction.share
                           ? 'Preparando...'
-                          : 'Compartilhar relatório',
+                          : 'Compartilhar arquivo',
                     ),
                   ),
                 ),
@@ -354,7 +354,9 @@ extension _DataExportFormatUi on DataExportFormat {
   String get title {
     return switch (this) {
       DataExportFormat.pdf => 'Relatório PDF',
-      DataExportFormat.csv => 'Dados brutos (CSV)',
+      DataExportFormat.csv => 'Dados e resultados (CSV)',
+      DataExportFormat.rawCsv => 'Dados brutos (CSV)',
+      DataExportFormat.rawXlsx => 'Dados brutos (XLSX)',
       DataExportFormat.xls => 'Planilha (Excel)',
       DataExportFormat.googleEarth => 'Coordenadas (Google Earth)',
     };
@@ -363,6 +365,10 @@ extension _DataExportFormatUi on DataExportFormat {
   String get description {
     return switch (this) {
       DataExportFormat.pdf => 'Resumo formatado para impressão e entrega.',
+      DataExportFormat.rawXlsx =>
+        'Parcelas lado a lado, com árvore, DAP e altura. Uma aba por talhão.',
+      DataExportFormat.rawCsv =>
+        'Todas as árvores dos talhões selecionados: propriedade, talhão, parcela, DAP e altura registrados, sem resultados calculados.',
       DataExportFormat.csv =>
         'Tabelas simples para análise em outros softwares.',
       DataExportFormat.xls => 'Dados organizados para conferência e cálculos.',
@@ -374,6 +380,8 @@ extension _DataExportFormatUi on DataExportFormat {
   IconData get icon {
     return switch (this) {
       DataExportFormat.pdf => Icons.picture_as_pdf_outlined,
+      DataExportFormat.rawCsv => Icons.table_rows_outlined,
+      DataExportFormat.rawXlsx => Icons.grid_on_outlined,
       DataExportFormat.csv => Icons.table_rows_outlined,
       DataExportFormat.xls => Icons.grid_on_outlined,
       DataExportFormat.googleEarth => Icons.public,

@@ -2,6 +2,26 @@
 
 Notas objetivas das decisoes feitas durante a implementacao.
 
+## Exportação de medições brutas (2026-09-10)
+
+- Opções próprias `Dados brutos (XLSX)` e `Dados brutos (CSV)` na tela Exportar.
+- XLSX: uma aba por talhão, com propriedade e talhão no topo. Parcelas lado a lado em A6, E6, I6 etc.; árvores a partir da linha 7 em três colunas (identificação, DAP em cm, altura em m), com uma coluna vazia entre parcelas. Parcelas vazias mantêm seu título.
+- CSV: uma linha por árvore de todos os talhões selecionados, inclusive parcelas ainda em andamento. Colunas iniciais: propriedade, talhão, parcela, número da árvore, DAP em cm e altura em m.
+- CSV inclui também identificação do levantamento/árvore, espécie, status/área da parcela, tronco torto, GPS e datas da árvore.
+- Valores originais do banco, sem cálculo de volume, estimativa de altura ou arredondamento adicional. XLSX mantém números como células numéricas; CSV usa UTF-8 com BOM, ponto e vírgula e vírgula decimal.
+- Exportação aberta pelo levantamento fica restrita a ele; a seleção de talhões existente é respeitada.
+
+## Modelo Fator de Forma
+
+- Modelo `Fator de Forma`: `pi * (D / 100)^2 * H * ff`.
+- DAP registrado em cm, convertido para m no cálculo; altura em m, sem divisão por 4 (D-042).
+- `ff` é um coeficiente informado na espécie ou na coleta, sem valor padrão.
+- O cadastro de fórmulas oferece a opção `Fator de forma (ff)`.
+- Selecionar esse modelo exige `ff` positivo e finito; não usar Spurr como alternativa quando faltar o fator.
+- Migração do banco v7 para v8 inclui o modelo e vínculos com espécies base, preservando configurações anteriores.
+- Migração para v9 atualiza nome, expressão e rótulos, preservando valores de ff e medições.
+- Resultados e exportações usam o mesmo cálculo em `ForestVolumeCalculator`.
+
 ## Terminologia
 
 - Usar `levantamento` para o registro/servico como um todo.
@@ -9,6 +29,8 @@ Notas objetivas das decisoes feitas durante a implementacao.
 - Evitar `contagem` na interface, nos avisos e nos documentos de regra.
 
 ## Novo levantamento
+
+- A tela Novo levantamento oferece o mesmo botão flutuante `Nova propriedade` e formulário da tela Propriedades. Após salvar, limpa os filtros e atualiza a lista para permitir cadastrar talhões e iniciar a coleta sem sair do fluxo. Cancelar preserva os filtros.
 
 - O fluxo de novo levantamento deve abrir uma tela dedicada, nao um bottom sheet pequeno.
 - A tela deve permitir busca digitada por nome da propriedade.

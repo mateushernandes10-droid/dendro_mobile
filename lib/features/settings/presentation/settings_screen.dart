@@ -807,7 +807,10 @@ class _SpeciesFormulaRowState extends ConsumerState<_SpeciesFormulaRow> {
       final parsed = _parseOptionalDouble(
         _controllers[coefficient.symbol]?.text ?? '',
       );
-      if (parsed == _invalidDouble) {
+      if (parsed == _invalidDouble ||
+          (coefficient.symbol.toLowerCase() == 'ff' &&
+              parsed != null &&
+              (parsed is! double || !parsed.isFinite || parsed <= 0))) {
         _showSnack(
           context,
           'Informe um valor válido para ${coefficient.label}.',
@@ -1375,7 +1378,7 @@ class _FormulaFormSheetState extends ConsumerState<_FormulaFormSheet> {
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
                   labelText: 'Símbolos dos coeficientes',
-                  hintText: 'Ex.: a, b, c',
+                  hintText: 'Ex.: a, b, c, ff',
                   helperText:
                       'Os valores são configurados no cadastro da espécie.',
                   prefixIcon: Icon(Icons.numbers),
@@ -1386,6 +1389,7 @@ class _FormulaFormSheetState extends ConsumerState<_FormulaFormSheet> {
                   }
                   return null;
                 },
+                onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -1403,6 +1407,35 @@ class _FormulaFormSheetState extends ConsumerState<_FormulaFormSheet> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 6),
+              CheckboxListTile(
+                value: _parseSymbols(
+                  _coefficientSymbolsController.text,
+                ).contains('ff'),
+                onChanged: _saving
+                    ? null
+                    : (value) {
+                        final symbols = _parseSymbols(
+                          _coefficientSymbolsController.text,
+                        ).toSet();
+                        if (value ?? false) {
+                          symbols.add('ff');
+                        } else {
+                          symbols.remove('ff');
+                        }
+                        setState(() {
+                          _coefficientSymbolsController.text = symbols.join(
+                            ', ',
+                          );
+                        });
+                      },
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                activeColor: DendroColors.primary,
+                title: const Text('Fator de forma (ff)'),
+                subtitle: const Text(
+                  'Valor informado na espécie ou na coleta.',
+                ),
+              ),
               for (final definition in _variableDefinitions)
                 CheckboxListTile(
                   value: _selectedVariables.contains(definition.key),

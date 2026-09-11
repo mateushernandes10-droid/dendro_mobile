@@ -297,7 +297,9 @@ class _InventoryFormulaSelectionSheetState
       final parsed = _parseOptionalDouble(
         _controllers[coefficient.symbol]?.text ?? '',
       );
-      if (parsed == _invalidDouble) {
+      if (parsed == _invalidDouble ||
+          (coefficient.symbol.toLowerCase() == 'ff' &&
+              (parsed is! double || !parsed.isFinite || parsed <= 0))) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.red.shade700,

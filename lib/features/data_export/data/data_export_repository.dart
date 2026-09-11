@@ -26,6 +26,13 @@ final dataExportProvider = FutureProvider.autoDispose
 enum DataExportFormat {
   pdf(label: 'PDF', extension: 'pdf', mimeType: 'application/pdf'),
   csv(label: 'CSV', extension: 'csv', mimeType: 'text/csv'),
+  rawCsv(label: 'Dados brutos CSV', extension: 'csv', mimeType: 'text/csv'),
+  rawXlsx(
+    label: 'Dados brutos XLSX',
+    extension: 'xlsx',
+    mimeType:
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ),
   xls(
     label: 'XLSX',
     extension: 'xlsx',
@@ -367,6 +374,8 @@ class DataExportRepository {
     final bytes = switch (format) {
       DataExportFormat.pdf => await _pdfBytes(dataset),
       DataExportFormat.csv => _csvBytes(dataset),
+      DataExportFormat.rawCsv => _rawCsvBytes(dataset),
+      DataExportFormat.rawXlsx => _rawXlsxBytes(dataset),
       DataExportFormat.xls => _xlsxBytes(dataset),
       DataExportFormat.googleEarth => _kmlBytes(dataset),
     };
@@ -980,6 +989,118 @@ Future<List<int>> _pdfBytes(DataExportDataset dataset) async {
   );
 
   return document.save();
+}
+
+Iterable<List<Object?>> _rawRows(DataExportDataset dataset) sync* {
+  yield [
+    'Propriedade',
+    'Talhão',
+    'Parcela',
+    'Árvore',
+    'DAP (cm)',
+    'Altura (m)',
+    'Levantamento ID',
+    'Espécie',
+    'Status parcela',
+    'Área parcela (ha)',
+    'Tronco torto',
+    'Latitude árvore',
+    'Longitude árvore',
+    'Precisão GPS (m)',
+    'Data captura GPS',
+    'Ponto referência',
+    'Data cadastro árvore',
+    'Data atualização árvore',
+    'Árvore ID',
+  ];
+  for (final stand in dataset.stands) {
+    for (final plot in stand.plots) {
+      for (final tree in plot.trees) {
+        yield [
+          dataset.property.name,
+          stand.option.stand.identification,
+          plot.plot.identification,
+          tree.number,
+          tree.dapCm,
+          tree.heightM,
+          stand.option.talhaoLevantamento.inventoryRunId,
+          stand.option.species.name,
+          _plotStatusLabel(plot.plot.status),
+          plot.plot.areaHa,
+          tree.hasTortuousStem ? 'Sim' : 'Não',
+          tree.latitude,
+          tree.longitude,
+          tree.accuracyMeters,
+          tree.locationCapturedAt?.toIso8601String(),
+          _referenceLabel(tree.plotReferencePosition),
+          tree.createdAt.toIso8601String(),
+          tree.updatedAt.toIso8601String(),
+          tree.id,
+        ];
+      }
+    }
+  }
+}
+
+List<int> _rawCsvBytes(DataExportDataset dataset) {
+  final buffer = StringBuffer('\uFEFF');
+  for (final row in _rawRows(dataset)) {
+    buffer.write(
+      _csvLine([
+        for (final value in row)
+          if (value is double) value.toString().replaceAll('.', ',') else value,
+      ]),
+    );
+    buffer.write('\r\n');
+  }
+  return utf8.encode(buffer.toString());
+}
+
+List<int> _rawXlsxBytes(DataExportDataset dataset) {
+  final workbook = excel.Excel.createExcel();
+  for (var standIndex = 0; standIndex < dataset.stands.length; standIndex++) {
+    final stand = dataset.stands[standIndex];
+    final sheetName = 'Talhão ${standIndex + 1}';
+    final sheet = workbook[sheetName];
+    if (standIndex == 0) workbook.setDefaultSheet(sheetName);
+    sheet.appendRow(_excelRow(['Propriedade', dataset.property.name]));
+    sheet.appendRow(_excelRow(['Talhão', stand.option.stand.identification]));
+    sheet.appendRow(
+      _excelRow([
+        'Levantamento',
+        stand.option.talhaoLevantamento.inventoryRunId,
+      ]),
+    );
+    sheet.appendRow(
+      _excelRow(['Colunas de cada parcela: Árvore | DAP (cm) | Altura (m)']),
+    );
+    for (var plotIndex = 0; plotIndex < stand.plots.length; plotIndex++) {
+      final plot = stand.plots[plotIndex];
+      final column = plotIndex * 4;
+      final title = sheet.cell(
+        excel.CellIndex.indexByColumnRow(columnIndex: column, rowIndex: 5),
+      );
+      title.value = excel.TextCellValue(plot.plot.identification);
+      title.cellStyle = excel.CellStyle(bold: true);
+      for (var treeIndex = 0; treeIndex < plot.trees.length; treeIndex++) {
+        final tree = plot.trees[treeIndex];
+        final values = _excelRow([tree.number, tree.dapCm, tree.heightM]);
+        for (var offset = 0; offset < values.length; offset++) {
+          sheet
+                  .cell(
+                    excel.CellIndex.indexByColumnRow(
+                      columnIndex: column + offset,
+                      rowIndex: 6 + treeIndex,
+                    ),
+                  )
+                  .value =
+              values[offset];
+        }
+      }
+    }
+  }
+  workbook.delete('Sheet1');
+  return workbook.encode()!;
 }
 
 List<int> _csvBytes(DataExportDataset dataset) {
@@ -1684,7 +1805,10 @@ String _csvLine(List<Object?> values) {
 String _csvValue(Object? value) {
   final text = value?.toString() ?? '';
   final mustQuote =
-      text.contains(';') || text.contains('"') || text.contains('\n');
+      text.contains(';') ||
+      text.contains('"') ||
+      text.contains('\n') ||
+      text.contains('\r');
   final escaped = text.replaceAll('"', '""');
   return mustQuote ? '"$escaped"' : escaped;
 }
@@ -1716,7 +1840,11 @@ String _xml(String value) {
 String _fileName(PropertyRecord property, DataExportFormat format) {
   final generatedAt = DateTime.now();
   final name = _safeFilePart(property.name);
-  return 'dendro_${name}_${_fileStamp(generatedAt)}.${format.extension}';
+  final kind =
+      format == DataExportFormat.rawCsv || format == DataExportFormat.rawXlsx
+      ? 'dados_brutos_'
+      : '';
+  return 'dendro_$kind${name}_${_fileStamp(generatedAt)}.${format.extension}';
 }
 
 String _safeFilePart(String value) {
