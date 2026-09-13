@@ -1,0 +1,23 @@
+erDiagram
+    properties ||--o{ stands : possui
+    properties ||--o{ inventory_runs : possui
+    species ||--o{ stands : classifica
+    inventory_runs ||--o{ talhao_levantamentos : contem
+    stands ||--o{ talhao_levantamentos : participa
+    species ||--o{ talhao_levantamentos : classifica
+    formulas ||--o{ talhao_levantamentos : selecionada
+    talhao_levantamentos ||--o{ plots : contem
+    plots ||--o{ trees : possui
+    plots ||--o{ plot_geo_points : documenta
+    formulas ||--o{ formula_variables : declara
+    formulas ||--o{ formula_coefficients : define
+    species ||--o{ species_formulas : associa
+    formulas ||--o{ species_formulas : associa
+    species ||--o{ species_formula_coefficients : configura
+    formulas ||--o{ species_formula_coefficients : parametriza
+    talhao_levantamentos ||--o{ talhao_formula_coefficients : preserva
+    activity_logs {
+        text id PK
+        text entity_type
+        text entity_id
+    }

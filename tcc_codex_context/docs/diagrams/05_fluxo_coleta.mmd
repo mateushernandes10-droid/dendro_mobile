@@ -1,0 +1,23 @@
+flowchart TD
+    A(["Início"]) --> B["Selecionar ou cadastrar propriedade e talhão"]
+    B --> C{"Já existe coleta ativa?"}
+    C -- Sim --> D["Retomar talhão no levantamento"]
+    C -- Não --> E["Escolher modelo e coeficientes"]
+    E --> F["Iniciar coleta / aproveitar planejamento<br/>e levantamento ativo da propriedade"]
+    F --> G["Abrir ou cadastrar parcela"]
+    D --> G
+    G --> H["Informar DAP cm, altura m e tronco torto"]
+    H --> I{"Capturar GPS?"}
+    I -- Sim --> J["Solicitar localização<br/>e referência P1–P4 quando escolhida"]
+    I -- Não --> K["Salvar árvore"]
+    J --> K
+    K --> L{"Registrar próxima árvore?"}
+    L -- Sim --> H
+    L -- Não --> M{"Finalizar parcela?"}
+    M -- Sim --> N["Marcar parcela como coletada"]
+    M -- Não --> O["Preservar dados e coleta em andamento"]
+    N --> P["Continuar parcelas ou consultar resultados"]
+    O --> P
+    P --> Q["Finalizar levantamento quando solicitado"]
+    Q --> R["Exportar no escopo selecionado"]
+    R --> S(["Fim"])

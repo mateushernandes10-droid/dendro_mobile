@@ -1,0 +1,44 @@
+classDiagram
+    PropertyRecord "1" --> "0..*" StandRecord
+    PropertyRecord "1" --> "0..*" InventoryRunRecord
+    InventoryRunRecord "1" --> "0..*" TalhaoLevantamentoRecord
+    StandRecord "1" --> "0..*" TalhaoLevantamentoRecord
+    SpeciesRecord "1" --> "0..*" StandRecord
+    SpeciesRecord "1" --> "0..*" TalhaoLevantamentoRecord
+    FormulaRecord "1" --> "0..*" TalhaoLevantamentoRecord
+    TalhaoLevantamentoRecord "1" --> "0..*" PlotRecord
+    PlotRecord "1" --> "0..*" TreeRecord
+    PlotRecord "1" --> "0..*" PlotGeoPointRecord
+    FormulaRecord "1" --> "0..*" FormulaVariableRecord
+    FormulaRecord "1" --> "0..*" FormulaCoefficientRecord
+    SpeciesRecord "1" --> "0..*" SpeciesFormulaRecord
+    FormulaRecord "1" --> "0..*" SpeciesFormulaRecord
+    SpeciesRecord "1" --> "0..*" SpeciesFormulaCoefficientRecord
+    FormulaRecord "1" --> "0..*" SpeciesFormulaCoefficientRecord
+    class TreeRecord {
+        String id
+        String plotId
+        int number
+        double dapCm
+        double heightM
+        bool hasTortuousStem
+    }
+    class TalhaoLevantamentoRecord {
+        String id
+        String inventoryRunId
+        String standId
+        String speciesId
+        String formulaId
+    }
+    class ResultsDashboard
+    class ResultsRepository {
+        watchDashboard(filters)
+    }
+    class ForestVolumeCalculator {
+        treeVolumeM3()
+        estimatedHeightM()
+        conversionForSpecies()
+    }
+    ResultsRepository ..> ResultsDashboard : produz em memoria
+    ResultsRepository ..> ForestVolumeCalculator : usa
+    ResultsRepository ..> TreeRecord : consulta

@@ -1,0 +1,22 @@
+flowchart TB
+    UI["Telas e widgets Flutter<br/>features/*/presentation"]
+    RP["Providers Riverpod<br/>estado e acesso aos repositórios"]
+    REPO["Repositórios por funcionalidade<br/>persistência, orquestração e agregações"]
+    CALC["ForestVolumeCalculator<br/>equações por árvore e conversões"]
+    DB["DendroDatabase / Drift<br/>migrações e SQL explícito"]
+    SQL[("SQLite local — 15 tabelas")]
+    GEO["Geolocator<br/>permissão e posição do dispositivo"]
+    EXPORT["DataExportRepository<br/>PDF, CSV, XLSX e KML"]
+    FILE["Salvamento Android / share_plus"]
+    UI --> RP
+    RP --> REPO
+    REPO --> DB
+    DB --> SQL
+    REPO --> CALC
+    UI --> GEO
+    GEO --> UI
+    UI --> EXPORT
+    EXPORT --> DB
+    EXPORT --> CALC
+    UI --> FILE
+    EXPORT --> UI

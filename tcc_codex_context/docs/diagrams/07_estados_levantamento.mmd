@@ -1,0 +1,7 @@
+stateDiagram-v2
+    [*] --> Planejamento: preparar parcelas
+    [*] --> EmAndamento: iniciar coleta
+    Planejamento --> EmAndamento: promover planejamento
+    EmAndamento --> EmAndamento: continuar coleta ou incluir talhão
+    EmAndamento --> Finalizado: concluir levantamento
+    Finalizado --> [*]

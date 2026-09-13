@@ -1,5 +1,20 @@
 # DECISIONS.md
 
+## D-043 — Documentação da versão de encerramento do desenvolvimento (13/09/2026)
+
+Por solicitação do usuário, a documentação foi revisada contra o código ce282bb para representar o aplicativo atual, sem novas alterações funcionais. PROJECT_CONTEXT, REQUIREMENTS, BUSINESS_RULES, ARCHITECTURE, ENGINEERING_MODELS e IMPLEMENTATION_NOTES descrevem o estado vigente.
+
+As decisões abaixo permanecem como histórico de planejamento e implementação. Não devem ser usadas isoladamente como prova de que uma funcionalidade foi entregue. Em caso de divergência sobre a versão atual, prevalecem D-043 e os documentos revisados, confrontados com o código.
+
+- Banco v9: 15 tabelas, incluindo coeficientes por espécie/fórmula, coeficientes por talhão do levantamento e atividades. Diagramas revisados em docs/diagrams.
+- Modelos de cálculo disponíveis: Spurr, Schumacher-Hall e Fator de Forma (D-042). Cadastro textual de fórmulas não equivale a avaliação genérica; math_expressions não foi implementado.
+- Estimativa econômica permaneceu um objetivo original, não implementado nesta versão.
+- PDF, CSV, XLSX, dados brutos CSV/XLSX e KML estão implementados. KMZ e XLS binário não.
+- Há planejamento, coleta em andamento e finalização. Coletas ativas da mesma propriedade são reunidas; propriedades distintas podem ter coleta simultânea.
+- Arquitetura real por funcionalidades, com telas/providers, repositórios, Drift/SQLite e calculadora. Não há camada completa Application/Domain ou serviços fictícios dos modelos iniciais.
+- Requisitos não atendidos são limitações da entrega, não novos pedidos de implementação.
+- Validação científica, comparação independente e testes com usuários permanecem pendentes; esta revisão documental não os executa.
+
 ## D-042 — Fator de Forma: nome e unidade no cálculo
 
 Substitui a nomenclatura e a regra de unidades de D-041, conforme orientação

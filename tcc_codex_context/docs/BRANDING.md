@@ -1,5 +1,7 @@
 # BRANDING.md
 
+> Referência de identidade visual. Revisão de escopo em 13/09/2026: este arquivo não é uma especificação do banco, da arquitetura ou das funcionalidades entregues. Para diagramas e estado atual, consultar ENGINEERING_MODELS.md e REQUIREMENTS.md.
+
 ## Nome do aplicativo
 
 **DENDRO Mobile**

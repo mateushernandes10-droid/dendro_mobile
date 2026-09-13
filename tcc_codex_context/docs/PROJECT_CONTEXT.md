@@ -1,143 +1,46 @@
-# PROJECT_CONTEXT.md
+# Contexto atual — DENDRO Mobile
 
-## Visão geral
-Este projeto é o desenvolvimento prático de um Trabalho de Conclusão de Curso em Ciência da Computação.
+Revisão em 13/09/2026. Esta documentação retrata o código-base ce282bb, escolhido pelo usuário como versão de encerramento do desenvolvimento do aplicativo.
 
-### Nome do aplicativo
-**DENDRO Mobile**
+## Tema e objetivo
 
-### Nome completo
-**DENDRO Mobile - Sistema para Inventário Florestal**
+Aplicativo mobile para apoio à coleta, armazenamento e processamento de inventários florestais em florestas plantadas, com foco original em Pinus e Eucalyptus no Rio Grande do Sul. O público-alvo inclui profissionais de campo, engenheiros florestais e produtores.
 
-### Tema
-**Sistema Mobile para Coleta e Análise de Dados de Inventário Florestal em Florestas Plantadas de Pinus e Eucalyptus no Rio Grande do Sul.**
+O problema estudado é a organização de medições de campo e seu processamento posterior. Redução de retrabalho, erros ou tempo são benefícios pretendidos, ainda não demonstrados por validação de usuários nesta documentação.
 
-## Problema
-Em inventários florestais, a coleta e o processamento dos dados ainda podem ocorrer por anotações em campo e posterior organização em planilhas. Isso pode gerar retrabalho, inconsistências, erros de transcrição e demora para obtenção dos resultados.
+O objetivo original do TCC incluía estimativa econômica. A versão implementada cobre coleta, cálculos volumétricos e exportação; não possui entrada de preço ou cálculo de valor monetário. O artigo deve reconhecer essa diferença.
 
-Há softwares existentes, porém o projeto identifica lacunas relacionadas a simplicidade, acessibilidade, integração das etapas do inventário e adequação à realidade de pequenos e médios produtores e profissionais que atuam com florestas plantadas no Rio Grande do Sul.
+## Produto implementado
 
-## Objetivo geral
-Desenvolver um sistema mobile para coleta, armazenamento e análise de dados de inventário florestal em florestas plantadas de Pinus e Eucalyptus, permitindo estimativa de volume e rendimento econômico, com foco na realidade do Rio Grande do Sul.
+Flutter/Dart, gerenciamento de estado com Riverpod e SQLite via Drift. Dados e cálculos são locais. Não existe backend, login, sincronização em nuvem ou separação de permissões entre usuário de campo e engenheiro.
 
-## Objetivos específicos do TCC
-- Levantar e analisar modelos matemáticos utilizados para estimativa de volume em florestas plantadas e suas variáveis dendrométricas.
-- Definir o método de amostragem utilizado no inventário.
-- Projetar a estrutura do sistema para cadastro de propriedades, talhões, parcelas e árvores.
-- Desenvolver aplicação mobile para coleta e armazenamento de dados em campo.
-- Realizar cálculos para estimativa de volume e produtividade.
-- Permitir a inserção do valor do metro cúbico da madeira para estimativa econômica.
-- Avaliar a organização, o processamento e a apresentação dos dados coletados.
+Cadastros permanentes: propriedade e talhão. Um levantamento pertence a uma propriedade e contém vínculos com talhões. Parcelas e árvores pertencem ao contexto de cada coleta, preservando levantamentos anteriores. A operação reúne coletas ativas da mesma propriedade; propriedades distintas podem ter levantamentos ativos simultâneos.
 
-## Público-alvo
-O foco é uma solução simples e prática para o contexto de florestas plantadas, especialmente:
-- pequenos e médios produtores florestais;
-- engenheiros florestais e profissionais que realizam inventários em campo.
+Fluxo principal: cadastrar/selecionar propriedade e talhão, iniciar ou retomar levantamento, configurar modelo/coeficientes, preparar parcelas, registrar árvores com DAP e altura, capturar GPS opcional, encerrar parcelas, consultar resultados e exportar.
 
-## Delimitação inicial
-- Região: Rio Grande do Sul.
-- Florestas plantadas.
-- Gêneros: Pinus e Eucalyptus.
-- Aplicativo mobile autônomo.
-- Operação sem dependência de internet.
+As abas são Início, Levantamentos, Propriedades, Resultados e Ajustes. Ajustes contém espécies, fórmulas e modo escuro. Há histórico local de atividades.
 
-A delimitação regional é importante porque os coeficientes utilizados em equações volumétricas podem variar conforme espécie, região, idade, manejo e condições de crescimento.
+## Cálculos
 
-## Conceitos do domínio
-### Propriedade
-Área/empreendimento florestal que será avaliado.
+Modelos implementados: Spurr, Schumacher-Hall e Fator de Forma. DAP é registrado em cm e altura em m. No Fator de Forma, o cálculo converte DAP para metros e usa ff informado pelo usuário. O cadastro de fórmulas não equivale a um interpretador genérico de expressões.
 
-### Talhão
-Unidade de manejo dentro de uma propriedade. Um mesmo projeto pode possuir vários talhões.
+O sistema aplica coeficientes configurados e valores de referência presentes no código; não estima coeficientes por regressão. A existência de valores padrão não comprova sua aplicabilidade a qualquer espécie ou região. As equações e comportamentos alternativos estão em BUSINESS_RULES.md.
 
-### Levantamento / Coleta
-Levantamento é o registro/serviço realizado em uma propriedade, podendo envolver um ou mais talhões. Coleta é a operação de campo feita dentro desse levantamento, com parcelas e árvores medidas. Uma mesma propriedade pode possuir vários levantamentos ao longo do tempo, e mais de um levantamento pode permanecer em andamento ao mesmo tempo.
+## Método e recursos
 
-### talhaolevantamento
-Entidade intermediária que representa um talhão dentro de um levantamento específico. Ela guarda o contexto da coleta daquele talhão naquele levantamento, permitindo histórico de novas coletas e mantendo no cadastro do talhão apenas a estrutura permanente e a última informação coletada.
+O método de referência é amostragem sistemática com parcelas de área fixa. O app permite registrar dimensões/áreas e extrapola volumes por área amostrada; não verifica a distribuição sistemática nem executa um planejamento estatístico completo da amostragem.
 
-### Parcela
-Unidade amostral pertencente ao contexto de um `talhaolevantamento`, utilizada para realizar as medições do inventário.
+GPS é documental, opcional e sujeito à precisão do dispositivo. Não substitui levantamento topográfico.
 
-### Árvore
-Indivíduo medido dentro de uma parcela.
+Exportações: PDF, CSV e XLSX com resultados, CSV/XLSX brutos e KML. Há diferenças de escopo entre painel, exportação por propriedade e exportação por levantamento, documentadas nos requisitos.
 
-### DAP
-Diâmetro à altura do peito, variável dendrométrica utilizada nos cálculos de inventário.
+## Como usar estes documentos no TCC
 
-### Altura
-Altura da árvore utilizada, juntamente com outras variáveis e coeficientes, nos modelos volumétricos.
+- REQUIREMENTS.md: requisitos e estado real de atendimento.
+- BUSINESS_RULES.md: regras e limitações observáveis no código.
+- ARCHITECTURE.md: componentes efetivamente existentes.
+- ENGINEERING_MODELS.md: diagramas revisados e modelo do banco.
+- IMPLEMENTATION_NOTES.md: evidências, escopo e verificações.
+- DECISIONS.md: histórico de decisões; D-043 estabelece a leitura vigente.
 
-## Organização conceitual do aplicativo
-`Propriedade -> Levantamento/Coleta -> talhaolevantamento -> Parcela -> Árvore -> Medições -> Cálculos -> Resultados`
-
-A propriedade e seus talhões são cadastros mais permanentes. O levantamento representa uma coleta específica, com data, status e dados medidos naquele evento. Quando um talhão participa de um levantamento, o sistema cria um `talhaolevantamento`, permitindo que o mesmo talhão seja coletado novamente em datas diferentes.
-
-Exemplo de coleta:
-1. selecionar/cadastrar propriedade;
-2. criar um novo levantamento ou continuar um levantamento em andamento;
-3. selecionar um ou mais talhões;
-4. confirmar espécie e fórmula/modelo para cada talhão selecionado;
-5. selecionar/cadastrar parcela;
-6. opcionalmente capturar pontos de geolocalização da parcela;
-7. registrar árvores da parcela;
-8. informar DAP e altura das árvores;
-9. aplicar a fórmula/modelo volumétrico configurado;
-10. consolidar os resultados;
-11. apresentar volume/produtividade e estimativa econômica.
-
-## Navegação principal prevista
-A interface mobile deve ser organizada por uma barra inferior com cinco áreas principais:
-- **Início**: painel de retomada rápida, criação de novo levantamento, sugestão de continuidade de levantamentos em aberto e resumo do último levantamento concluído.
-- **Levantamentos**: lista e acesso aos levantamentos por data, propriedade, talhão e status.
-- **Propriedades**: cadastro e consulta da estrutura permanente das propriedades e seus talhões.
-- **Resultados**: área analítica/dashboard, inicialmente orientada à seleção de uma propriedade para visualizar resultados consolidados.
-- **Ajustes**: cadastros auxiliares e configurações, como espécies e fórmulas/modelos matemáticos.
-
-## Modelos matemáticos
-O referencial do TCC considera modelos clássicos de estimativa volumétrica, em especial:
-- Spurr;
-- Schumacher-Hall.
-
-Os coeficientes não são universais. Eles são obtidos em estudos por ajuste estatístico a partir de dados de campo e cubagem rigorosa. O aplicativo não tem como objetivo gerar esses coeficientes.
-
-A intenção discutida para o software é permitir que modelos, fórmulas e coeficientes possam ser configurados, possibilitando futura utilização em outras regiões quando o usuário possuir parâmetros tecnicamente adequados.
-
-Além de fórmulas/modelos pré-cadastrados, o sistema deve ser estruturado para permitir fórmulas personalizadas cadastradas pelo usuário. Essas fórmulas devem possuir nome único, expressão matemática validada, variáveis declaradas e coeficientes necessários. Cada variável usada na expressão deve ter um símbolo/letra e ser vinculada a uma referência reconhecida pelo sistema, inicialmente DAP, altura, idade ou área basal. A aplicação deve avaliar expressões matemáticas de forma controlada, sem executar código arbitrário.
-
-## Tecnologia definida
-- Linguagem: Dart.
-- Framework: Flutter.
-- Persistência local: SQLite.
-- IDE principal: Visual Studio Code.
-- Android Studio: configuração do ambiente Android e emuladores.
-- Versionamento: Git.
-- Repositório: GitHub.
-
-## Característica essencial
-O sistema precisa funcionar em campo, inclusive sem conexão com a internet. Coleta, armazenamento, processamento e resultados devem ocorrer localmente no dispositivo na primeira versão.
-
-## Geolocalização e documentação geográfica
-Durante um levantamento, o usuário poderá registrar pontos de geolocalização da parcela utilizando o GPS/localização do celular ou tablet. A ideia inicial é permitir marcar os cantos da parcela amostral, formando um polígono para documentação.
-
-Esses pontos devem ser tratados como georreferenciamento de apoio ao inventário, não como medição topográfica precisa sem validação técnica. O contorno completo do talhão não é obrigatório no fluxo de campo, pois a amostragem por parcelas não exige que o usuário percorra todo o perímetro do talhão.
-
-Como evolução desejada, o aplicativo poderá exportar as parcelas georreferenciadas em KML/KMZ para abertura no Google Earth, aproximando o sistema do fluxo de trabalho utilizado por profissionais que já documentam inventários com imagens aéreas e marcações geográficas.
-
-## Validação prevista
-O TCC prevê validação com apoio de profissional da Engenharia Florestal e docentes da área, comparando os resultados produzidos pelo aplicativo com levantamentos/cálculos realizados por métodos de referência.
-
-Serão observados aspectos como:
-- usabilidade;
-- tempo de análise;
-- confiabilidade;
-- precisão dos resultados.
-
-## Evoluções possíveis, mas fora do núcleo da primeira versão
-- sincronização com servidor quando houver internet;
-- aplicação web para consulta dos dados sincronizados;
-- backup em nuvem;
-- ampliação para outras regiões e espécies;
-- biblioteca maior de modelos e coeficientes;
-- exportações mais avançadas.
-- importação/exportação geográfica mais completa, incluindo KML/KMZ e eventual desenho/importação de contornos de talhão.
+A validação científica, a comparação manual de inventário completo, os testes com usuários e a escrita final do artigo permanecem trabalhos acadêmicos pendentes. Um APK gerado e testes automatizados aprovados não substituem essas etapas.

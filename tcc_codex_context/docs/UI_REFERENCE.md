@@ -1,5 +1,7 @@
 # UI_REFERENCE.md
 
+> Referência visual de projeto, não inventário das telas entregues. Na revisão de 13/09/2026, os fluxos efetivamente implementados foram documentados em ENGINEERING_MODELS.md e REQUIREMENTS.md. Exemplos do protótipo abaixo não devem ser apresentados como capturas da versão final do aplicativo.
+
 Referência visual inicial a partir do export do Stitch AI salvo em:
 
 ```text

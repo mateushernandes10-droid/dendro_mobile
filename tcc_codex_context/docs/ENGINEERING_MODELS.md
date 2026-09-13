@@ -1,796 +1,437 @@
-# ENGINEERING_MODELS.md
+# Modelos de engenharia da versão implementada
 
-Modelos iniciais de engenharia do sistema, derivados do contexto, requisitos, regras de negócio e decisões atuais do projeto.
+Revisão em 13/09/2026, código-base ce282bb. Substitui os diagramas conceituais anteriores. Fontes editáveis estão em diagrams/. Os diagramas representam código e persistência atuais; não certificam validação científica ou ensaios com usuários.
 
-Estes modelos servem como base para o TCC e podem ser refinados conforme o desenvolvimento avance e as regras técnicas de inventário florestal sejam validadas.
+## 1. Atores e funções
 
-## 1. Visão Geral dos Atores
+Não há autenticação ou perfis distintos. Usuário de campo e engenheiro têm acesso às mesmas funções; a responsabilidade técnica é externa às permissões do software.
 
-### Usuário de campo
-Pessoa que utiliza o aplicativo durante o levantamento para cadastrar propriedade/talhão, registrar parcelas, árvores, medições e pontos de geolocalização.
-
-### Responsável técnico / engenheiro florestal
-Pessoa responsável por validar fórmulas, coeficientes, método de amostragem, resultados e documentação final do inventário.
-
-Na primeira versão do sistema não haverá autenticação nem perfis separados. A distinção dos atores é conceitual para documentação dos casos de uso.
-
-## 2. Diagrama de Casos de Uso
+O gráfico abaixo é uma visão funcional em Mermaid, não uma notação UML formal de casos de uso. As linhas indicam associação ao usuário, sem sugerir include/extend ou ordem obrigatória. Para UML formal, manter esse escopo ao redesenhar ator, fronteira e elipses.
 
 ```mermaid
 flowchart LR
-    usuario["Usuário de campo"]
-    engenheiro["Responsável técnico / engenheiro florestal"]
-
-    UC01(("Gerenciar propriedades"))
-    UC02(("Gerenciar talhões"))
-    UC03(("Criar levantamento"))
-    UC04(("Continuar levantamento"))
-    UC05(("Concluir levantamento"))
-    UC06(("Registrar parcelas"))
-    UC07(("Capturar geolocalização da parcela"))
-    UC08(("Registrar árvores e medições"))
-    UC09(("Gerenciar espécies"))
-    UC10(("Gerenciar fórmulas/modelos"))
-    UC11(("Configurar coeficientes"))
-    UC12(("Calcular volume"))
-    UC13(("Consultar resultados"))
-    UC14(("Exportar dados/resultados"))
-    UC15(("Exportar KML/KMZ"))
-
-    usuario --> UC01
-    usuario --> UC02
-    usuario --> UC03
-    usuario --> UC04
-    usuario --> UC05
-    usuario --> UC06
-    usuario --> UC07
-    usuario --> UC08
-    usuario --> UC13
-    usuario --> UC14
-    usuario --> UC15
-
-    engenheiro --> UC09
-    engenheiro --> UC10
-    engenheiro --> UC11
-    engenheiro --> UC12
-    engenheiro --> UC13
-    engenheiro --> UC14
-    engenheiro --> UC15
-
-    UC03 --> UC01
-    UC03 --> UC02
-    UC06 --> UC07
-    UC08 --> UC12
-    UC10 --> UC11
-    UC12 --> UC13
+    U["Usuário do aplicativo<br/>(profissional de campo ou engenheiro)"]
+    subgraph APP["DENDRO Mobile — funções implementadas"]
+        C1(["Gerenciar propriedades e talhões"])
+        C2(["Preparar parcelas"])
+        C3(["Iniciar ou retomar levantamento"])
+        C4(["Configurar espécies, modelos e coeficientes"])
+        C5(["Registrar e corrigir árvores"])
+        C6(["Capturar coordenadas opcionais"])
+        C7(["Finalizar parcelas e levantamento"])
+        C8(["Consultar resultados calculados"])
+        C9(["Exportar dados e resultados"])
+        C10(["Consultar atividades e ajustar tema"])
+    end
+    U --- C1
+    U --- C2
+    U --- C3
+    U --- C4
+    U --- C5
+    U --- C6
+    U --- C7
+    U --- C8
+    U --- C9
+    U --- C10
 ```
 
-## 3. Casos de Uso Textuais
+Casos de uso entregues e rastreabilidade:
 
-### UC-001 — Gerenciar propriedades
-**Ator principal:** Usuário de campo.
+| Caso | Descrição | Requisitos |
+|---|---|---|
+| UC-001 | Cadastrar, consultar, editar e excluir propriedade; disponível também em Novo levantamento | RF-001 |
+| UC-002 | Gerenciar talhões da propriedade e dimensões de parcela | RF-002 |
+| UC-003 | Iniciar levantamento, escolher modelo/coeficientes e aproveitar planejamento/levantamento ativo da propriedade | RF-017 |
+| UC-004 | Retomar talhão em coleta pelo Início ou Levantamentos | RF-018 |
+| UC-005 | Preparar e gerenciar parcelas; acompanhar status | RF-003, RF-015 |
+| UC-006 | Registrar, editar e excluir árvores com DAP/altura e sequência Salvar/Próxima | RF-004, RF-005, RF-012 |
+| UC-007 | Capturar localização opcional da árvore e associar referência P1–P4 | RF-020 |
+| UC-008 | Gerenciar espécies, vínculos e modelo padrão | RF-006 |
+| UC-009 | Cadastrar modelos e configurar coeficientes; sem parser de expressões arbitrárias | RF-007 parcial, RF-008 |
+| UC-010 | Calcular volumes ao consultar resultados, com os modelos reconhecidos pela calculadora | RF-009 |
+| UC-011 | Filtrar e consultar painel | RF-010, RF-021 |
+| UC-012 | Selecionar escopo e exportar PDF, CSV, XLSX ou variantes brutas | RF-016 |
+| UC-013 | Exportar KML com coordenadas disponíveis | RF-016, RF-020 |
+| UC-014 | Finalizar parcela e concluir levantamento por ações próprias | RF-015, RF-017 |
+| UC-015 | Consultar histórico de atividades e alterar tema | Funções auxiliares implementadas |
 
-**Objetivo:** Cadastrar, visualizar, editar, excluir e pesquisar propriedades.
+Não incluir estimativa econômica, parser genérico, sincronização ou KMZ como casos entregues. Captura GPS é opcional e não uma etapa obrigatória de registrar árvore.
 
-**Fluxo principal:**
-1. O usuário acessa a aba Propriedades.
-2. O sistema exibe propriedades cadastradas com nome, município/UF, área em hectares e quantidade de talhões.
-3. O usuário pode buscar por nome ou aplicar filtros.
-4. O usuário pode cadastrar nova propriedade ou abrir uma existente.
-5. O usuário pode editar ou excluir uma propriedade pelo menu de ações.
+## 2. Arquitetura efetiva
 
-**Regras relacionadas:** RF-001, BR-001, BR-012, D-022, D-023.
+```mermaid
+flowchart TB
+    UI["Telas e widgets Flutter<br/>features/*/presentation"]
+    RP["Providers Riverpod<br/>estado e acesso aos repositórios"]
+    REPO["Repositórios por funcionalidade<br/>persistência, orquestração e agregações"]
+    CALC["ForestVolumeCalculator<br/>equações por árvore e conversões"]
+    DB["DendroDatabase / Drift<br/>migrações e SQL explícito"]
+    SQL[("SQLite local — 15 tabelas")]
+    GEO["Geolocator<br/>permissão e posição do dispositivo"]
+    EXPORT["DataExportRepository<br/>PDF, CSV, XLSX e KML"]
+    FILE["Salvamento Android / share_plus"]
+    UI --> RP
+    RP --> REPO
+    REPO --> DB
+    DB --> SQL
+    REPO --> CALC
+    UI --> GEO
+    GEO --> UI
+    UI --> EXPORT
+    EXPORT --> DB
+    EXPORT --> CALC
+    UI --> FILE
+    EXPORT --> UI
+```
 
-### UC-002 — Gerenciar talhões
-**Ator principal:** Usuário de campo.
+Telas/providers acessam repositórios. O banco usa Drift e SQL explícito; repositórios agregam dados. A calculadora por árvore é separada, enquanto geração de arquivos e agregações de relatório estão no exportador. GPS é solicitado pela tela de coleta; não há GeolocationService separado. Não desenhar camadas Application/Domain inexistentes nem bibliotecas apenas planejadas.
 
-**Objetivo:** Cadastrar e manter talhões vinculados a uma propriedade.
-
-**Fluxo principal:**
-1. O usuário abre uma propriedade.
-2. O sistema lista os talhões vinculados.
-3. O usuário cadastra, edita, exclui ou abre um talhão.
-
-**Regras relacionadas:** RF-002, BR-001, D-005.
-
-### UC-003 — Criar levantamento
-**Ator principal:** Usuário de campo.
-
-**Objetivo:** Iniciar um novo levantamento/inventário de campo.
-
-**Fluxo principal:**
-1. O usuário escolhe criar novo levantamento.
-2. O sistema solicita a propriedade.
-3. O usuário seleciona propriedade cadastrada ou cadastra uma nova, quando disponível.
-4. O usuário seleciona ou cria um ou mais talhões envolvidos.
-5. O usuário confirma espécie e fórmula/modelo para cada talhão selecionado.
-6. O sistema cria o levantamento com status `em andamento`.
-7. O sistema cria um vínculo `talhaolevantamento` para cada talhão incluído na coleta.
-
-**Regras relacionadas:** RF-017, RF-018, BR-019, BR-020, D-015, D-021.
-
-### UC-004 — Continuar levantamento
-**Ator principal:** Usuário de campo.
-
-**Objetivo:** Retomar um levantamento aberto anteriormente.
-
-**Fluxo principal:**
-1. O usuário acessa a tela inicial ou a aba Levantamentos.
-2. O sistema exibe levantamentos em andamento.
-3. A tela inicial sugere o levantamento atualizado mais recentemente.
-4. O usuário abre o levantamento e continua o registro de parcelas, árvores e medições.
-
-**Regras relacionadas:** RF-017, RF-018, BR-019, D-020, D-021.
-
-### UC-005 — Registrar parcela
-**Ator principal:** Usuário de campo.
-
-**Objetivo:** Cadastrar uma parcela amostral dentro de um talhão selecionado no levantamento.
-
-**Fluxo principal:**
-1. O usuário abre um levantamento em andamento.
-2. O usuário seleciona o talhão dentro do levantamento.
-3. O usuário cria uma nova parcela.
-4. O sistema sugere a identificação da parcela, por exemplo `P01`.
-5. O usuário pode capturar pontos de geolocalização.
-6. O sistema salva a parcela vinculada ao `talhaolevantamento`.
-
-**Regras relacionadas:** RF-003, RF-020, BR-022.
-
-### UC-006 — Capturar geolocalização da parcela
-**Ator principal:** Usuário de campo.
-
-**Objetivo:** Registrar coordenadas da parcela usando a localização do dispositivo.
-
-**Fluxo principal:**
-1. O usuário solicita capturar um ponto da parcela.
-2. O sistema verifica permissão de localização.
-3. O sistema obtém latitude, longitude e precisão.
-4. O sistema salva o ponto com ordem e data/hora.
-5. O usuário repete a operação para os demais pontos necessários.
-
-**Fluxos alternativos:**
-- Se a permissão for negada, o sistema informa que a geolocalização é opcional.
-- Se a localização estiver indisponível, o usuário pode continuar a coleta sem pontos geográficos.
-
-**Regras relacionadas:** RF-020, RNF-010, BR-022, D-026.
-
-### UC-007 — Registrar árvores e medições
-**Ator principal:** Usuário de campo.
-
-**Objetivo:** Registrar árvores medidas em uma parcela.
-
-**Fluxo principal:**
-1. O usuário abre uma parcela.
-2. O sistema exibe a lista de árvores já medidas.
-3. O usuário toca em **Nova árvore**.
-4. O sistema abre o painel deslizante de cadastro.
-5. O sistema sugere a identificação sequencial da árvore, por exemplo `Árvore 20`.
-6. O usuário informa DAP, altura e demais campos definidos.
-7. O usuário pode capturar coordenada opcional da árvore.
-8. O sistema valida os valores informados.
-9. O usuário escolhe **Salvar** ou **Próxima**.
-10. O sistema salva a árvore/medição e atualiza a lista.
-
-**Fluxos alternativos:**
-- Em **Salvar**, o sistema recolhe o painel e retorna à lista.
-- Em **Próxima**, o sistema mantém o painel aberto e limpo para outra árvore.
-- Ao editar, o sistema abre o painel preenchido com dados da árvore selecionada.
-- Ao excluir, o sistema deve solicitar confirmação quando houver risco de perda de dados.
-- Se a captura de coordenada for recusada ou indisponível, o sistema permite continuar a coleta sem coordenada.
-
-**Pós-condição:**
-Salvar árvores não encerra automaticamente a parcela. A parcela só muda para `coletada` quando o usuário aciona a opção de finalizar parcela.
-
-**Regras relacionadas:** RF-004, RF-005, BR-002, BR-011, BR-012.
-
-### UC-008 — Gerenciar espécies
-**Ator principal:** Responsável técnico / engenheiro florestal.
-
-**Objetivo:** Cadastrar e manter espécies/categorias usadas no inventário.
-
-**Fluxo principal:**
-1. O usuário acessa Ajustes.
-2. O usuário abre o cadastro de espécies.
-3. O sistema exibe Pinus e Eucalyptus/Eucalipto como cadastros base.
-4. O usuário associa fórmulas/modelos permitidos à espécie.
-5. O usuário define a fórmula/modelo padrão quando aplicável.
-
-**Regras relacionadas:** RF-006, BR-020, D-024.
-
-### UC-009 — Gerenciar fórmulas/modelos
-**Ator principal:** Responsável técnico / engenheiro florestal.
-
-**Objetivo:** Cadastrar e manter fórmulas volumétricas disponíveis no sistema.
-
-**Fluxo principal:**
-1. O usuário acessa Ajustes.
-2. O usuário abre Fórmulas/Modelos.
-3. O sistema exibe fórmulas/modelos em cards recolhíveis.
-4. O usuário abre um card para visualizar/alterar coeficientes ou usa o menu de três pontos para editar/excluir.
-5. O usuário informa nome, descrição, expressão matemática, variáveis/símbolos e coeficientes quando estiver criando/editando.
-6. O sistema valida nome único, expressão e variáveis declaradas.
-7. O sistema salva a fórmula.
-
-**Fluxos alternativos:**
-- Se o nome já existir, o sistema impede o cadastro.
-- Se a expressão for inválida ou possuir símbolo/variável não declarado, o sistema impede o cadastro.
-- Se houver alterações não salvas ao recolher/sair, o sistema pergunta se o usuário deseja salvar ou descartar.
-- Se o usuário excluir uma fórmula associada a espécie ou levantamento, o sistema deve informar o impacto e solicitar confirmação.
-
-**Regras relacionadas:** RF-007, RF-008, RNF-009, BR-004, BR-008, BR-021, D-025.
-
-### UC-010 — Calcular volume
-**Ator principal:** Sistema, sob comando do usuário.
-
-**Objetivo:** Calcular volume a partir das medições, fórmula/modelo e coeficientes.
-
-**Fluxo principal:**
-1. O usuário solicita cálculo ou abre resultados.
-2. O sistema identifica medições válidas.
-3. O sistema obtém fórmula/modelo e coeficientes aplicáveis.
-4. O sistema calcula volume por árvore.
-5. O sistema consolida resultados conforme regras técnicas disponíveis.
-6. O sistema apresenta resultados ao usuário.
-
-**Restrições:**
-- Extrapolação parcela/talhão depende do método de amostragem validado.
-- Fórmulas sem validação técnica devem ser tratadas como responsabilidade do usuário/fonte adotada.
-
-**Regras relacionadas:** RF-009, RF-010, RNF-005, BR-008, BR-009, BR-016.
-
-### UC-011 — Consultar resultados
-**Ator principal:** Usuário de campo ou responsável técnico.
-
-**Objetivo:** Visualizar resultados consolidados por propriedade, com filtros opcionais.
-
-**Fluxo principal:**
-1. O usuário acessa a aba Resultados.
-2. O sistema solicita ou permite selecionar uma propriedade.
-3. O usuário pode selecionar filtros opcionais, como um ou mais talhões e espécie.
-4. O sistema recalcula/atualiza os indicadores usando apenas os dados compatíveis com os filtros ativos.
-5. O usuário pode abrir detalhes de um levantamento, talhão ou indicador.
-
-**Fluxos alternativos:**
-- A tela pode ser aberta a partir de uma propriedade, já com a propriedade selecionada.
-- A tela pode ser aberta a partir de um talhão, já com propriedade e talhão selecionados.
-- Se nenhum filtro opcional for aplicado, o sistema considera todos os dados da propriedade selecionada.
-
-**Regras relacionadas:** RF-010, RF-021, BR-024, D-028.
-
-### UC-012 — Exportar dados/resultados
-**Ator principal:** Usuário de campo ou responsável técnico.
-
-**Objetivo:** Gerar arquivo com dados coletados e/ou resultados.
-
-**Fluxo principal:**
-1. O usuário seleciona levantamento ou propriedade.
-2. O usuário solicita exportação pela tela da propriedade, resultados ou detalhe do levantamento.
-3. O sistema abre a tela de exportação com os talhões/áreas selecionados por padrão conforme o contexto.
-4. O usuário escolhe formato de arquivo.
-5. O usuário mantém ou altera a seleção de talhões/áreas incluídos.
-6. O sistema gera arquivo no formato selecionado.
-7. O sistema disponibiliza o arquivo ao usuário.
-
-**Formatos desejados:**
-- PDF;
-- CSV;
-- XLS/XLSX;
-- KML/KMZ.
-
-**Regras relacionadas:** RF-016, BR-018, D-011.
-
-### UC-013 — Exportar KML/KMZ
-**Ator principal:** Responsável técnico / engenheiro florestal.
-
-**Objetivo:** Exportar pontos/polígonos de parcelas para uso no Google Earth.
-
-**Fluxo principal:**
-1. O usuário seleciona levantamento ou propriedade.
-2. O usuário solicita exportação geográfica.
-3. O sistema busca parcelas com pontos de geolocalização.
-4. O sistema gera KML/KMZ preservando propriedade, levantamento, talhão e parcela.
-5. O usuário importa o arquivo no Google Earth.
-
-**Regras relacionadas:** RF-016, RF-020, BR-023, D-027.
-
-## 4. Diagrama de Classes Conceitual
+## 3. Modelo de classes de dados
 
 ```mermaid
 classDiagram
-    class Propriedade {
-        +String id
-        +String nome
-        +String municipio
-        +String uf
-        +double areaTotalHa
-        +DateTime criadoEm
-        +DateTime atualizadoEm
+    PropertyRecord "1" --> "0..*" StandRecord
+    PropertyRecord "1" --> "0..*" InventoryRunRecord
+    InventoryRunRecord "1" --> "0..*" TalhaoLevantamentoRecord
+    StandRecord "1" --> "0..*" TalhaoLevantamentoRecord
+    SpeciesRecord "1" --> "0..*" StandRecord
+    SpeciesRecord "1" --> "0..*" TalhaoLevantamentoRecord
+    FormulaRecord "1" --> "0..*" TalhaoLevantamentoRecord
+    TalhaoLevantamentoRecord "1" --> "0..*" PlotRecord
+    PlotRecord "1" --> "0..*" TreeRecord
+    PlotRecord "1" --> "0..*" PlotGeoPointRecord
+    FormulaRecord "1" --> "0..*" FormulaVariableRecord
+    FormulaRecord "1" --> "0..*" FormulaCoefficientRecord
+    SpeciesRecord "1" --> "0..*" SpeciesFormulaRecord
+    FormulaRecord "1" --> "0..*" SpeciesFormulaRecord
+    SpeciesRecord "1" --> "0..*" SpeciesFormulaCoefficientRecord
+    FormulaRecord "1" --> "0..*" SpeciesFormulaCoefficientRecord
+    class TreeRecord {
+        String id
+        String plotId
+        int number
+        double dapCm
+        double heightM
+        bool hasTortuousStem
     }
-
-    class Talhao {
-        +String id
-        +String propriedadeId
-        +String identificacao
-        +String especieId
-        +double areaHa
-        +int anoPlantio
-        +String espacamento
-        +String regimeManejo
-        +String observacao
-        +DateTime criadoEm
-        +DateTime atualizadoEm
+    class TalhaoLevantamentoRecord {
+        String id
+        String inventoryRunId
+        String standId
+        String speciesId
+        String formulaId
     }
-
-    class Levantamento {
-        +String id
-        +String propriedadeId
-        +StatusLevantamento status
-        +DateTime iniciadoEm
-        +DateTime atualizadoEm
-        +DateTime concluidoEm
-        +concluir()
-        +reabrir()
+    class ResultsDashboard
+    class ResultsRepository {
+        watchDashboard(filters)
     }
-
-    class TalhaoLevantamento {
-        +String id
-        +String levantamentoId
-        +String talhaoId
-        +String especieId
-        +String formulaId
-        +double areaPadraoParcelaHa
-        +DateTime criadoEm
-        +DateTime atualizadoEm
+    class ForestVolumeCalculator {
+        treeVolumeM3()
+        estimatedHeightM()
+        conversionForSpecies()
     }
-
-    class Parcela {
-        +String id
-        +String talhaoLevantamentoId
-        +String identificacao
-        +StatusParcela status
-        +double areaHa
-        +String posicaoReferencia
-        +DateTime criadoEm
-        +DateTime atualizadoEm
-        +marcarEmAndamento()
-        +finalizar()
-    }
-
-    class PontoGeografico {
-        +String id
-        +String parcelaId
-        +int ordem
-        +double latitude
-        +double longitude
-        +double precisaoMetros
-        +DateTime capturadoEm
-    }
-
-    class Arvore {
-        +String id
-        +String parcelaId
-        +int numero
-        +double dap
-        +double altura
-        +double latitude
-        +double longitude
-        +double precisaoMetros
-        +DateTime coordenadaCapturadaEm
-        +DateTime criadoEm
-        +DateTime atualizadoEm
-    }
-
-    class Especie {
-        +String id
-        +String nome
-        +String descricao
-        +bool ativa
-    }
-
-    class FormulaVolumetrica {
-        +String id
-        +String nome
-        +String descricao
-        +String expressao
-        +bool ativa
-        +validarExpressao()
-    }
-
-    class FormulaVariavel {
-        +String id
-        +String formulaId
-        +String simbolo
-        +String variavel
-        +String unidade
-        +String origemValor
-    }
-
-    class Coeficiente {
-        +String id
-        +String formulaId
-        +String nome
-        +double valor
-    }
-
-    class EspecieFormula {
-        +String especieId
-        +String formulaId
-        +bool padrao
-    }
-
-    class ResultadoInventario {
-        +String levantamentoId
-        +double volumeTotal
-        +double valorBrutoEstimado
-        +DateTime calculadoEm
-    }
-
-    class FiltroResultados {
-        +String propriedadeId
-        +List~String~ talhaoIds
-        +String especieId
-        +DateTime periodoInicio
-        +DateTime periodoFim
-    }
-
-    class CalculadoraVolume {
-        +calcularVolumeArvore(arvore, formula, coeficientes)
-        +calcularResumoParcela(parcela)
-        +calcularResumoTalhaoLevantamento(talhaoLevantamento)
-        +calcularResumoLevantamento(levantamento)
-    }
-
-    class StatusLevantamento {
-        <<enumeration>>
-        emAndamento
-        concluido
-    }
-
-    class StatusParcela {
-        <<enumeration>>
-        pendente
-        emAndamento
-        coletada
-    }
-
-    Propriedade "1" --> "0..*" Talhao
-    Propriedade "1" --> "0..*" Levantamento
-    Levantamento "1" --> "0..*" TalhaoLevantamento
-    Talhao "1" --> "0..*" TalhaoLevantamento
-    TalhaoLevantamento "1" --> "0..*" Parcela
-    Parcela "1" --> "0..*" Arvore
-    Parcela "1" --> "0..*" PontoGeografico
-    Especie "1" --> "0..*" EspecieFormula
-    FormulaVolumetrica "1" --> "0..*" EspecieFormula
-    FormulaVolumetrica "1" --> "0..*" FormulaVariavel
-    FormulaVolumetrica "1" --> "0..*" Coeficiente
-    Especie "1" --> "0..*" TalhaoLevantamento
-    FormulaVolumetrica "1" --> "0..*" TalhaoLevantamento
-    Levantamento "1" --> "0..1" ResultadoInventario
-    FiltroResultados ..> Propriedade
-    FiltroResultados ..> Talhao
-    FiltroResultados ..> Especie
-    CalculadoraVolume ..> Arvore
-    CalculadoraVolume ..> FormulaVolumetrica
-    CalculadoraVolume ..> Coeficiente
+    ResultsRepository ..> ResultsDashboard : produz em memoria
+    ResultsRepository ..> ForestVolumeCalculator : usa
+    ResultsRepository ..> TreeRecord : consulta
 ```
 
-## 5. Modelo Entidade-Relacionamento Inicial
+São nomes reais de registros gerados pelo Drift e de classes de cálculo/resultados, com atributos selecionados. Não são entidades de domínio com métodos fictícios concluir()/reabrir(). Ações de persistência ficam nos repositórios. As duas tabelas SQL explícitas (coeficientes da coleta e atividades) são representadas integralmente no modelo do banco, não como registros Drift gerados.
+
+## 4. Relacionamentos do banco
 
 ```mermaid
 erDiagram
-    PROPERTIES ||--o{ STANDS : possui
-    PROPERTIES ||--o{ INVENTORY_RUNS : possui
-    INVENTORY_RUNS ||--o{ TALHAO_LEVANTAMENTOS : contem
-    STANDS ||--o{ TALHAO_LEVANTAMENTOS : participa
-    TALHAO_LEVANTAMENTOS ||--o{ PLOTS : contem
-    PLOTS ||--o{ TREES : possui
-    PLOTS ||--o{ PLOT_GEO_POINTS : possui
-    SPECIES ||--o{ SPECIES_FORMULAS : associa
-    FORMULAS ||--o{ SPECIES_FORMULAS : associa
-    FORMULAS ||--o{ FORMULA_COEFFICIENTS : possui
-    FORMULAS ||--o{ FORMULA_VARIABLES : possui
+    properties ||--o{ stands : possui
+    properties ||--o{ inventory_runs : possui
+    species ||--o{ stands : classifica
+    inventory_runs ||--o{ talhao_levantamentos : contem
+    stands ||--o{ talhao_levantamentos : participa
+    species ||--o{ talhao_levantamentos : classifica
+    formulas ||--o{ talhao_levantamentos : selecionada
+    talhao_levantamentos ||--o{ plots : contem
+    plots ||--o{ trees : possui
+    plots ||--o{ plot_geo_points : documenta
+    formulas ||--o{ formula_variables : declara
+    formulas ||--o{ formula_coefficients : define
+    species ||--o{ species_formulas : associa
+    formulas ||--o{ species_formulas : associa
+    species ||--o{ species_formula_coefficients : configura
+    formulas ||--o{ species_formula_coefficients : parametriza
+    talhao_levantamentos ||--o{ talhao_formula_coefficients : preserva
+    activity_logs {
+        text id PK
+        text entity_type
+        text entity_id
+    }
+```
 
-    PROPERTIES {
+Cada filho das ligações acima possui uma chave estrangeira obrigatória para exatamente um pai; o pai pode ter zero ou muitos filhos. A representação é estrutural: um levantamento criado pela interface normalmente tem talhão, mas a cardinalidade mínima de filhos não é imposta por uma FK.
+
+activity_logs é independente: entity_type/entity_id são referências lógicas opcionais, sem FK. Não desenhar uma FK inexistente. species_formula_coefficients possui FKs independentes para species e formulas, não uma FK composta para species_formulas.
+
+## 5. Modelo físico completo — 15 tabelas
+
+Fonte: classes Table e comandos CREATE TABLE em dendro_database.dart, schemaVersion 9. IDs textuais, números reais, booleanos armazenados como inteiros, enums como texto e datas no armazenamento inteiro padrão do Drift. “nullable” identifica campo opcional.
+
+```mermaid
+erDiagram
+    properties ||--o{ stands : possui
+    properties ||--o{ inventory_runs : possui
+    species ||--o{ stands : classifica
+    inventory_runs ||--o{ talhao_levantamentos : contem
+    stands ||--o{ talhao_levantamentos : participa
+    species ||--o{ talhao_levantamentos : classifica
+    formulas ||--o{ talhao_levantamentos : selecionada
+    talhao_levantamentos ||--o{ plots : contem
+    plots ||--o{ trees : possui
+    plots ||--o{ plot_geo_points : documenta
+    formulas ||--o{ formula_variables : declara
+    formulas ||--o{ formula_coefficients : define
+    species ||--o{ species_formulas : associa
+    formulas ||--o{ species_formulas : associa
+    species ||--o{ species_formula_coefficients : configura
+    formulas ||--o{ species_formula_coefficients : parametriza
+    talhao_levantamentos ||--o{ talhao_formula_coefficients : preserva
+    properties {
         text id PK
         text name
         text municipality
         text state
         real total_area_ha
-        text created_at
-        text updated_at
+        integer created_at
+        integer updated_at
     }
-
-    STANDS {
+    species {
+        text id PK
+        text name UK
+        text scientific_name "nullable"
+        text description "nullable"
+        integer active
+        integer created_at
+        integer updated_at
+    }
+    formulas {
+        text id PK
+        text name UK
+        text description "nullable"
+        text expression
+        integer active
+        integer created_at
+        integer updated_at
+    }
+    formula_variables {
+        text id PK
+        text formula_id FK
+        text symbol
+        text label
+        text unit
+        text value_source
+        text variable_key
+    }
+    formula_coefficients {
+        text id PK
+        text formula_id FK
+        text symbol
+        text label
+        real value "nullable"
+    }
+    species_formulas {
+        text species_id PK,FK
+        text formula_id PK,FK
+        integer is_default
+        integer created_at
+    }
+    species_formula_coefficients {
+        text id PK
+        text species_id FK
+        text formula_id FK
+        text symbol
+        text label
+        real value "nullable"
+        integer updated_at
+    }
+    stands {
         text id PK
         text property_id FK
         text identification
         text species_id FK
         real area_ha
-        integer planting_year
-        text spacing
-        text management_regime
-        text notes
-        text created_at
-        text updated_at
+        integer planting_year "nullable"
+        text spacing "nullable"
+        text management_regime "nullable"
+        real plot_width_m "nullable"
+        real plot_length_m "nullable"
+        text notes "nullable"
+        integer created_at
+        integer updated_at
     }
-
-    INVENTORY_RUNS {
+    inventory_runs {
         text id PK
         text property_id FK
         text status
-        text started_at
-        text updated_at
-        text completed_at
+        integer started_at
+        integer updated_at
+        integer completed_at "nullable"
     }
-
-    TALHAO_LEVANTAMENTOS {
+    talhao_levantamentos {
         text id PK
         text inventory_run_id FK
         text stand_id FK
         text species_id FK
         text formula_id FK
-        real default_plot_area_ha
-        text created_at
-        text updated_at
+        real default_plot_area_ha "nullable"
+        integer created_at
+        integer updated_at
     }
-
-    PLOTS {
+    talhao_formula_coefficients {
+        text id PK
+        text talhao_levantamento_id FK
+        text symbol
+        text label
+        real value "nullable"
+    }
+    plots {
         text id PK
         text talhao_levantamento_id FK
         text identification
         text status
-        real area_ha
-        text reference_position
-        text created_at
-        text updated_at
+        real area_ha "nullable"
+        text reference_position "nullable"
+        integer created_at
+        integer updated_at
     }
-
-    TREES {
-        text id PK
-        text plot_id FK
-        integer number
-        real dap
-        real height
-        real latitude
-        real longitude
-        real accuracy_meters
-        text location_captured_at
-        text created_at
-        text updated_at
-    }
-
-    PLOT_GEO_POINTS {
+    plot_geo_points {
         text id PK
         text plot_id FK
         integer point_order
+        text reference_position "nullable"
         real latitude
         real longitude
-        real accuracy_meters
-        text captured_at
+        real accuracy_meters "nullable"
+        integer captured_at
     }
-
-    SPECIES {
+    trees {
         text id PK
-        text name
-        text description
-        integer active
+        text plot_id FK
+        integer number
+        real dap_cm
+        real height_m
+        integer has_tortuous_stem
+        real latitude "nullable"
+        real longitude "nullable"
+        real accuracy_meters "nullable"
+        integer location_captured_at "nullable"
+        text plot_reference_position "nullable"
+        integer created_at
+        integer updated_at
     }
-
-    FORMULAS {
+    activity_logs {
         text id PK
-        text name
-        text description
-        text expression
-        integer active
-    }
-
-    SPECIES_FORMULAS {
-        text species_id FK
-        text formula_id FK
-        integer is_default
-    }
-
-    FORMULA_COEFFICIENTS {
-        text id PK
-        text formula_id FK
-        text name
-        real value
-    }
-
-    FORMULA_VARIABLES {
-        text id PK
-        text formula_id FK
-        text symbol
-        text variable_key
-        text unit
-        text value_source
+        text type
+        text title
+        text subtitle
+        text entity_type "nullable"
+        text entity_id "nullable"
+        integer occurred_at
     }
 ```
 
-## 6. Arquitetura em Camadas
+### Chaves e restrições compostas
 
-```mermaid
-flowchart TB
-    UI["Presentation\nTelas, widgets, navegação e estado visual"]
-    APP["Application / Services\nCasos de uso e orquestração"]
-    DOMAIN["Domain\nEntidades, regras e cálculos puros"]
-    DATA["Data\nSQLite, repositórios e mapeamento"]
-    DEVICE["Recursos do dispositivo\nGPS/localização e arquivos"]
+- properties: PK id.
+- species e formulas: PK id, nome único.
+- species_formulas: PK composta (species_id, formula_id).
+- stands: UNIQUE(property_id, identification).
+- talhao_levantamentos: UNIQUE(inventory_run_id, stand_id).
+- plots: UNIQUE(talhao_levantamento_id, identification).
+- trees: UNIQUE(plot_id, number).
+- plot_geo_points: UNIQUE(plot_id, point_order).
+- formula_variables e formula_coefficients: UNIQUE(formula_id, symbol).
+- species_formula_coefficients: UNIQUE(species_id, formula_id, symbol).
+- talhao_formula_coefficients: UNIQUE(talhao_levantamento_id, symbol).
+- Todas as demais tabelas usam PK id; activity_logs não possui FK.
 
-    UI --> APP
-    APP --> DOMAIN
-    APP --> DATA
-    DATA --> DOMAIN
-    APP --> DEVICE
+As FKs declaram CASCADE, exceto stands.species_id e talhao_levantamentos.species_id/formula_id, que declaram RESTRICT. Essa descrição é do esquema; repositórios também executam exclusões explícitas. Não afirmar que constraints sozinhas cobrem toda regra de interface.
 
-    DOMAIN -.-> CALC["Serviços de cálculo\nVolume, resumo, estimativa econômica"]
-    DATA -.-> SQLITE["SQLite local"]
-    DEVICE -.-> GPS["Localização do dispositivo"]
-    DEVICE -.-> EXPORT["Geração de CSV/PDF/KML/KMZ"]
-```
+talhao_formula_coefficients e activity_logs são criadas por SQL nas rotinas de criação/migração, além das 13 tabelas de @DriftDatabase. ResultadoInventario, Measurements e VolumeModel não são tabelas adicionais. DAP/altura ficam em trees; o catálogo volumétrico fica em formulas.
 
-## 7. Fluxo de Navegação Principal
+## 6. Fluxo operacional
 
 ```mermaid
 flowchart TD
-    APP["Aplicativo"]
-    HOME["Início"]
-    RUNS["Levantamentos"]
-    PROPS["Propriedades"]
-    RESULTS["Resultados"]
-    SETTINGS["Ajustes"]
-
-    APP --> HOME
-    APP --> RUNS
-    APP --> PROPS
-    APP --> RESULTS
-    APP --> SETTINGS
-
-    HOME --> NEW_RUN["Criar novo levantamento"]
-    HOME --> CONTINUE_RUN["Continuar levantamento em andamento"]
-    HOME --> LAST_DONE["Resumo do último levantamento concluído"]
-
-    RUNS --> OPEN_RUN["Abrir levantamento"]
-    OPEN_RUN --> RUN_STANDS["Talhões do levantamento"]
-    RUN_STANDS --> RUN_PLOTS["Parcelas"]
-    RUN_PLOTS --> RUN_TREES["Árvores e medições"]
-
-    PROPS --> PROPERTY_DETAIL["Detalhe da propriedade"]
-    PROPERTY_DETAIL --> PROPERTY_STANDS["Talhões cadastrados"]
-    PROPERTY_DETAIL --> PROPERTY_RUNS["Levantamentos da propriedade"]
-
-    RESULTS --> SELECT_PROPERTY["Selecionar propriedade"]
-    SELECT_PROPERTY --> PROPERTY_DASHBOARD["Dashboard da propriedade"]
-
-    SETTINGS --> SPECIES["Espécies"]
-    SETTINGS --> FORMULAS["Fórmulas/modelos"]
+    A(["Início"]) --> B["Selecionar ou cadastrar propriedade e talhão"]
+    B --> C{"Já existe coleta ativa?"}
+    C -- Sim --> D["Retomar talhão no levantamento"]
+    C -- Não --> E["Escolher modelo e coeficientes"]
+    E --> F["Iniciar coleta / aproveitar planejamento<br/>e levantamento ativo da propriedade"]
+    F --> G["Abrir ou cadastrar parcela"]
+    D --> G
+    G --> H["Informar DAP cm, altura m e tronco torto"]
+    H --> I{"Capturar GPS?"}
+    I -- Sim --> J["Solicitar localização<br/>e referência P1–P4 quando escolhida"]
+    I -- Não --> K["Salvar árvore"]
+    J --> K
+    K --> L{"Registrar próxima árvore?"}
+    L -- Sim --> H
+    L -- Não --> M{"Finalizar parcela?"}
+    M -- Sim --> N["Marcar parcela como coletada"]
+    M -- Não --> O["Preservar dados e coleta em andamento"]
+    N --> P["Continuar parcelas ou consultar resultados"]
+    O --> P
+    P --> Q["Finalizar levantamento quando solicitado"]
+    Q --> R["Exportar no escopo selecionado"]
+    R --> S(["Fim"])
 ```
 
-## 8. Diagrama de Atividade — Realizar Levantamento
+Este é um percurso de uso, não uma regra que obrigue finalizar tudo antes de consultar/exportar: o aplicativo permite resultados e exportação com coleta em andamento. As etapas acadêmicas da pesquisa devem ser representadas em outro fluxograma, baseado na metodologia efetivamente executada do artigo.
 
-```mermaid
-flowchart TD
-    START([Início])
-    CREATE["Criar ou continuar levantamento"]
-    SELECT_PROP["Selecionar/cadastrar propriedade"]
-    SELECT_STAND["Selecionar/cadastrar talhões"]
-    CONFIRM_MODEL["Confirmar espécie/modelo por talhão"]
-    CREATE_PLOT["Criar parcela"]
-    GEO_DECISION{"Capturar geolocalização?"}
-    CAPTURE_POINTS["Capturar pontos da parcela"]
-    ADD_TREE["Registrar árvore"]
-    MORE_TREES{"Há mais árvores na parcela?"}
-    MORE_PLOTS{"Há mais parcelas?"}
-    CALCULATE["Calcular/atualizar resultados"]
-    CLOSE_DECISION{"Concluir levantamento?"}
-    CLOSE["Marcar como concluído"]
-    SAVE_OPEN["Manter em andamento"]
-    END([Fim])
-
-    START --> CREATE
-    CREATE --> SELECT_PROP
-    SELECT_PROP --> SELECT_STAND
-    SELECT_STAND --> CONFIRM_MODEL
-    CONFIRM_MODEL --> CREATE_PLOT
-    CREATE_PLOT --> GEO_DECISION
-    GEO_DECISION -- Sim --> CAPTURE_POINTS
-    GEO_DECISION -- Não --> ADD_TREE
-    CAPTURE_POINTS --> ADD_TREE
-    ADD_TREE --> MORE_TREES
-    MORE_TREES -- Sim --> ADD_TREE
-    MORE_TREES -- Não --> MORE_PLOTS
-    MORE_PLOTS -- Sim --> CREATE_PLOT
-    MORE_PLOTS -- Não --> CALCULATE
-    CALCULATE --> CLOSE_DECISION
-    CLOSE_DECISION -- Sim --> CLOSE
-    CLOSE_DECISION -- Não --> SAVE_OPEN
-    CLOSE --> END
-    SAVE_OPEN --> END
-```
-
-## 9. Diagrama de Sequência — Calcular Volume
+## 7. Sequência de consulta de resultados
 
 ```mermaid
 sequenceDiagram
-    actor Usuario as Usuário
-    participant Tela as Tela de Resultados/Levantamento
-    participant Servico as InventoryCalculationService
-    participant Repo as Repositórios SQLite
-    participant Calc as CalculadoraVolume
-
-    Usuario->>Tela: Solicita visualizar/calcular resultados
-    Tela->>Servico: calcularResultado(levantamentoId)
-    Servico->>Repo: buscar levantamento, talhaolevantamentos, parcelas, árvores, fórmula, variáveis e coeficientes
-    Repo-->>Servico: dados do levantamento
-    Servico->>Calc: calcular volumes por árvore
-    Calc-->>Servico: volumes calculados
-    Servico->>Calc: consolidar resultados disponíveis
-    Calc-->>Servico: resumo do levantamento
-    Servico-->>Tela: ResultadoInventario
-    Tela-->>Usuario: Exibe volume, produtividade e valor bruto
+    actor U as Usuário
+    participant T as Tela de resultados
+    participant P as Provider Riverpod
+    participant R as ResultsRepository
+    participant D as DendroDatabase
+    participant C as ForestVolumeCalculator
+    U->>T: Selecionar filtros
+    T->>P: Observar painel filtrado
+    P->>R: watchDashboard(filters)
+    R->>D: Consultar parcelas, vínculos, fórmulas e árvores
+    D-->>R: Registros locais
+    R->>D: Ler coeficientes da coleta ou catálogo
+    D-->>R: Coeficientes
+    loop Árvores incluídas
+        R->>C: treeVolumeM3(medições, modelo, coeficientes)
+        C-->>R: Volume da árvore
+    end
+    R->>R: Somar volumes, áreas e indicadores
+    R-->>P: ResultsDashboard
+    P-->>T: Estado atualizado
+    T-->>U: Apresentar resultados
 ```
 
-## 10. Diagrama de Sequência — Capturar Ponto GPS
+A sequência usa componentes reais. O stream da consulta acompanha dados locais; o painel agrega registros compatíveis com os filtros. A exportação tem escopo próprio, conforme REQUIREMENTS.md.
 
-```mermaid
-sequenceDiagram
-    actor Usuario as Usuário
-    participant Tela as Tela da Parcela
-    participant Geo as GeolocationService
-    participant Device as Dispositivo
-    participant Repo as PlotGeoPointRepository
-
-    Usuario->>Tela: Toca em "Capturar ponto"
-    Tela->>Geo: capturarPonto(parcelaId, ordem)
-    Geo->>Device: verificar permissão/localização
-    Device-->>Geo: permissão concedida
-    Geo->>Device: obter posição atual
-    Device-->>Geo: latitude, longitude, precisão
-    Geo->>Repo: salvar ponto geográfico
-    Repo-->>Geo: ponto salvo
-    Geo-->>Tela: ponto capturado
-    Tela-->>Usuario: Atualiza lista/mapa de pontos
-```
-
-## 11. Diagrama de Sequência — Cadastrar Fórmula Personalizada
-
-```mermaid
-sequenceDiagram
-    actor Usuario as Responsável técnico
-    participant Tela as Tela de Fórmulas
-    participant Service as FormulaService
-    participant Parser as ExpressionParser
-    participant Repo as FormulaRepository
-
-    Usuario->>Tela: Informa nome, expressão, variáveis/símbolos e coeficientes
-    Tela->>Service: salvarFormula(dados)
-    Service->>Repo: verificar nome único
-    Repo-->>Service: nome disponível
-    Service->>Parser: validar expressão
-    Parser-->>Service: expressão válida e variáveis identificadas
-    Service->>Service: verificar se símbolos possuem variáveis reconhecidas
-    Service->>Repo: salvar fórmula, variáveis e coeficientes
-    Repo-->>Service: fórmula salva
-    Service-->>Tela: sucesso
-    Tela-->>Usuario: Exibe fórmula cadastrada
-```
-
-## 12. Diagrama de Estados — Levantamento
+## 8. Estados
 
 ```mermaid
 stateDiagram-v2
-    [*] --> EmAndamento: criar levantamento
-    EmAndamento --> EmAndamento: editar dados / registrar parcelas / registrar árvores
-    EmAndamento --> Concluido: concluir levantamento
-    Concluido --> EmAndamento: reabrir, se permitido futuramente
-    Concluido --> [*]
+    [*] --> Planejamento: preparar parcelas
+    [*] --> EmAndamento: iniciar coleta
+    Planejamento --> EmAndamento: promover planejamento
+    EmAndamento --> EmAndamento: continuar coleta ou incluir talhão
+    EmAndamento --> Finalizado: concluir levantamento
+    Finalizado --> [*]
 ```
 
-## 13. Observações e Pendências dos Modelos
+Os nomes persistidos são planning, inProgress e completed. O diagrama mostra o percurso de criação/coleta/conclusão, omitindo exclusões e rotinas de normalização. Não inclui reabertura futura como função implementada.
 
-- Confirmar unidade oficial de produtividade.
-- Validar tecnicamente a implementação operacional da extrapolação para amostragem sistemática com parcelas de área fixa.
-- Definir quais exportações entram no MVP e quais ficam como evolução.
-- Definir se o contorno do talhão será cadastrado, desenhado ou importado futuramente.
+Parcelas têm pending, inProgress e collected. A gravação de árvores e a finalização de parcela são ações separadas; status da parcela e do levantamento não são uma única máquina de estados.
+
+## 9. Uso das figuras no artigo
+
+A visão de relacionamentos é mais legível no corpo do artigo; o modelo com todos os atributos pode ser apêndice ou dividido em coleta e catálogos. Manter nomes/cardinalidades ao redesenhar. Legendas sugeridas: “Funções implementadas do DENDRO Mobile”, “Arquitetura da aplicação” e “Modelo de dados da aplicação”. Indicar elaboração própria com base na implementação.
+
+Para descrever resultados, observar as limitações em BUSINESS_RULES.md: fórmulas genéricas não interpretadas, valores padrão, ausência de estimativa econômica, escopos históricos distintos e validação acadêmica pendente.
