@@ -1,0 +1,57 @@
+{
+  "InventoryRunStatus": [
+    "planning",
+    "inProgress",
+    "completed"
+  ],
+  "PlotStatus": [
+    "pending",
+    "inProgress",
+    "collected"
+  ],
+  "FormulaVariableKey": [
+    "dap",
+    "height",
+    "age",
+    "basalArea"
+  ],
+  "ActivityLogType": [
+    "propertyCreated",
+    "propertyUpdated",
+    "propertyDeleted",
+    "standCreated",
+    "standUpdated",
+    "standDeleted",
+    "plotCreated",
+    "plotUpdated",
+    "plotDeleted",
+    "plotCollected",
+    "speciesCreated",
+    "speciesUpdated",
+    "speciesDeleted",
+    "speciesFormulaLinked",
+    "speciesFormulaUnlinked",
+    "speciesDefaultFormulaChanged",
+    "formulaCreated",
+    "formulaUpdated",
+    "formulaDeleted",
+    "formulaCoefficientsUpdated",
+    "inventoryRunStarted",
+    "inventoryRunCompleted",
+    "inventoryRunDeleted",
+    "inventoryRunStandAdded",
+    "inventoryRunStandUpdated",
+    "inventoryRunStandRemoved",
+    "standCompleted",
+    "exportCreated"
+  ],
+  "ActivityEntityType": [
+    "property",
+    "stand",
+    "plot",
+    "species",
+    "formula",
+    "inventoryRun",
+    "export"
+  ]
+}

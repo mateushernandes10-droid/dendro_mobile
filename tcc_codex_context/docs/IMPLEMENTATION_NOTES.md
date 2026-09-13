@@ -1,6 +1,6 @@
 # Estado da implementação e evidências
 
-Revisão documental em 13/09/2026, código-base ce282bb. Os documentos foram alinhados à versão atual por solicitação do usuário, que encerrou o escopo de desenvolvimento. Esta revisão não altera o código do aplicativo.
+Revisão documental em 13/09/2026, versão refatorada em português (base 82f29e2). Os documentos foram alinhados à versão atual por solicitação do usuário, que encerrou o escopo de desenvolvimento. Esta revisão não altera o código do aplicativo.
 
 ## Implementação disponível
 
@@ -40,14 +40,14 @@ A tela Novo levantamento reutiliza o formulário de propriedade; salvar atualiza
 
 | Tema | Fonte |
 |---|---|
-| Banco v9, 15 tabelas, carga inicial | lib/core/database/dendro_database.dart |
-| Fórmulas e conversões | lib/core/forest/forest_volume_calculator.dart |
-| Painel e filtros | lib/features/results/data/results_repository.dart |
-| Formatos, conteúdo e escopo de exportação | lib/features/data_export/data/data_export_repository.dart |
-| Coleta e GPS | lib/features/tree_collection/ |
-| Planejamento, parcelas e áreas | lib/features/plots/ |
-| Coeficientes e catálogos | lib/features/settings/, lib/features/inventory_runs/ |
-| Tema | lib/core/preferences/theme_mode_controller.dart |
+| Banco v10, 15 tabelas, carga inicial | lib/nucleo/banco/banco_dendro.dart |
+| Fórmulas e conversões | lib/nucleo/floresta/calculadora_volume_florestal.dart |
+| Painel e filtros | lib/funcionalidades/resultados/dados/repositorio_resultados.dart |
+| Formatos, conteúdo e escopo de exportação | lib/funcionalidades/exportacao_dados/dados/repositorio_exportacao_dados.dart |
+| Coleta e GPS | lib/funcionalidades/coleta_arvores/ |
+| Planejamento, parcelas e áreas | lib/funcionalidades/parcelas/ |
+| Coeficientes e catálogos | lib/funcionalidades/ajustes/, lib/funcionalidades/levantamentos/ |
+| Tema | lib/nucleo/preferencias/controlador_tema.dart |
 
 ## Testes e build
 

@@ -1,6 +1,6 @@
 # Contexto atual — DENDRO Mobile
 
-Revisão em 13/09/2026. Esta documentação retrata o código-base ce282bb, escolhido pelo usuário como versão de encerramento do desenvolvimento do aplicativo.
+Revisão em 13/09/2026. Esta documentação retrata o versão refatorada em português (base 82f29e2), escolhido pelo usuário como versão de encerramento do desenvolvimento do aplicativo.
 
 ## Tema e objetivo
 

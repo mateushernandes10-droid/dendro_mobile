@@ -18,7 +18,7 @@ Este material deve ser usado como norte visual, não como cópia direta. O fluxo
 - Botões principais em verde escuro com bom contraste.
 - Campos numéricos com botões de incremento/decremento para medições em campo.
 - Tipografia forte para títulos e aparência monoespaçada para números, medições e coordenadas.
-- Cards de status para levantamentos, parcelas, progresso, volume e produtividade.
+- Cards de situacao para levantamentos, parcelas, progresso, volume e produtividade.
 - Listas com altura confortável para toque em celular.
 - A lateral direita do topo deve manter a logo do DENDRO Mobile. Ações de adicionar/cadastrar devem usar botão flutuante no canto inferior direito, como o `+` da tela de parcelas.
 - A barra inferior deve ficar fixa em todo o app. Em telas principais, exibir ícones e nomes; em telas internas, exibir apenas ícones para reduzir a altura ocupada.
@@ -39,7 +39,7 @@ Este material deve ser usado como norte visual, não como cópia direta. O fluxo
 - `abertura_dendro_mobile/screen.png`: referência para abertura/splash com imagem de floresta, mas deve ser adaptada para imagem em tela inteira.
 - `dashboard/screen.png`: referência de cabeçalho, barra inferior e estilo geral, mas precisa ser adaptada para a aba Início do DENDRO.
 - `coleta_de_rvores/screen.png`: boa referência para entrada rápida de DAP e altura com botões `-` e `+`, adaptada para painel deslizante sobre a lista de árvores da parcela.
-- `parcelas_do_talh_o/screen.png`: boa referência para lista de parcelas com status coletada, em andamento e pendente.
+- `parcelas_do_talh_o/screen.png`: boa referência para lista de parcelas com situacao coletada, em andamento e pendente.
 - `modelos_matem_ticos/screen.png`: referência útil para tela de fórmulas/modelos e coeficientes, adaptando o ícone de informação para menu de três pontos.
 - `resultados_do_invent_rio/screen.png`: referência útil para resultados, volume estimado, produtividade, distribuição diamétrica, filtros e estimativa econômica bruta.
 - `exporta_o_de_dados/screen.png`: referência para exportação, incluindo PDF/CSV/planilha e adaptação para KML/KMZ.
@@ -164,7 +164,7 @@ Comportamento dos botões:
 
 Status da parcela:
 
-- finalizar/encerrar a parcela muda seu status para `coletada`;
+- finalizar/encerrar a parcela muda seu situacao para `coletada`;
 - apenas voltar da tela não finaliza a parcela;
 - se houver dados salvos e o usuário voltar sem finalizar, a parcela permanece `em andamento`.
 
@@ -185,7 +185,7 @@ Filtros:
 - seleção de propriedade;
 - seleção opcional de um ou mais talhões;
 - seleção opcional de espécie;
-- filtros futuros podem incluir período, status do levantamento ou modelo/fórmula.
+- filtros futuros podem incluir período, situacao do levantamento ou modelo/fórmula.
 
 Regras de interação:
 
@@ -338,5 +338,5 @@ Para iniciar o app, aproveitar principalmente:
 1. barra inferior com ícones e rótulos, adaptada para as cinco abas oficiais;
 2. tela Início com card de continuar levantamento e cards de resumo;
 3. tela de coleta de árvore com campos DAP/altura usando stepper;
-4. tela de parcelas com status visual;
+4. tela de parcelas com situacao visual;
 5. tela de resultados com cards e estimativa econômica.

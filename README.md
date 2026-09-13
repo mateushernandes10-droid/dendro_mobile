@@ -18,7 +18,7 @@ A documentação de contexto, requisitos, regras de negócio, arquitetura, decis
 tcc_codex_context/
 ```
 
-A documentação foi revisada em 13/09/2026 contra o código-base `ce282bb`, representando a versão atual de encerramento do desenvolvimento. Para elaborar os diagramas do TCC, começar por:
+A documentação foi revisada em 13/09/2026 contra o código refatorado a partir de `82f29e2`, representando a versão atual de encerramento do desenvolvimento. Para elaborar os diagramas do TCC, começar por:
 
 - [Requisitos e atendimento atual](tcc_codex_context/docs/REQUIREMENTS.md)
 - [Arquitetura implementada](tcc_codex_context/docs/ARCHITECTURE.md)

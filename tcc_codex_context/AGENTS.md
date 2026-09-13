@@ -6,7 +6,7 @@ Aplicação mobile para apoio à coleta, armazenamento e análise de dados de in
 ## Estado vigente — revisão de 13/09/2026
 
 O usuário encerrou o escopo de desenvolvimento do aplicativo. Documentar a implementação atual, sem implementar pendências por inferência. D-043 em docs/DECISIONS.md e os documentos revisados descrevem o estado real; decisões anteriores e referências visuais são histórico/projeto, não prova de funcionalidade.
-O banco está na versão 9, com 15 tabelas. Cálculos implementados: Spurr, Schumacher-Hall e Fator de Forma. Cadastro de expressões existe, mas não há parser genérico. Estimativa econômica e KMZ não foram implementados. Não acrescentar esses itens aos diagramas como entregues.
+O banco está na versão 10, com 15 tabelas. Cálculos implementados: Spurr, Schumacher-Hall e Fator de Forma. Cadastro de expressões existe, mas não há parser genérico. Estimativa econômica e KMZ não foram implementados. Não acrescentar esses itens aos diagramas como entregues.
 
 Antes de alterar código, leia nesta ordem:
 1. `docs/PROJECT_CONTEXT.md`
@@ -26,7 +26,7 @@ Antes de alterar código, leia nesta ordem:
 - Stack definida: **Dart + Flutter + SQLite**.
 - Camada SQLite definida: **Drift**.
 - Gerenciamento de estado definido: **Riverpod**.
-- Avaliação genérica com **math_expressions** foi planejada, mas não implementada. Documentar a seleção de modelos existente em ForestVolumeCalculator; só retomar implementação mediante novo pedido.
+- Avaliação genérica com **math_expressions** foi planejada, mas não implementada. Documentar a seleção de modelos existente em CalculadoraVolumeFlorestal; só retomar implementação mediante novo pedido.
 - A primeira versão **não possui backend nem servidor externo**.
 - Não introduzir Firebase, Supabase, MySQL, PostgreSQL, APIs remotas ou autenticação online sem solicitação explícita.
 - A estrutura permanente do cadastro parte de **Propriedade -> Talhão**.

@@ -1,6 +1,6 @@
 # Regras de negócio e limites observados
 
-Revisão em 13/09/2026, código-base ce282bb. Descreve comportamento implementado, inclusive limitações; não certifica a validade científica das equações.
+Revisão em 13/09/2026, versão refatorada em português (base 82f29e2). Descreve comportamento implementado, inclusive limitações; não certifica a validade científica das equações.
 
 ## BR-001 — Hierarquia
 Propriedade possui talhões e levantamentos. TalhaoLevantamentos associa um talhão a um levantamento, com espécie/modelo. Parcela pertence a essa associação; árvore pertence à parcela. Há histórico de diferentes levantamentos.
@@ -21,7 +21,7 @@ O código usa dart:math, incluindo math.pi. A expressão do Fator de Forma não 
 Os coeficientes não são universais. O aplicativo possui valores padrão, mas sua existência no código não demonstra adequação para qualquer espécie/região.
 
 ## BR-006 — Origem e valores padrão
-Não há ajuste estatístico de coeficientes. Os valores presentes em ForestVolumeCalculator são:
+Não há ajuste estatístico de coeficientes. Os valores presentes em CalculadoraVolumeFlorestal são:
 - Spurr: a = 0.0175858265880592; b = 0.0000329326161133665.
 - Schumacher-Hall: a = -11.584059201173265; b = 1.8114471288118603; c = 1.6187968875426328.
 - ff: sem valor padrão.
@@ -52,10 +52,10 @@ Os formulários de árvore exigem DAP e altura positivos. Há obrigatoriedade de
 Cadastros, coleta, consultas, cálculos e geração de arquivos ocorrem localmente. Compartilhar arquivos depende dos aplicativos/destinos escolhidos pelo usuário.
 
 ## BR-014 — Persistência
-SQLite via Drift, esquema v9. Há 15 tabelas de aplicação, incluindo duas criadas por SQL explícito. Resultados calculados não têm tabela própria.
+SQLite via Drift, esquema v10. Há 15 tabelas de aplicação, incluindo duas criadas por SQL explícito. Resultados calculados não têm tabela própria.
 
 ## BR-015 — Histórico
-Datas, status e activity_logs apoiam a organização. Coeficientes por talhão do levantamento são armazenados separadamente. A expressão da fórmula permanece vinculada ao catálogo por ID; não existe versionamento histórico completo nem trilha de todas as alterações.
+Datas, situacao e registros_atividade apoiam a organização. Coeficientes por talhão do levantamento são armazenados separadamente. A expressão da fórmula permanece vinculada ao catálogo por ID; não existe versionamento histórico completo nem trilha de todas as alterações.
 
 ## BR-016 — Agregação e extrapolação
 No painel e nos conjuntos de exportação, volume amostrado é a soma dos volumes das árvores incluídas. A área medida soma áreaHa das parcelas não pendentes, tratando área ausente como zero.
@@ -74,13 +74,13 @@ Por levantamento: apenas os vínculos daquela coleta. Por propriedade: vínculo 
 CSV bruto conserva medições e campos auxiliares por árvore. XLSX bruto prioriza propriedade/talhão e parcelas lado a lado, com número/DAP/altura. Ambos incluem árvores de parcelas ainda em andamento e não substituem altura nem calculam volume.
 
 ## BR-019 — Estados de levantamento
-O enum inclui planning (planejamento), inProgress (em andamento) e completed (finalizado). Parcelas preparadas podem pertencer a planejamento, promovido para coleta. A operação reúne talhões de uma mesma propriedade em seu levantamento ativo; a leitura normaliza registros ativos antigos quando possível, com tratamento de colisões. Diferentes propriedades podem ter coletas simultâneas. Não há ação dedicada de reabrir levantamento concluído documentada como fluxo entregue.
+O enum inclui planejamento (planejamento), emAndamento (em andamento) e concluido (finalizado). Parcelas preparadas podem pertencer a planejamento, promovido para coleta. A operação reúne talhões de uma mesma propriedade em seu levantamento ativo; a leitura normaliza registros ativos antigos quando possível, com tratamento de colisões. Diferentes propriedades podem ter coletas simultâneas. Não há ação dedicada de reabrir levantamento concluído documentada como fluxo entregue.
 
 ## BR-020 — Espécie/modelo/coeficientes
 Uma espécie pode associar várias fórmulas e indicar uma padrão. Há definições globais de coeficientes, valores por espécie/fórmula e cópias por talhão do levantamento. No painel, se há coeficientes da coleta, usa esse conjunto; sem ele, consulta configuração da espécie, global e padrões da calculadora. Não representar espécie-fórmula como relação um-para-um.
 
 ## BR-021 — Cadastro de expressões
-Nome único, expressão textual, descrição, status, variáveis e coeficientes são persistidos. O enum de variáveis contém DAP, altura, idade e área basal, mas a calculadora não resolve genericamente essas referências. A interface exige expressão preenchida; não existe ExpressionParser/math_expressions. Cadastro disponível não equivale a cálculo genérico entregue.
+Nome único, expressão textual, descrição, situacao, variáveis e coeficientes são persistidos. O enum de variáveis contém DAP, altura, idade e área basal, mas a calculadora não resolve genericamente essas referências. A interface exige expressão preenchida; não existe ExpressionParser/math_expressions. Cadastro disponível não equivale a cálculo genérico entregue.
 
 ## BR-022 — GPS
 Captura opcional pelo Geolocator com verificação de serviço e permissão; latitude, longitude, precisão e data ficam no banco. Os pontos são documentação de campo, não levantamento topográfico certificado.
@@ -92,7 +92,7 @@ Exporta representação geográfica a partir dos pontos armazenados das parcelas
 Painel permite propriedade, espécie e talhões; exige propriedade ou espécie como filtro base. Alterar filtros modifica a consulta, não os dados. O escopo histórico do painel difere da seleção mais recente por talhão na exportação por propriedade.
 
 ## BR-025 — Estados de parcela
-pending, inProgress e collected. Registrar árvores inicia/atualiza a coleta; finalizar parcela é ação explícita. Sair da tela preserva árvores já salvas. O status do levantamento é separado do status das parcelas.
+pendente, emAndamento e coletada. Registrar árvores inicia/atualiza a coleta; finalizar parcela é ação explícita. Sair da tela preserva árvores já salvas. O situacao do levantamento é separado do situacao das parcelas.
 
 ## BR-026 — Sequência de árvores
 O próximo número é o maior número existente na parcela mais um; com parcela vazia, começa em 1. Exclusão não renumera as demais árvores, mas excluir o maior número pode permitir reutilizá-lo depois. Salvar grava e recolhe o formulário; Próxima grava e prepara novo registro.
@@ -101,6 +101,6 @@ O próximo número é o maior número existente na parcela mais um; com parcela 
 A coordenada é opcional por árvore. O usuário pode associá-la explicitamente a P1–P4 da parcela. Pontos existentes são indicados e a substituição requer confirmação no fluxo da interface. Não representar a captura GPS como etapa obrigatória da coleta.
 
 ## Evidência
-Limitação de apresentação no PDF: _volumeEquationWithValues formata apenas Schumacher-Hall ou Spurr, de modo que o texto da equação pode divergir do cálculo numérico do Fator de Forma. A narrativa metodológica também descreve amostragem sistemática sem verificar sua execução. Esses textos não constituem evidência de validação; a revisão documental não os alterou no app.
+Limitação de apresentação no PDF: _volumeEquacaoComValores formata apenas Schumacher-Hall ou Spurr, de modo que o texto da equação pode divergir do cálculo numérico do Fator de Forma. A narrativa metodológica também descreve amostragem sistemática sem verificar sua execução. Esses textos não constituem evidência de validação; a revisão documental não os alterou no app.
 
-Fontes: lib/core/database/dendro_database.dart; lib/core/forest/forest_volume_calculator.dart; repositórios em lib/features/results, data_export, plots, inventory_runs, tree_collection e settings; formulários correspondentes.
+Fontes: lib/nucleo/banco/banco_dendro.dart; lib/nucleo/floresta/calculadora_volume_florestal.dart; repositórios em lib/funcionalidades/results, data_export, parcelas, levantamentos, tree_collection e settings; formulários correspondentes.

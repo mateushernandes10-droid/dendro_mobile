@@ -1,6 +1,6 @@
 # Requisitos e atendimento na versão atual
 
-Revisão em 13/09/2026, código-base ce282bb. Os identificadores originais foram preservados para rastreabilidade. “Implementado” indica existência no código, não validação científica ou aprovação por usuários.
+Revisão em 13/09/2026, versão refatorada em português (base 82f29e2). Os identificadores originais foram preservados para rastreabilidade. “Implementado” indica existência no código, não validação científica ou aprovação por usuários.
 
 ## Requisitos funcionais
 
@@ -8,7 +8,7 @@ Revisão em 13/09/2026, código-base ce282bb. Os identificadores originais foram
 |---|---|---|
 | RF-001 | Gerenciar propriedades | Implementado: cadastro, consulta, edição, exclusão, busca/filtros; nome, município, UF e área em ha. Nova propriedade também pode ser cadastrada em Novo levantamento. |
 | RF-002 | Gerenciar talhões | Implementado: vínculo à propriedade, identificação, espécie, área; ano de plantio, espaçamento, manejo, observações e dimensões de parcela opcionais. |
-| RF-003 | Gerenciar parcelas | Implementado: identificação sequencial, área opcional, status e vínculo ao talhão dentro de um levantamento. Permite preparar parcelas antes da coleta. |
+| RF-003 | Gerenciar parcelas | Implementado: identificação sequencial, área opcional, situacao e vínculo ao talhão dentro de um levantamento. Permite preparar parcelas antes da coleta. |
 | RF-004 | Gerenciar árvores | Implementado: número sequencial na parcela, edição/exclusão, ações Salvar e Próxima, indicação de tronco torto e coordenada opcional. |
 | RF-005 | Registrar medições | Implementado: DAP em cm e altura em m; formulário exige valores positivos. |
 | RF-006 | Gerenciar espécies | Implementado: nome, nome científico/observação opcionais, ativo/inativo e fórmulas associadas; catálogo base Pinus e Eucalyptus. A espécie é definida no talhão/contexto do levantamento, não individualmente na árvore. |
@@ -19,7 +19,7 @@ Revisão em 13/09/2026, código-base ce282bb. Os identificadores originais foram
 | RF-011 | Estimar valor econômico bruto | Não implementado: objetivo original do TCC, sem fluxo de preço da madeira ou cálculo monetário no código atual. Não incluir como caso de uso entregue. |
 | RF-012 | Corrigir dados coletados | Implementado: edição de cadastros e medições. Datas e atividades apoiam organização; não constituem auditoria completa de versões. |
 | RF-013 | Operar offline | Implementado para os fluxos locais de coleta, consulta e cálculo; não há backend. |
-| RF-014 | Persistir localmente | Implementado com SQLite/Drift, esquema v9. |
+| RF-014 | Persistir localmente | Implementado com SQLite/Drift, esquema v10. |
 | RF-015 | Exibir progresso da coleta | Implementado: parcelas pendentes, em andamento e coletadas; contagens e retomada. |
 | RF-016 | Exportar | Implementado: PDF, CSV, XLSX, CSV bruto, XLSX bruto e KML; KMZ e XLS binário não implementados. |
 | RF-017 | Gerenciar levantamentos | Implementado: planejamento, início/retomada, conclusão, edição do contexto de talhões e exclusão. Coletas ativas da mesma propriedade são reunidas; pode haver atividade simultânea em propriedades distintas. |
@@ -30,7 +30,7 @@ Revisão em 13/09/2026, código-base ce282bb. Os identificadores originais foram
 
 ## Exportação bruta e escopo
 
-CSV bruto: uma linha por árvore, começando por propriedade, talhão, parcela, número, DAP cm e altura m. Inclui levantamento, espécie, status/área de parcela, tronco torto, GPS, datas e ID da árvore. Usa UTF-8 com BOM, separador ponto e vírgula e decimal com vírgula.
+CSV bruto: uma linha por árvore, começando por propriedade, talhão, parcela, número, DAP cm e altura m. Inclui levantamento, espécie, situacao/área de parcela, tronco torto, GPS, datas e ID da árvore. Usa UTF-8 com BOM, separador ponto e vírgula e decimal com vírgula.
 
 XLSX bruto: uma aba por talhão, identificação de propriedade/talhão/levantamento no topo; títulos de parcelas em A6, E6, I6 etc. Cada grupo tem três colunas (árvore, DAP cm, altura m); dados começam na linha 7. Parcelas vazias preservam o título. O XLSX bruto não contém todos os campos auxiliares do CSV.
 

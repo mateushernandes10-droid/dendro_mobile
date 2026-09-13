@@ -1,44 +1,44 @@
 classDiagram
-    PropertyRecord "1" --> "0..*" StandRecord
-    PropertyRecord "1" --> "0..*" InventoryRunRecord
-    InventoryRunRecord "1" --> "0..*" TalhaoLevantamentoRecord
-    StandRecord "1" --> "0..*" TalhaoLevantamentoRecord
-    SpeciesRecord "1" --> "0..*" StandRecord
-    SpeciesRecord "1" --> "0..*" TalhaoLevantamentoRecord
-    FormulaRecord "1" --> "0..*" TalhaoLevantamentoRecord
-    TalhaoLevantamentoRecord "1" --> "0..*" PlotRecord
-    PlotRecord "1" --> "0..*" TreeRecord
-    PlotRecord "1" --> "0..*" PlotGeoPointRecord
-    FormulaRecord "1" --> "0..*" FormulaVariableRecord
-    FormulaRecord "1" --> "0..*" FormulaCoefficientRecord
-    SpeciesRecord "1" --> "0..*" SpeciesFormulaRecord
-    FormulaRecord "1" --> "0..*" SpeciesFormulaRecord
-    SpeciesRecord "1" --> "0..*" SpeciesFormulaCoefficientRecord
-    FormulaRecord "1" --> "0..*" SpeciesFormulaCoefficientRecord
-    class TreeRecord {
+    Propriedade "1" --> "0..*" Talhao
+    Propriedade "1" --> "0..*" Levantamento
+    Levantamento "1" --> "0..*" TalhaoLevantamento
+    Talhao "1" --> "0..*" TalhaoLevantamento
+    Especie "1" --> "0..*" Talhao
+    Especie "1" --> "0..*" TalhaoLevantamento
+    ModeloMatematico "1" --> "0..*" TalhaoLevantamento
+    TalhaoLevantamento "1" --> "0..*" Parcela
+    Parcela "1" --> "0..*" Arvore
+    Parcela "1" --> "0..*" PontoGeograficoParcela
+    ModeloMatematico "1" --> "0..*" VariavelModelo
+    ModeloMatematico "1" --> "0..*" CoeficienteModelo
+    Especie "1" --> "0..*" EspecieModelo
+    ModeloMatematico "1" --> "0..*" EspecieModelo
+    Especie "1" --> "0..*" CoeficienteEspecieModelo
+    ModeloMatematico "1" --> "0..*" CoeficienteEspecieModelo
+    class Arvore {
         String id
-        String plotId
-        int number
+        String parcelaId
+        int numero
         double dapCm
-        double heightM
-        bool hasTortuousStem
+        double alturaM
+        bool possuiTroncoTortuoso
     }
-    class TalhaoLevantamentoRecord {
+    class TalhaoLevantamento {
         String id
-        String inventoryRunId
-        String standId
-        String speciesId
-        String formulaId
+        String levantamentoId
+        String talhaoId
+        String especieId
+        String modeloMatematicoId
     }
-    class ResultsDashboard
-    class ResultsRepository {
-        watchDashboard(filters)
+    class PainelResultados
+    class RepositorioResultados {
+        observarPainel(filters)
     }
-    class ForestVolumeCalculator {
-        treeVolumeM3()
-        estimatedHeightM()
-        conversionForSpecies()
+    class CalculadoraVolumeFlorestal {
+        volumeArvoreM3()
+        estimarAlturaM()
+        conversaoParaEspecie()
     }
-    ResultsRepository ..> ResultsDashboard : produz em memoria
-    ResultsRepository ..> ForestVolumeCalculator : usa
-    ResultsRepository ..> TreeRecord : consulta
+    RepositorioResultados ..> PainelResultados : produz em memoria
+    RepositorioResultados ..> CalculadoraVolumeFlorestal : usa
+    RepositorioResultados ..> Arvore : consulta

@@ -1,6 +1,6 @@
 # Fontes dos diagramas
 
-Revisadas contra o código ce282bb em 13/09/2026. Arquivos .mmd são texto Mermaid editável. O conteúdo também está incorporado em ../ENGINEERING_MODELS.md, com explicações e limitações.
+Revisadas contra o versão refatorada em português (base 82f29e2) em 13/09/2026. Arquivos .mmd são texto Mermaid editável. O conteúdo também está incorporado em ../ENGINEERING_MODELS.md, com explicações e limitações.
 
 | Arquivo | Uso |
 |---|---|

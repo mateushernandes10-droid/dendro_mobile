@@ -2,21 +2,21 @@ sequenceDiagram
     actor U as Usuário
     participant T as Tela de resultados
     participant P as Provider Riverpod
-    participant R as ResultsRepository
-    participant D as DendroDatabase
-    participant C as ForestVolumeCalculator
+    participant R as RepositorioResultados
+    participant D as BancoDendro
+    participant C as CalculadoraVolumeFlorestal
     U->>T: Selecionar filtros
     T->>P: Observar painel filtrado
-    P->>R: watchDashboard(filters)
+    P->>R: observarPainel(filters)
     R->>D: Consultar parcelas, vínculos, fórmulas e árvores
     D-->>R: Registros locais
     R->>D: Ler coeficientes da coleta ou catálogo
     D-->>R: Coeficientes
     loop Árvores incluídas
-        R->>C: treeVolumeM3(medições, modelo, coeficientes)
+        R->>C: volumeArvoreM3(medições, modelo, coeficientes)
         C-->>R: Volume da árvore
     end
     R->>R: Somar volumes, áreas e indicadores
-    R-->>P: ResultsDashboard
+    R-->>P: PainelResultados
     P-->>T: Estado atualizado
     T-->>U: Apresentar resultados

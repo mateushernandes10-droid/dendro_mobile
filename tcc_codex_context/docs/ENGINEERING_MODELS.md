@@ -1,6 +1,6 @@
 # Modelos de engenharia da versão implementada
 
-Revisão em 13/09/2026, código-base ce282bb. Substitui os diagramas conceituais anteriores. Fontes editáveis estão em diagrams/. Os diagramas representam código e persistência atuais; não certificam validação científica ou ensaios com usuários.
+Revisão em 13/09/2026, versão refatorada em português (base 82f29e2). Substitui os diagramas conceituais anteriores. Fontes editáveis estão em diagrams/. Os diagramas representam código e persistência atuais; não certificam validação científica ou ensaios com usuários.
 
 ## 1. Atores e funções
 
@@ -43,7 +43,7 @@ Casos de uso entregues e rastreabilidade:
 | UC-002 | Gerenciar talhões da propriedade e dimensões de parcela | RF-002 |
 | UC-003 | Iniciar levantamento, escolher modelo/coeficientes e aproveitar planejamento/levantamento ativo da propriedade | RF-017 |
 | UC-004 | Retomar talhão em coleta pelo Início ou Levantamentos | RF-018 |
-| UC-005 | Preparar e gerenciar parcelas; acompanhar status | RF-003, RF-015 |
+| UC-005 | Preparar e gerenciar parcelas; acompanhar situacao | RF-003, RF-015 |
 | UC-006 | Registrar, editar e excluir árvores com DAP/altura e sequência Salvar/Próxima | RF-004, RF-005, RF-012 |
 | UC-007 | Capturar localização opcional da árvore e associar referência P1–P4 | RF-020 |
 | UC-008 | Gerenciar espécies, vínculos e modelo padrão | RF-006 |
@@ -64,11 +64,11 @@ flowchart TB
     UI["Telas e widgets Flutter<br/>features/*/presentation"]
     RP["Providers Riverpod<br/>estado e acesso aos repositórios"]
     REPO["Repositórios por funcionalidade<br/>persistência, orquestração e agregações"]
-    CALC["ForestVolumeCalculator<br/>equações por árvore e conversões"]
-    DB["DendroDatabase / Drift<br/>migrações e SQL explícito"]
+    CALC["CalculadoraVolumeFlorestal<br/>equações por árvore e conversões"]
+    DB["BancoDendro / Drift<br/>migrações e SQL explícito"]
     SQL[("SQLite local — 15 tabelas")]
     GEO["Geolocator<br/>permissão e posição do dispositivo"]
-    EXPORT["DataExportRepository<br/>PDF, CSV, XLSX e KML"]
+    EXPORT["RepositorioExportacaoDados<br/>PDF, CSV, XLSX e KML"]
     FILE["Salvamento Android / share_plus"]
     UI --> RP
     RP --> REPO
@@ -90,49 +90,49 @@ Telas/providers acessam repositórios. O banco usa Drift e SQL explícito; repos
 
 ```mermaid
 classDiagram
-    PropertyRecord "1" --> "0..*" StandRecord
-    PropertyRecord "1" --> "0..*" InventoryRunRecord
-    InventoryRunRecord "1" --> "0..*" TalhaoLevantamentoRecord
-    StandRecord "1" --> "0..*" TalhaoLevantamentoRecord
-    SpeciesRecord "1" --> "0..*" StandRecord
-    SpeciesRecord "1" --> "0..*" TalhaoLevantamentoRecord
-    FormulaRecord "1" --> "0..*" TalhaoLevantamentoRecord
-    TalhaoLevantamentoRecord "1" --> "0..*" PlotRecord
-    PlotRecord "1" --> "0..*" TreeRecord
-    PlotRecord "1" --> "0..*" PlotGeoPointRecord
-    FormulaRecord "1" --> "0..*" FormulaVariableRecord
-    FormulaRecord "1" --> "0..*" FormulaCoefficientRecord
-    SpeciesRecord "1" --> "0..*" SpeciesFormulaRecord
-    FormulaRecord "1" --> "0..*" SpeciesFormulaRecord
-    SpeciesRecord "1" --> "0..*" SpeciesFormulaCoefficientRecord
-    FormulaRecord "1" --> "0..*" SpeciesFormulaCoefficientRecord
-    class TreeRecord {
+    Propriedade "1" --> "0..*" Talhao
+    Propriedade "1" --> "0..*" Levantamento
+    Levantamento "1" --> "0..*" TalhaoLevantamento
+    Talhao "1" --> "0..*" TalhaoLevantamento
+    Especie "1" --> "0..*" Talhao
+    Especie "1" --> "0..*" TalhaoLevantamento
+    ModeloMatematico "1" --> "0..*" TalhaoLevantamento
+    TalhaoLevantamento "1" --> "0..*" Parcela
+    Parcela "1" --> "0..*" Arvore
+    Parcela "1" --> "0..*" PontoGeograficoParcela
+    ModeloMatematico "1" --> "0..*" VariavelModelo
+    ModeloMatematico "1" --> "0..*" CoeficienteModelo
+    Especie "1" --> "0..*" EspecieModelo
+    ModeloMatematico "1" --> "0..*" EspecieModelo
+    Especie "1" --> "0..*" CoeficienteEspecieModelo
+    ModeloMatematico "1" --> "0..*" CoeficienteEspecieModelo
+    class Arvore {
         String id
-        String plotId
-        int number
+        String parcelaId
+        int numero
         double dapCm
-        double heightM
-        bool hasTortuousStem
+        double alturaM
+        bool possuiTroncoTortuoso
     }
-    class TalhaoLevantamentoRecord {
+    class TalhaoLevantamento {
         String id
-        String inventoryRunId
-        String standId
-        String speciesId
-        String formulaId
+        String levantamentoId
+        String talhaoId
+        String especieId
+        String modeloMatematicoId
     }
-    class ResultsDashboard
-    class ResultsRepository {
-        watchDashboard(filters)
+    class PainelResultados
+    class RepositorioResultados {
+        observarPainel(filters)
     }
-    class ForestVolumeCalculator {
-        treeVolumeM3()
-        estimatedHeightM()
-        conversionForSpecies()
+    class CalculadoraVolumeFlorestal {
+        volumeArvoreM3()
+        estimarAlturaM()
+        conversaoParaEspecie()
     }
-    ResultsRepository ..> ResultsDashboard : produz em memoria
-    ResultsRepository ..> ForestVolumeCalculator : usa
-    ResultsRepository ..> TreeRecord : consulta
+    RepositorioResultados ..> PainelResultados : produz em memoria
+    RepositorioResultados ..> CalculadoraVolumeFlorestal : usa
+    RepositorioResultados ..> Arvore : consulta
 ```
 
 São nomes reais de registros gerados pelo Drift e de classes de cálculo/resultados, com atributos selecionados. Não são entidades de domínio com métodos fictícios concluir()/reabrir(). Ações de persistência ficam nos repositórios. As duas tabelas SQL explícitas (coeficientes da coleta e atividades) são representadas integralmente no modelo do banco, não como registros Drift gerados.
@@ -141,219 +141,219 @@ São nomes reais de registros gerados pelo Drift e de classes de cálculo/result
 
 ```mermaid
 erDiagram
-    properties ||--o{ stands : possui
-    properties ||--o{ inventory_runs : possui
-    species ||--o{ stands : classifica
-    inventory_runs ||--o{ talhao_levantamentos : contem
-    stands ||--o{ talhao_levantamentos : participa
-    species ||--o{ talhao_levantamentos : classifica
-    formulas ||--o{ talhao_levantamentos : selecionada
-    talhao_levantamentos ||--o{ plots : contem
-    plots ||--o{ trees : possui
-    plots ||--o{ plot_geo_points : documenta
-    formulas ||--o{ formula_variables : declara
-    formulas ||--o{ formula_coefficients : define
-    species ||--o{ species_formulas : associa
-    formulas ||--o{ species_formulas : associa
-    species ||--o{ species_formula_coefficients : configura
-    formulas ||--o{ species_formula_coefficients : parametriza
-    talhao_levantamentos ||--o{ talhao_formula_coefficients : preserva
-    activity_logs {
+    propriedades ||--o{ talhoes : possui
+    propriedades ||--o{ levantamentos : possui
+    especies ||--o{ talhoes : classifica
+    levantamentos ||--o{ talhao_levantamentos : contem
+    talhoes ||--o{ talhao_levantamentos : participa
+    especies ||--o{ talhao_levantamentos : classifica
+    modelos_matematicos ||--o{ talhao_levantamentos : selecionada
+    talhao_levantamentos ||--o{ parcelas : contem
+    parcelas ||--o{ arvores : possui
+    parcelas ||--o{ pontos_geograficos_parcela : documenta
+    modelos_matematicos ||--o{ variaveis_modelo : declara
+    modelos_matematicos ||--o{ coeficientes_modelo : define
+    especies ||--o{ especies_modelos : associa
+    modelos_matematicos ||--o{ especies_modelos : associa
+    especies ||--o{ coeficientes_especie_modelo : configura
+    modelos_matematicos ||--o{ coeficientes_especie_modelo : parametriza
+    talhao_levantamentos ||--o{ coeficientes_talhao_levantamento : preserva
+    registros_atividade {
         text id PK
-        text entity_type
-        text entity_id
+        text tipo_entidade
+        text entidade_id
     }
 ```
 
 Cada filho das ligações acima possui uma chave estrangeira obrigatória para exatamente um pai; o pai pode ter zero ou muitos filhos. A representação é estrutural: um levantamento criado pela interface normalmente tem talhão, mas a cardinalidade mínima de filhos não é imposta por uma FK.
 
-activity_logs é independente: entity_type/entity_id são referências lógicas opcionais, sem FK. Não desenhar uma FK inexistente. species_formula_coefficients possui FKs independentes para species e formulas, não uma FK composta para species_formulas.
+registros_atividade é independente: tipo_entidade/entidade_id são referências lógicas opcionais, sem FK. Não desenhar uma FK inexistente. coeficientes_especie_modelo possui FKs independentes para especies e modelos_matematicos, não uma FK composta para especies_modelos.
 
 ## 5. Modelo físico completo — 15 tabelas
 
-Fonte: classes Table e comandos CREATE TABLE em dendro_database.dart, schemaVersion 9. IDs textuais, números reais, booleanos armazenados como inteiros, enums como texto e datas no armazenamento inteiro padrão do Drift. “nullable” identifica campo opcional.
+Fonte: classes Table e comandos CREATE TABLE em dendro_database.dart, schemaVersion 10. IDs textuais, números reais, booleanos armazenados como inteiros, enums como texto e datas no armazenamento inteiro padrão do Drift. “nullable” identifica campo opcional.
 
 ```mermaid
 erDiagram
-    properties ||--o{ stands : possui
-    properties ||--o{ inventory_runs : possui
-    species ||--o{ stands : classifica
-    inventory_runs ||--o{ talhao_levantamentos : contem
-    stands ||--o{ talhao_levantamentos : participa
-    species ||--o{ talhao_levantamentos : classifica
-    formulas ||--o{ talhao_levantamentos : selecionada
-    talhao_levantamentos ||--o{ plots : contem
-    plots ||--o{ trees : possui
-    plots ||--o{ plot_geo_points : documenta
-    formulas ||--o{ formula_variables : declara
-    formulas ||--o{ formula_coefficients : define
-    species ||--o{ species_formulas : associa
-    formulas ||--o{ species_formulas : associa
-    species ||--o{ species_formula_coefficients : configura
-    formulas ||--o{ species_formula_coefficients : parametriza
-    talhao_levantamentos ||--o{ talhao_formula_coefficients : preserva
-    properties {
+    propriedades ||--o{ talhoes : possui
+    propriedades ||--o{ levantamentos : possui
+    especies ||--o{ talhoes : classifica
+    levantamentos ||--o{ talhao_levantamentos : contem
+    talhoes ||--o{ talhao_levantamentos : participa
+    especies ||--o{ talhao_levantamentos : classifica
+    modelos_matematicos ||--o{ talhao_levantamentos : selecionada
+    talhao_levantamentos ||--o{ parcelas : contem
+    parcelas ||--o{ arvores : possui
+    parcelas ||--o{ pontos_geograficos_parcela : documenta
+    modelos_matematicos ||--o{ variaveis_modelo : declara
+    modelos_matematicos ||--o{ coeficientes_modelo : define
+    especies ||--o{ especies_modelos : associa
+    modelos_matematicos ||--o{ especies_modelos : associa
+    especies ||--o{ coeficientes_especie_modelo : configura
+    modelos_matematicos ||--o{ coeficientes_especie_modelo : parametriza
+    talhao_levantamentos ||--o{ coeficientes_talhao_levantamento : preserva
+    propriedades {
         text id PK
-        text name
-        text municipality
-        text state
-        real total_area_ha
-        integer created_at
-        integer updated_at
+        text nome
+        text municipio
+        text estado
+        real area_total_ha
+        integer criado_em
+        integer atualizado_em
     }
-    species {
+    especies {
         text id PK
-        text name UK
-        text scientific_name "nullable"
-        text description "nullable"
-        integer active
-        integer created_at
-        integer updated_at
+        text nome UK
+        text nome_cientifico "nullable"
+        text descricao "nullable"
+        integer ativo
+        integer criado_em
+        integer atualizado_em
     }
-    formulas {
+    modelos_matematicos {
         text id PK
-        text name UK
-        text description "nullable"
-        text expression
-        integer active
-        integer created_at
-        integer updated_at
+        text nome UK
+        text descricao "nullable"
+        text expressao
+        integer ativo
+        integer criado_em
+        integer atualizado_em
     }
-    formula_variables {
+    variaveis_modelo {
         text id PK
-        text formula_id FK
-        text symbol
-        text label
-        text unit
-        text value_source
-        text variable_key
+        text modelo_matematico_id FK
+        text simbolo
+        text rotulo
+        text unidade
+        text origem_valor
+        text chave_variavel
     }
-    formula_coefficients {
+    coeficientes_modelo {
         text id PK
-        text formula_id FK
-        text symbol
-        text label
-        real value "nullable"
+        text modelo_matematico_id FK
+        text simbolo
+        text rotulo
+        real valor "nullable"
     }
-    species_formulas {
-        text species_id PK,FK
-        text formula_id PK,FK
-        integer is_default
-        integer created_at
+    especies_modelos {
+        text especie_id PK,FK
+        text modelo_matematico_id PK,FK
+        integer padrao
+        integer criado_em
     }
-    species_formula_coefficients {
+    coeficientes_especie_modelo {
         text id PK
-        text species_id FK
-        text formula_id FK
-        text symbol
-        text label
-        real value "nullable"
-        integer updated_at
+        text especie_id FK
+        text modelo_matematico_id FK
+        text simbolo
+        text rotulo
+        real valor "nullable"
+        integer atualizado_em
     }
-    stands {
+    talhoes {
         text id PK
-        text property_id FK
-        text identification
-        text species_id FK
+        text propriedade_id FK
+        text identificacao
+        text especie_id FK
         real area_ha
-        integer planting_year "nullable"
-        text spacing "nullable"
-        text management_regime "nullable"
-        real plot_width_m "nullable"
-        real plot_length_m "nullable"
-        text notes "nullable"
-        integer created_at
-        integer updated_at
+        integer ano_plantio "nullable"
+        text espacamento "nullable"
+        text regime_manejo "nullable"
+        real largura_parcela_m "nullable"
+        real comprimento_parcela_m "nullable"
+        text observacoes "nullable"
+        integer criado_em
+        integer atualizado_em
     }
-    inventory_runs {
+    levantamentos {
         text id PK
-        text property_id FK
-        text status
-        integer started_at
-        integer updated_at
-        integer completed_at "nullable"
+        text propriedade_id FK
+        text situacao
+        integer iniciado_em
+        integer atualizado_em
+        integer concluido_em "nullable"
     }
     talhao_levantamentos {
         text id PK
-        text inventory_run_id FK
-        text stand_id FK
-        text species_id FK
-        text formula_id FK
-        real default_plot_area_ha "nullable"
-        integer created_at
-        integer updated_at
+        text levantamento_id FK
+        text talhao_id FK
+        text especie_id FK
+        text modelo_matematico_id FK
+        real area_padrao_parcela_ha "nullable"
+        integer criado_em
+        integer atualizado_em
     }
-    talhao_formula_coefficients {
+    coeficientes_talhao_levantamento {
         text id PK
         text talhao_levantamento_id FK
-        text symbol
-        text label
-        real value "nullable"
+        text simbolo
+        text rotulo
+        real valor "nullable"
     }
-    plots {
+    parcelas {
         text id PK
         text talhao_levantamento_id FK
-        text identification
-        text status
+        text identificacao
+        text situacao
         real area_ha "nullable"
-        text reference_position "nullable"
-        integer created_at
-        integer updated_at
+        text posicao_referencia "nullable"
+        integer criado_em
+        integer atualizado_em
     }
-    plot_geo_points {
+    pontos_geograficos_parcela {
         text id PK
-        text plot_id FK
-        integer point_order
-        text reference_position "nullable"
+        text parcela_id FK
+        integer ordem_ponto
+        text posicao_referencia "nullable"
         real latitude
         real longitude
-        real accuracy_meters "nullable"
-        integer captured_at
+        real precisao_metros "nullable"
+        integer capturado_em
     }
-    trees {
+    arvores {
         text id PK
-        text plot_id FK
-        integer number
+        text parcela_id FK
+        integer numero
         real dap_cm
-        real height_m
-        integer has_tortuous_stem
+        real altura_m
+        integer possui_tronco_tortuoso
         real latitude "nullable"
         real longitude "nullable"
-        real accuracy_meters "nullable"
-        integer location_captured_at "nullable"
-        text plot_reference_position "nullable"
-        integer created_at
-        integer updated_at
+        real precisao_metros "nullable"
+        integer localizacao_capturada_em "nullable"
+        text posicao_referencia_parcela "nullable"
+        integer criado_em
+        integer atualizado_em
     }
-    activity_logs {
+    registros_atividade {
         text id PK
-        text type
-        text title
-        text subtitle
-        text entity_type "nullable"
-        text entity_id "nullable"
-        integer occurred_at
+        text tipo
+        text titulo
+        text subtitulo
+        text tipo_entidade "nullable"
+        text entidade_id "nullable"
+        integer ocorrido_em
     }
 ```
 
 ### Chaves e restrições compostas
 
-- properties: PK id.
-- species e formulas: PK id, nome único.
-- species_formulas: PK composta (species_id, formula_id).
-- stands: UNIQUE(property_id, identification).
-- talhao_levantamentos: UNIQUE(inventory_run_id, stand_id).
-- plots: UNIQUE(talhao_levantamento_id, identification).
-- trees: UNIQUE(plot_id, number).
-- plot_geo_points: UNIQUE(plot_id, point_order).
-- formula_variables e formula_coefficients: UNIQUE(formula_id, symbol).
-- species_formula_coefficients: UNIQUE(species_id, formula_id, symbol).
-- talhao_formula_coefficients: UNIQUE(talhao_levantamento_id, symbol).
-- Todas as demais tabelas usam PK id; activity_logs não possui FK.
+- propriedades: PK id.
+- especies e modelos_matematicos: PK id, nome único.
+- especies_modelos: PK composta (especie_id, modelo_matematico_id).
+- talhoes: UNIQUE(propriedade_id, identificacao).
+- talhao_levantamentos: UNIQUE(levantamento_id, talhao_id).
+- parcelas: UNIQUE(talhao_levantamento_id, identificacao).
+- arvores: UNIQUE(parcela_id, numero).
+- pontos_geograficos_parcela: UNIQUE(parcela_id, ordem_ponto).
+- variaveis_modelo e coeficientes_modelo: UNIQUE(modelo_matematico_id, simbolo).
+- coeficientes_especie_modelo: UNIQUE(especie_id, modelo_matematico_id, simbolo).
+- coeficientes_talhao_levantamento: UNIQUE(talhao_levantamento_id, simbolo).
+- Todas as demais tabelas usam PK id; registros_atividade não possui FK.
 
-As FKs declaram CASCADE, exceto stands.species_id e talhao_levantamentos.species_id/formula_id, que declaram RESTRICT. Essa descrição é do esquema; repositórios também executam exclusões explícitas. Não afirmar que constraints sozinhas cobrem toda regra de interface.
+As FKs declaram CASCADE, exceto talhoes.especie_id e talhao_levantamentos.especie_id/modelo_matematico_id, que declaram RESTRICT. Essa descrição é do esquema; repositórios também executam exclusões explícitas. Não afirmar que constraints sozinhas cobrem toda regra de interface.
 
-talhao_formula_coefficients e activity_logs são criadas por SQL nas rotinas de criação/migração, além das 13 tabelas de @DriftDatabase. ResultadoInventario, Measurements e VolumeModel não são tabelas adicionais. DAP/altura ficam em trees; o catálogo volumétrico fica em formulas.
+coeficientes_talhao_levantamento e registros_atividade são criadas por SQL nas rotinas de criação/migração, além das 13 tabelas de @DriftDatabase. ResultadoInventario, Medicoes e VolumeModel não são tabelas adicionais. DAP/altura ficam em arvores; o catálogo volumétrico fica em modelos_matematicos.
 
 ## 6. Fluxo operacional
 
@@ -392,22 +392,22 @@ sequenceDiagram
     actor U as Usuário
     participant T as Tela de resultados
     participant P as Provider Riverpod
-    participant R as ResultsRepository
-    participant D as DendroDatabase
-    participant C as ForestVolumeCalculator
+    participant R as RepositorioResultados
+    participant D as BancoDendro
+    participant C as CalculadoraVolumeFlorestal
     U->>T: Selecionar filtros
     T->>P: Observar painel filtrado
-    P->>R: watchDashboard(filters)
+    P->>R: observarPainel(filters)
     R->>D: Consultar parcelas, vínculos, fórmulas e árvores
     D-->>R: Registros locais
     R->>D: Ler coeficientes da coleta ou catálogo
     D-->>R: Coeficientes
     loop Árvores incluídas
-        R->>C: treeVolumeM3(medições, modelo, coeficientes)
+        R->>C: volumeArvoreM3(medições, modelo, coeficientes)
         C-->>R: Volume da árvore
     end
     R->>R: Somar volumes, áreas e indicadores
-    R-->>P: ResultsDashboard
+    R-->>P: PainelResultados
     P-->>T: Estado atualizado
     T-->>U: Apresentar resultados
 ```
@@ -426,9 +426,9 @@ stateDiagram-v2
     Finalizado --> [*]
 ```
 
-Os nomes persistidos são planning, inProgress e completed. O diagrama mostra o percurso de criação/coleta/conclusão, omitindo exclusões e rotinas de normalização. Não inclui reabertura futura como função implementada.
+Os nomes persistidos são planejamento, emAndamento e concluido. O diagrama mostra o percurso de criação/coleta/conclusão, omitindo exclusões e rotinas de normalização. Não inclui reabertura futura como função implementada.
 
-Parcelas têm pending, inProgress e collected. A gravação de árvores e a finalização de parcela são ações separadas; status da parcela e do levantamento não são uma única máquina de estados.
+Parcelas têm pendente, emAndamento e coletada. A gravação de árvores e a finalização de parcela são ações separadas; situacao da parcela e do levantamento não são uma única máquina de estados.
 
 ## 9. Uso das figuras no artigo
 

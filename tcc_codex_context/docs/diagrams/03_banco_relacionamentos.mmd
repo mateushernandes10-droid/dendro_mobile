@@ -1,23 +1,23 @@
 erDiagram
-    properties ||--o{ stands : possui
-    properties ||--o{ inventory_runs : possui
-    species ||--o{ stands : classifica
-    inventory_runs ||--o{ talhao_levantamentos : contem
-    stands ||--o{ talhao_levantamentos : participa
-    species ||--o{ talhao_levantamentos : classifica
-    formulas ||--o{ talhao_levantamentos : selecionada
-    talhao_levantamentos ||--o{ plots : contem
-    plots ||--o{ trees : possui
-    plots ||--o{ plot_geo_points : documenta
-    formulas ||--o{ formula_variables : declara
-    formulas ||--o{ formula_coefficients : define
-    species ||--o{ species_formulas : associa
-    formulas ||--o{ species_formulas : associa
-    species ||--o{ species_formula_coefficients : configura
-    formulas ||--o{ species_formula_coefficients : parametriza
-    talhao_levantamentos ||--o{ talhao_formula_coefficients : preserva
-    activity_logs {
+    propriedades ||--o{ talhoes : possui
+    propriedades ||--o{ levantamentos : possui
+    especies ||--o{ talhoes : classifica
+    levantamentos ||--o{ talhao_levantamentos : contem
+    talhoes ||--o{ talhao_levantamentos : participa
+    especies ||--o{ talhao_levantamentos : classifica
+    modelos_matematicos ||--o{ talhao_levantamentos : selecionada
+    talhao_levantamentos ||--o{ parcelas : contem
+    parcelas ||--o{ arvores : possui
+    parcelas ||--o{ pontos_geograficos_parcela : documenta
+    modelos_matematicos ||--o{ variaveis_modelo : declara
+    modelos_matematicos ||--o{ coeficientes_modelo : define
+    especies ||--o{ especies_modelos : associa
+    modelos_matematicos ||--o{ especies_modelos : associa
+    especies ||--o{ coeficientes_especie_modelo : configura
+    modelos_matematicos ||--o{ coeficientes_especie_modelo : parametriza
+    talhao_levantamentos ||--o{ coeficientes_talhao_levantamento : preserva
+    registros_atividade {
         text id PK
-        text entity_type
-        text entity_id
+        text tipo_entidade
+        text entidade_id
     }
