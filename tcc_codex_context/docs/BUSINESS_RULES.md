@@ -31,8 +31,8 @@ São parâmetros de referência do desenvolvimento. A referência bibliográfica
 O foco do TCC é Rio Grande do Sul, Pinus e Eucalyptus. O cadastro permite outras espécies, mas isso não valida automaticamente modelos para elas.
 
 ## BR-008 — Seleção do cálculo e valores alternativos
-A calculadora identifica Fator de Forma pelo ID específico ou pela expressão normalizada correspondente. Exige ff finito e positivo; se inválido, retorna zero.
-Nos demais casos, usa Schumacher-Hall quando o ID contém “schumacher” ou a expressão normalizada começa com “exp(”; caso contrário, utiliza Spurr. Portanto uma expressão personalizada desconhecida pode ser calculada como Spurr, e não como a expressão cadastrada.
+A calculadora identifica Fator de Forma pelo código específico ou pela expressão normalizada correspondente. Exige ff finito e positivo; se inválido, retorna zero.
+Nos demais casos, usa Schumacher-Hall quando o código contém “schumacher” ou a expressão normalizada começa com “exp(”; caso contrário, utiliza Spurr. Portanto uma expressão personalizada desconhecida pode ser calculada como Spurr, e não como a expressão cadastrada.
 Spurr e Schumacher-Hall usam coeficientes fornecidos ou os valores padrão quando ausentes. Altura não positiva recebida pela calculadora é substituída por `6.4229 × ln(DAPcm) + 0.8203`; o formulário normal exige altura positiva. DAP/altura resolvida não positivos retornam zero; volumes negativos ou não finitos também retornam zero.
 Esse comportamento deve ser documentado como limite da implementação, sem afirmar que qualquer fórmula cadastrada é corretamente interpretada.
 
@@ -52,7 +52,7 @@ Os formulários de árvore exigem DAP e altura positivos. Há obrigatoriedade de
 Cadastros, coleta, consultas, cálculos e geração de arquivos ocorrem localmente. Compartilhar arquivos depende dos aplicativos/destinos escolhidos pelo usuário.
 
 ## BR-014 — Persistência
-SQLite via Drift, esquema v10. Há 15 tabelas de aplicação, incluindo duas criadas por SQL explícito. Resultados calculados não têm tabela própria.
+SQLite via Drift, esquema v11. Há 15 tabelas de aplicação, incluindo duas criadas por SQL explícito. Resultados calculados não têm tabela própria.
 
 ## BR-015 — Histórico
 Datas, situacao e registros_atividade apoiam a organização. Coeficientes por talhão do levantamento são armazenados separadamente. A expressão da fórmula permanece vinculada ao catálogo por ID; não existe versionamento histórico completo nem trilha de todas as alterações.
@@ -104,3 +104,7 @@ A coordenada é opcional por árvore. O usuário pode associá-la explicitamente
 Limitação de apresentação no PDF: _volumeEquacaoComValores formata apenas Schumacher-Hall ou Spurr, de modo que o texto da equação pode divergir do cálculo numérico do Fator de Forma. A narrativa metodológica também descreve amostragem sistemática sem verificar sua execução. Esses textos não constituem evidência de validação; a revisão documental não os alterou no app.
 
 Fontes: lib/nucleo/banco/banco_dendro.dart; lib/nucleo/floresta/calculadora_volume_florestal.dart; repositórios em lib/funcionalidades/results, data_export, parcelas, levantamentos, tree_collection e settings; formulários correspondentes.
+
+## Identificadores — schema v11
+
+As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a PK composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional: os padrões conservam seus códigos estáveis; cadastros personalizados não precisam gerar códigos nem UUID. As regras de escolha de modelos usam codigo, sem alterar expressões ou coeficientes. registros_atividade usa entidade_id inteiro opcional, sem FK polimórfica; referencia_legada conserva apenas referências antigas sem entidade correspondente. São 15 tabelas e 115 colunas.

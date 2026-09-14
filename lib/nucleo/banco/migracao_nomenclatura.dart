@@ -73,16 +73,18 @@ const nomesColunasLegadas = {
 };
 
 Future<void> migrarNomenclaturaParaPortugues(GeneratedDatabase banco) async {
-  final registros = await banco.customSelect(
-    "SELECT name FROM sqlite_master WHERE type = 'table'",
-  ).get();
+  final registros = await banco
+      .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
+      .get();
   final tabelas = registros.map((linha) => linha.read<String>('name')).toSet();
   for (final entrada in nomesTabelasLegadas.entries) {
     final antigo = entrada.key;
     final novo = entrada.value;
     if (antigo != novo && tabelas.contains(antigo)) {
       if (tabelas.contains(novo)) {
-        throw StateError('Migração ambígua: tabelas $antigo e $novo coexistem.');
+        throw StateError(
+          'Migração ambígua: tabelas $antigo e $novo coexistem.',
+        );
       }
       await banco.customStatement('ALTER TABLE "$antigo" RENAME TO "$novo"');
       tabelas.remove(antigo);
@@ -102,13 +104,19 @@ Future<void> migrarNomenclaturaParaPortugues(GeneratedDatabase banco) async {
     }
   }
   await _traduzirValores(banco, tabelas, 'levantamentos', 'situacao', {
-    'planning': 'planejamento', 'inProgress': 'emAndamento', 'completed': 'concluido',
+    'planning': 'planejamento',
+    'inProgress': 'emAndamento',
+    'completed': 'concluido',
   });
   await _traduzirValores(banco, tabelas, 'parcelas', 'situacao', {
-    'pending': 'pendente', 'inProgress': 'emAndamento', 'collected': 'coletada',
+    'pending': 'pendente',
+    'inProgress': 'emAndamento',
+    'collected': 'coletada',
   });
   await _traduzirValores(banco, tabelas, 'variaveis_modelo', 'chave_variavel', {
-    'height': 'altura', 'age': 'idade', 'basalArea': 'areaBasal',
+    'height': 'altura',
+    'age': 'idade',
+    'basalArea': 'areaBasal',
   });
   await _traduzirAtividades(banco, tabelas);
 }
@@ -129,8 +137,10 @@ Future<void> _traduzirValores(
   }
 }
 
-
-Future<void> _traduzirAtividades(GeneratedDatabase banco, Set<String> tabelas) async {
+Future<void> _traduzirAtividades(
+  GeneratedDatabase banco,
+  Set<String> tabelas,
+) async {
   await _traduzirValores(banco, tabelas, 'registros_atividade', 'tipo', {
     'propertyCreated': 'propriedadeCriada',
     'propertyUpdated': 'propriedadeAtualizada',
@@ -161,13 +171,19 @@ Future<void> _traduzirAtividades(GeneratedDatabase banco, Set<String> tabelas) a
     'standCompleted': 'talhaoConcluido',
     'exportCreated': 'exportacaoCriada',
   });
-  await _traduzirValores(banco, tabelas, 'registros_atividade', 'tipo_entidade', {
-    'property': 'propriedade',
-    'stand': 'talhao',
-    'plot': 'parcela',
-    'species': 'especie',
-    'formula': 'modeloMatematico',
-    'inventoryRun': 'levantamento',
-    'export': 'exportacao',
-  });
+  await _traduzirValores(
+    banco,
+    tabelas,
+    'registros_atividade',
+    'tipo_entidade',
+    {
+      'property': 'propriedade',
+      'stand': 'talhao',
+      'plot': 'parcela',
+      'species': 'especie',
+      'formula': 'modeloMatematico',
+      'inventoryRun': 'levantamento',
+      'export': 'exportacao',
+    },
+  );
 }

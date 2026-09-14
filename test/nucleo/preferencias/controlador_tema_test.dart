@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('controlador carrega preferencia de modo escuro', () async {
-    final armazenamento = _MemoriaTemaModoArmazenamento(inicialEscuroModo: true);
+    final armazenamento = _MemoriaTemaModoArmazenamento(
+      inicialEscuroModo: true,
+    );
     final controlador = ControladorTemaAplicativo(armazenamento);
     addTearDown(controlador.dispose);
 
@@ -14,7 +16,9 @@ void main() {
   });
 
   test('controlador salva alternancia de tema', () async {
-    final armazenamento = _MemoriaTemaModoArmazenamento(inicialEscuroModo: false);
+    final armazenamento = _MemoriaTemaModoArmazenamento(
+      inicialEscuroModo: false,
+    );
     final controlador = ControladorTemaAplicativo(armazenamento);
     addTearDown(controlador.dispose);
 
@@ -32,7 +36,8 @@ void main() {
 }
 
 class _MemoriaTemaModoArmazenamento implements ArmazenamentoModoTema {
-  _MemoriaTemaModoArmazenamento({bool? inicialEscuroModo}) : escuroModo = inicialEscuroModo;
+  _MemoriaTemaModoArmazenamento({bool? inicialEscuroModo})
+    : escuroModo = inicialEscuroModo;
 
   bool? escuroModo;
 

@@ -57,8 +57,12 @@ class _TelaEspecieAjustes extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final especieAsync = ref.watch(provedorAjustesEspecie);
-    final modelosMatematicosAsync = ref.watch(provedorAjustesModelosMatematicos);
-    final especieModelosMatematicosAsync = ref.watch(provedorAjustesEspecieModelosMatematicos);
+    final modelosMatematicosAsync = ref.watch(
+      provedorAjustesModelosMatematicos,
+    );
+    final especieModelosMatematicosAsync = ref.watch(
+      provedorAjustesEspecieModelosMatematicos,
+    );
     final especieModeloMatematicoCoeficientesAsync = ref.watch(
       provedorAjustesEspecieModeloMatematicoCoeficientes,
     );
@@ -89,7 +93,9 @@ class _TelaEspecieAjustes extends ConsumerWidget {
           },
           construtor: () {
             final especies = especieAsync.value ?? const <Especie>[];
-            final modelosMatematicos = modelosMatematicosAsync.value ?? const <ModeloMatematicoResumo>[];
+            final modelosMatematicos =
+                modelosMatematicosAsync.value ??
+                const <ModeloMatematicoResumo>[];
             final vinculos =
                 especieModelosMatematicosAsync.value ?? const <EspecieModelo>[];
             final coeficientes =
@@ -123,8 +129,10 @@ class _TelaEspecieAjustes extends ConsumerWidget {
                             (coeficiente) => coeficiente.especieId == item.id,
                           )
                           .toList(),
-                      aoEditar: () => _abrirEspecieFormulario(context, especie: item),
-                      aoExcluir: () => _confirmarExcluirEspecie(context, ref, item),
+                      aoEditar: () =>
+                          _abrirEspecieFormulario(context, especie: item),
+                      aoExcluir: () =>
+                          _confirmarExcluirEspecie(context, ref, item),
                     ),
                   ),
               ],
@@ -141,7 +149,9 @@ class _TelaModeloMatematicoAjustes extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final modelosMatematicosAsync = ref.watch(provedorAjustesModelosMatematicos);
+    final modelosMatematicosAsync = ref.watch(
+      provedorAjustesModelosMatematicos,
+    );
 
     return TelaDendro(
       titulo: 'Modelos matemáticos',
@@ -175,9 +185,15 @@ class _TelaModeloMatematicoAjustes extends ConsumerWidget {
                     child: _ModeloMatematicoCartao(
                       key: ValueKey(modeloMatematico.modeloMatematico.id),
                       resumo: modeloMatematico,
-                      aoEditar: () => _abrirModeloMatematicoFormulario(context, resumo: modeloMatematico),
-                      aoExcluir: () =>
-                          _confirmarExcluirModeloMatematico(context, ref, modeloMatematico.modeloMatematico),
+                      aoEditar: () => _abrirModeloMatematicoFormulario(
+                        context,
+                        resumo: modeloMatematico,
+                      ),
+                      aoExcluir: () => _confirmarExcluirModeloMatematico(
+                        context,
+                        ref,
+                        modeloMatematico.modeloMatematico,
+                      ),
                     ),
                   ),
               ],
@@ -186,7 +202,8 @@ class _TelaModeloMatematicoAjustes extends ConsumerWidget {
           loading: () => const _CarregandoCartao(),
           error: (erro, pilhaTrace) => _AjustesErroCartao(
             mensagem: 'Não foi possível carregar as fórmulas.',
-            aoTentarNovamente: () => ref.invalidate(provedorAjustesModelosMatematicos),
+            aoTentarNovamente: () =>
+                ref.invalidate(provedorAjustesModelosMatematicos),
           ),
         ),
       ],
@@ -271,7 +288,10 @@ Future<void> _abrirEspecieFormulario(BuildContext context, {Especie? especie}) {
   );
 }
 
-Future<void> _abrirModeloMatematicoFormulario(BuildContext context, {ModeloMatematicoResumo? resumo}) {
+Future<void> _abrirModeloMatematicoFormulario(
+  BuildContext context, {
+  ModeloMatematicoResumo? resumo,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -351,7 +371,9 @@ Future<void> _confirmarExcluirModeloMatematico(
   if (confirmado != true || !context.mounted) return;
 
   try {
-    await ref.read(provedorRepositorioAjustes).excluirModeloMatematico(modeloMatematico.id);
+    await ref
+        .read(provedorRepositorioAjustes)
+        .excluirModeloMatematico(modeloMatematico.id);
     if (!context.mounted) return;
     _mostrarAviso(context, '${modeloMatematico.nome} excluída.');
   } catch (_) {
@@ -554,17 +576,23 @@ class _EspecieCartao extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           if (modelosMatematicos.isEmpty)
-            const _DiscretoTexto('Cadastre uma fórmula para vincular à espécie.')
+            const _DiscretoTexto(
+              'Cadastre uma fórmula para vincular à espécie.',
+            )
           else
             for (final modeloMatematico in modelosMatematicos)
               _EspecieModeloMatematicoLinha(
                 especieId: especie.id,
                 resumo: modeloMatematico,
-                vinculo: _vinculoParaModeloMatematico(vinculos, modeloMatematico.modeloMatematico.id),
+                vinculo: _vinculoParaModeloMatematico(
+                  vinculos,
+                  modeloMatematico.modeloMatematico.id,
+                ),
                 coeficientes: coeficientes
                     .where(
                       (coeficiente) =>
-                          coeficiente.modeloMatematicoId == modeloMatematico.modeloMatematico.id,
+                          coeficiente.modeloMatematicoId ==
+                          modeloMatematico.modeloMatematico.id,
                     )
                     .toList(),
                 aoVinculadoAlterado: (vinculado) async {
@@ -573,7 +601,8 @@ class _EspecieCartao extends ConsumerWidget {
                         .read(provedorRepositorioAjustes)
                         .definirEspecieModeloMatematicoVinculado(
                           especieId: especie.id,
-                          modeloMatematicoId: modeloMatematico.modeloMatematico.id,
+                          modeloMatematicoId:
+                              modeloMatematico.modeloMatematico.id,
                           vinculado: vinculado,
                         );
                   } catch (_) {
@@ -591,7 +620,8 @@ class _EspecieCartao extends ConsumerWidget {
                         .read(provedorRepositorioAjustes)
                         .definirPadraoModeloMatematicoParaEspecie(
                           especieId: especie.id,
-                          modeloMatematicoId: modeloMatematico.modeloMatematico.id,
+                          modeloMatematicoId:
+                              modeloMatematico.modeloMatematico.id,
                         );
                   } catch (_) {
                     if (!context.mounted) return;
@@ -619,7 +649,7 @@ class _EspecieModeloMatematicoLinha extends ConsumerStatefulWidget {
     required this.aoDefinirPadrao,
   });
 
-  final String especieId;
+  final int especieId;
   final ModeloMatematicoResumo resumo;
   final EspecieModelo? vinculo;
   final List<CoeficienteEspecieModelo> coeficientes;
@@ -627,10 +657,12 @@ class _EspecieModeloMatematicoLinha extends ConsumerStatefulWidget {
   final VoidCallback aoDefinirPadrao;
 
   @override
-  ConsumerState<_EspecieModeloMatematicoLinha> createState() => _EspecieModeloMatematicoLinhaEstado();
+  ConsumerState<_EspecieModeloMatematicoLinha> createState() =>
+      _EspecieModeloMatematicoLinhaEstado();
 }
 
-class _EspecieModeloMatematicoLinhaEstado extends ConsumerState<_EspecieModeloMatematicoLinha> {
+class _EspecieModeloMatematicoLinhaEstado
+    extends ConsumerState<_EspecieModeloMatematicoLinha> {
   final Map<String, TextEditingController> _controladores = {};
   bool _expandido = false;
   bool _salvando = false;
@@ -693,7 +725,8 @@ class _EspecieModeloMatematicoLinhaEstado extends ConsumerState<_EspecieModeloMa
               children: [
                 Checkbox(
                   value: _vinculado,
-                  onChanged: (valor) => widget.aoVinculadoAlterado(valor ?? false),
+                  onChanged: (valor) =>
+                      widget.aoVinculadoAlterado(valor ?? false),
                   activeColor: CoresDendro.principal,
                   checkColor: Colors.white,
                   side: BorderSide(color: caixaSelecaoBordaCor, width: 1.5),
@@ -737,9 +770,7 @@ class _EspecieModeloMatematicoLinhaEstado extends ConsumerState<_EspecieModeloMa
                 ),
                 IconButton(
                   onPressed: _vinculado ? widget.aoDefinirPadrao : null,
-                  tooltip: _padrao
-                      ? 'Fórmula padrão'
-                      : 'Definir como padrão',
+                  tooltip: _padrao ? 'Fórmula padrão' : 'Definir como padrão',
                   style: IconButton.styleFrom(
                     foregroundColor: _padrao
                         ? CoresDendro.aviso
@@ -766,7 +797,8 @@ class _EspecieModeloMatematicoLinhaEstado extends ConsumerState<_EspecieModeloMa
                 ),
               ],
             ),
-            if (_expandido && _vinculado) _CoeficienteCamposParaEspecie(linha: this),
+            if (_expandido && _vinculado)
+              _CoeficienteCamposParaEspecie(linha: this),
           ],
         ),
       ),
@@ -793,7 +825,9 @@ class _EspecieModeloMatematicoLinhaEstado extends ConsumerState<_EspecieModeloMa
       final texto = valor == null ? '' : _formatoNumero(valor);
       final controlador = _controladores[coeficiente.simbolo];
       if (controlador == null) {
-        _controladores[coeficiente.simbolo] = TextEditingController(text: texto);
+        _controladores[coeficiente.simbolo] = TextEditingController(
+          text: texto,
+        );
       } else if (controlador.text != texto) {
         controlador.text = texto;
       }
@@ -810,7 +844,9 @@ class _EspecieModeloMatematicoLinhaEstado extends ConsumerState<_EspecieModeloMa
       if (interpretado == _invalidoReal ||
           (coeficiente.simbolo.toLowerCase() == 'ff' &&
               interpretado != null &&
-              (interpretado is! double || !interpretado.isFinite || interpretado <= 0))) {
+              (interpretado is! double ||
+                  !interpretado.isFinite ||
+                  interpretado <= 0))) {
         _mostrarAviso(
           context,
           'Informe um valor válido para ${coeficiente.rotulo}.',
@@ -863,7 +899,9 @@ class _CoeficienteCamposParaEspecie extends StatelessWidget {
           const Divider(height: 1),
           const SizedBox(height: 12),
           if (coeficientes.isEmpty)
-            const _DiscretoTexto('Este modelo não possui coeficientes definidos.')
+            const _DiscretoTexto(
+              'Este modelo não possui coeficientes definidos.',
+            )
           else ...[
             const Text(
               'Coeficientes da espécie',
@@ -1032,7 +1070,9 @@ class _ModeloMatematicoCartao extends StatelessWidget {
           ],
           _VariaveisModelo(variaveis: resumo.variaveis),
           const SizedBox(height: 12),
-          _ModeloMatematicoCoeficienteSimbolos(coeficientes: resumo.coeficientes),
+          _ModeloMatematicoCoeficienteSimbolos(
+            coeficientes: resumo.coeficientes,
+          ),
         ],
       ),
     );
@@ -1125,10 +1165,12 @@ class _EspecieFormularioPainel extends ConsumerStatefulWidget {
   final Especie? especie;
 
   @override
-  ConsumerState<_EspecieFormularioPainel> createState() => _EspecieFormularioPainelEstado();
+  ConsumerState<_EspecieFormularioPainel> createState() =>
+      _EspecieFormularioPainelEstado();
 }
 
-class _EspecieFormularioPainelEstado extends ConsumerState<_EspecieFormularioPainel> {
+class _EspecieFormularioPainelEstado
+    extends ConsumerState<_EspecieFormularioPainel> {
   final _chaveFormulario = GlobalKey<FormState>();
   late final TextEditingController _nomeControlador;
   late final TextEditingController _cientificoNomeControlador;
@@ -1228,7 +1270,9 @@ class _EspecieFormularioPainelEstado extends ConsumerState<_EspecieFormularioPai
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_outlined),
-                  label: Text(_estaEditando ? 'Salvar alterações' : 'Cadastrar'),
+                  label: Text(
+                    _estaEditando ? 'Salvar alterações' : 'Cadastrar',
+                  ),
                 ),
               ),
             ],
@@ -1288,10 +1332,12 @@ class _ModeloMatematicoFormularioPainel extends ConsumerStatefulWidget {
   final ModeloMatematicoResumo? resumo;
 
   @override
-  ConsumerState<_ModeloMatematicoFormularioPainel> createState() => _ModeloMatematicoFormularioPainelEstado();
+  ConsumerState<_ModeloMatematicoFormularioPainel> createState() =>
+      _ModeloMatematicoFormularioPainelEstado();
 }
 
-class _ModeloMatematicoFormularioPainelEstado extends ConsumerState<_ModeloMatematicoFormularioPainel> {
+class _ModeloMatematicoFormularioPainelEstado
+    extends ConsumerState<_ModeloMatematicoFormularioPainel> {
   final _chaveFormulario = GlobalKey<FormState>();
   late final TextEditingController _nomeControlador;
   late final TextEditingController _descricaoControlador;
@@ -1307,7 +1353,9 @@ class _ModeloMatematicoFormularioPainelEstado extends ConsumerState<_ModeloMatem
   void initState() {
     super.initState();
     final resumo = widget.resumo;
-    _nomeControlador = TextEditingController(text: resumo?.modeloMatematico.nome ?? '');
+    _nomeControlador = TextEditingController(
+      text: resumo?.modeloMatematico.nome ?? '',
+    );
     _descricaoControlador = TextEditingController(
       text: resumo?.modeloMatematico.descricao ?? '',
     );
@@ -1476,7 +1524,9 @@ class _ModeloMatematicoFormularioPainelEstado extends ConsumerState<_ModeloMatem
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_outlined),
-                  label: Text(_estaEditando ? 'Salvar alterações' : 'Cadastrar'),
+                  label: Text(
+                    _estaEditando ? 'Salvar alterações' : 'Cadastrar',
+                  ),
                 ),
               ),
             ],
@@ -1505,7 +1555,9 @@ class _ModeloMatematicoFormularioPainelEstado extends ConsumerState<_ModeloMatem
         .where((item) => _selecionadoVariaveis.contains(item.key))
         .map((item) => item.paraRascunho())
         .toList();
-    final coeficientes = _interpretarSimbolos(_coeficienteSimbolosControlador.text);
+    final coeficientes = _interpretarSimbolos(
+      _coeficienteSimbolosControlador.text,
+    );
 
     try {
       if (_estaEditando) {
@@ -1642,7 +1694,10 @@ class _CarregandoCartao extends StatelessWidget {
 }
 
 class _AjustesErroCartao extends StatelessWidget {
-  const _AjustesErroCartao({required this.mensagem, required this.aoTentarNovamente});
+  const _AjustesErroCartao({
+    required this.mensagem,
+    required this.aoTentarNovamente,
+  });
 
   final String mensagem;
   final VoidCallback aoTentarNovamente;
@@ -1752,7 +1807,7 @@ enum _ModeloMatematicoAcao { editar, excluir }
 
 EspecieModelo? _vinculoParaModeloMatematico(
   List<EspecieModelo> vinculos,
-  String modeloMatematicoId,
+  int modeloMatematicoId,
 ) {
   for (final vinculo in vinculos) {
     if (vinculo.modeloMatematicoId == modeloMatematicoId) return vinculo;
@@ -1801,7 +1856,11 @@ const _invalidoReal = Object();
 
 String _formatoNumero(double valor) => valor.toString().replaceAll('.', ',');
 
-void _mostrarAviso(BuildContext context, String mensagem, {bool estaErro = false}) {
+void _mostrarAviso(
+  BuildContext context,
+  String mensagem, {
+  bool estaErro = false,
+}) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(mensagem),

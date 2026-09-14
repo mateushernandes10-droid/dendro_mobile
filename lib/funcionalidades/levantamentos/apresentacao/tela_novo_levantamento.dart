@@ -16,18 +16,21 @@ class TelaNovoLevantamento extends ConsumerStatefulWidget {
   const TelaNovoLevantamento({super.key});
 
   @override
-  ConsumerState<TelaNovoLevantamento> createState() => _NovoLevantamentoTelaEstado();
+  ConsumerState<TelaNovoLevantamento> createState() =>
+      _NovoLevantamentoTelaEstado();
 }
 
 class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
   static const _todosFiltroValor = '__all__';
+  static const _todasEspeciesValor = -1;
 
   final _buscaControlador = TextEditingController();
   String? _municipioFiltro;
-  String? _especieIdFiltro;
-  String? _salvandoTalhaoId;
+  int? _especieIdFiltro;
+  int? _salvandoTalhaoId;
   String? _erroMensagem;
-  final Map<String, LevantamentoModeloMatematicoSelecao> _selecoesModeloPorTalhaoId = {};
+  final Map<int, LevantamentoModeloMatematicoSelecao>
+  _selecoesModeloPorTalhaoId = {};
 
   @override
   void initState() {
@@ -81,11 +84,15 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
                   selecionadoEspecieId: _especieIdFiltro,
                   especies: especies,
                   aoMunicipioAlterado: (valor) => setState(() {
-                    _municipioFiltro = valor == _todosFiltroValor ? null : valor;
+                    _municipioFiltro = valor == _todosFiltroValor
+                        ? null
+                        : valor;
                     _erroMensagem = null;
                   }),
                   aoEspecieAlterado: (valor) => setState(() {
-                    _especieIdFiltro = valor == _todosFiltroValor ? null : valor;
+                    _especieIdFiltro = valor == _todasEspeciesValor
+                        ? null
+                        : valor;
                     _erroMensagem = null;
                   }),
                   aoLimpar: _possuiFiltros ? _limparFiltros : null,
@@ -125,8 +132,9 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
                     _LevantamentoIniciarPropriedadeGrupo(
                       opcao: opcao,
                       salvandoTalhaoId: _salvandoTalhaoId,
-                      aoCriarTalhao: () =>
-                          _abrirNovoTalhaoPainel(propriedadeId: opcao.propriedade.id),
+                      aoCriarTalhao: () => _abrirNovoTalhaoPainel(
+                        propriedadeId: opcao.propriedade.id,
+                      ),
                       aoIniciar: _iniciarTalhao,
                       modeloMatematicoSelecaoParaTalhao: (talhaoId) =>
                           _selecoesModeloPorTalhaoId[talhaoId],
@@ -139,7 +147,8 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (erro, pilhaTrace) => _CarregarIniciarOpcoesErro(
-            aoTentarNovamente: () => ref.invalidate(provedorLevantamentoIniciarOpcoes),
+            aoTentarNovamente: () =>
+                ref.invalidate(provedorLevantamentoIniciarOpcoes),
           ),
         ),
       ),
@@ -182,7 +191,8 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
       final correspondenciasBusca =
           consulta.isEmpty || propriedade.nome.toLowerCase().contains(consulta);
       final correspondenciasMunicipio =
-          _municipioFiltro == null || _municipioRotulo(propriedade) == _municipioFiltro;
+          _municipioFiltro == null ||
+          _municipioRotulo(propriedade) == _municipioFiltro;
 
       if (!correspondenciasBusca || !correspondenciasMunicipio) continue;
 
@@ -199,7 +209,9 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
     return visivelOpcoes;
   }
 
-  List<String> _municipioOpcoes(List<LevantamentoIniciarPropriedadeOpcao> opcoes) {
+  List<String> _municipioOpcoes(
+    List<LevantamentoIniciarPropriedadeOpcao> opcoes,
+  ) {
     final municipios = {
       for (final opcao in opcoes) _municipioRotulo(opcao.propriedade),
     }.toList()..sort();
@@ -220,7 +232,8 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
           .read(provedorRepositorioParcelas)
           .iniciarNovoLevantamentoParaTalhao(
             resumo.talhao.id,
-            modeloMatematicoSelecao: _selecoesModeloPorTalhaoId[resumo.talhao.id],
+            modeloMatematicoSelecao:
+                _selecoesModeloPorTalhaoId[resumo.talhao.id],
           );
 
       _invalidarIniciarProvedores(resumo.talhao.id);
@@ -257,13 +270,14 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
     });
   }
 
-  Future<void> _abrirNovoTalhaoPainel({required String propriedadeId}) async {
+  Future<void> _abrirNovoTalhaoPainel({required int propriedadeId}) async {
     final criacao = await showModalBottomSheet<_RapidoTalhaoCriacao>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (context) => _RapidoTalhaoFormularioPainel(propriedadeId: propriedadeId),
+      builder: (context) =>
+          _RapidoTalhaoFormularioPainel(propriedadeId: propriedadeId),
     );
 
     if (criacao == null || !mounted) return;
@@ -285,7 +299,7 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
     await _iniciarTalhao(resumo);
   }
 
-  void _invalidarIniciarProvedores(String talhaoId) {
+  void _invalidarIniciarProvedores(int talhaoId) {
     ref.invalidate(provedorLevantamentoIniciarOpcoes);
     ref.invalidate(provedorAtivoLevantamentos);
     ref.invalidate(provedorAtivoLevantamento);
@@ -308,10 +322,10 @@ class _LevantamentoIniciarFiltros extends StatelessWidget {
   final TextEditingController buscaControlador;
   final List<String> municipioOpcoes;
   final String? selecionadoMunicipio;
-  final String? selecionadoEspecieId;
+  final int? selecionadoEspecieId;
   final AsyncValue<List<Especie>> especies;
   final ValueChanged<String?> aoMunicipioAlterado;
-  final ValueChanged<String?> aoEspecieAlterado;
+  final ValueChanged<int?> aoEspecieAlterado;
   final VoidCallback? aoLimpar;
 
   @override
@@ -338,7 +352,10 @@ class _LevantamentoIniciarFiltros extends StatelessWidget {
                 color: CoresDendro.textoDiscreto,
                 fontWeight: FontWeight.w700,
               ),
-              prefixIcon: const Icon(Icons.search, color: CoresDendro.principal),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: CoresDendro.principal,
+              ),
               fillColor: campoCor,
             ),
           ),
@@ -349,7 +366,8 @@ class _LevantamentoIniciarFiltros extends StatelessWidget {
             ),
             isExpanded: true,
             initialValue:
-                selecionadoMunicipio ?? _NovoLevantamentoTelaEstado._todosFiltroValor,
+                selecionadoMunicipio ??
+                _NovoLevantamentoTelaEstado._todosFiltroValor,
             style: const TextStyle(
               color: CoresDendro.texto,
               fontWeight: FontWeight.w700,
@@ -383,13 +401,14 @@ class _LevantamentoIniciarFiltros extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           especies.when(
-            data: (itens) => DropdownButtonFormField<String>(
+            data: (itens) => DropdownButtonFormField<int>(
               key: ValueKey(
-                'species-${selecionadoEspecieId ?? _NovoLevantamentoTelaEstado._todosFiltroValor}',
+                'species-${selecionadoEspecieId ?? _NovoLevantamentoTelaEstado._todasEspeciesValor}',
               ),
               isExpanded: true,
               initialValue:
-                  selecionadoEspecieId ?? _NovoLevantamentoTelaEstado._todosFiltroValor,
+                  selecionadoEspecieId ??
+                  _NovoLevantamentoTelaEstado._todasEspeciesValor,
               style: const TextStyle(
                 color: CoresDendro.texto,
                 fontWeight: FontWeight.w700,
@@ -410,7 +429,7 @@ class _LevantamentoIniciarFiltros extends StatelessWidget {
               ),
               items: [
                 const DropdownMenuItem(
-                  value: _NovoLevantamentoTelaEstado._todosFiltroValor,
+                  value: _NovoLevantamentoTelaEstado._todasEspeciesValor,
                   child: Text('Todas as espécies'),
                 ),
                 for (final item in itens)
@@ -459,10 +478,10 @@ class _LevantamentoIniciarPropriedadeGrupo extends StatelessWidget {
   });
 
   final LevantamentoIniciarPropriedadeOpcao opcao;
-  final String? salvandoTalhaoId;
+  final int? salvandoTalhaoId;
   final VoidCallback aoCriarTalhao;
   final ValueChanged<TalhaoResumo> aoIniciar;
-  final LevantamentoModeloMatematicoSelecao? Function(String talhaoId)
+  final LevantamentoModeloMatematicoSelecao? Function(int talhaoId)
   modeloMatematicoSelecaoParaTalhao;
   final ValueChanged<TalhaoResumo> aoAjustarModeloMatematico;
 
@@ -496,9 +515,13 @@ class _LevantamentoIniciarPropriedadeGrupo extends StatelessWidget {
               resumo: resumo,
               salvando: salvandoTalhaoId == resumo.talhao.id,
               desabilitado:
-                  salvandoTalhaoId != null && salvandoTalhaoId != resumo.talhao.id,
-              modeloMatematicoSelecao: modeloMatematicoSelecaoParaTalhao(resumo.talhao.id),
-              aoAjustarModeloMatematico: () => aoAjustarModeloMatematico(resumo),
+                  salvandoTalhaoId != null &&
+                  salvandoTalhaoId != resumo.talhao.id,
+              modeloMatematicoSelecao: modeloMatematicoSelecaoParaTalhao(
+                resumo.talhao.id,
+              ),
+              aoAjustarModeloMatematico: () =>
+                  aoAjustarModeloMatematico(resumo),
               aoIniciar: () => aoIniciar(resumo),
             ),
             const SizedBox(height: 8),
@@ -625,7 +648,10 @@ class _IniciarTalhaoCartao extends StatelessWidget {
             spacing: 12,
             runSpacing: 6,
             children: [
-              _TalhaoMetadados(icone: Icons.eco_outlined, rotulo: resumo.especie.nome),
+              _TalhaoMetadados(
+                icone: Icons.eco_outlined,
+                rotulo: resumo.especie.nome,
+              ),
               _TalhaoMetadados(
                 icone: Icons.area_chart_outlined,
                 rotulo: _formatoArea(resumo.talhao.areaHa),
@@ -640,7 +666,9 @@ class _IniciarTalhaoCartao extends StatelessWidget {
             const SizedBox(height: 12),
             _ModeloMatematicoAjusteBotao(
               selecao: modeloMatematicoSelecao,
-              aoPressionado: desabilitado || salvando ? null : aoAjustarModeloMatematico,
+              aoPressionado: desabilitado || salvando
+                  ? null
+                  : aoAjustarModeloMatematico,
             ),
           ],
           const SizedBox(height: 12),
@@ -843,14 +871,15 @@ class _VazioIniciarCartao extends StatelessWidget {
 class _RapidoTalhaoFormularioPainel extends ConsumerStatefulWidget {
   const _RapidoTalhaoFormularioPainel({required this.propriedadeId});
 
-  final String propriedadeId;
+  final int propriedadeId;
 
   @override
   ConsumerState<_RapidoTalhaoFormularioPainel> createState() =>
       _RapidoTalhaoFormularioPainelEstado();
 }
 
-class _RapidoTalhaoFormularioPainelEstado extends ConsumerState<_RapidoTalhaoFormularioPainel> {
+class _RapidoTalhaoFormularioPainelEstado
+    extends ConsumerState<_RapidoTalhaoFormularioPainel> {
   final _chaveFormulario = GlobalKey<FormState>();
   final _identificacaoControlador = TextEditingController();
   final _areaControlador = TextEditingController();
@@ -861,7 +890,7 @@ class _RapidoTalhaoFormularioPainelEstado extends ConsumerState<_RapidoTalhaoFor
   final _parcelaComprimentoControlador = TextEditingController();
   final _observacoesControlador = TextEditingController();
   LevantamentoModeloMatematicoSelecao? _modeloMatematicoSelecao;
-  String? _especieId;
+  int? _especieId;
   bool _salvando = false;
 
   @override
@@ -926,7 +955,7 @@ class _RapidoTalhaoFormularioPainelEstado extends ConsumerState<_RapidoTalhaoFor
               especies.when(
                 data: (itens) {
                   _sincronizarEspecieSelecao(itens);
-                  return DropdownButtonFormField<String>(
+                  return DropdownButtonFormField<int>(
                     key: ValueKey('quick-species-$_especieId'),
                     isExpanded: true,
                     initialValue: _especieId,
@@ -1079,11 +1108,17 @@ class _RapidoTalhaoFormularioPainelEstado extends ConsumerState<_RapidoTalhaoFor
             identificacao: _identificacaoControlador.text,
             especieId: _especieId!,
             areaHa: _interpretarArea(_areaControlador.text)!,
-            anoPlantio: _interpretarOpcionalInteiro(_plantioAnoControlador.text),
+            anoPlantio: _interpretarOpcionalInteiro(
+              _plantioAnoControlador.text,
+            ),
             espacamento: _espacamentoControlador.text,
             regimeManejo: _manejoRegimeControlador.text,
-            larguraParcelaM: _interpretarOpcionalArea(_parcelaLarguraControlador.text),
-            comprimentoParcelaM: _interpretarOpcionalArea(_parcelaComprimentoControlador.text),
+            larguraParcelaM: _interpretarOpcionalArea(
+              _parcelaLarguraControlador.text,
+            ),
+            comprimentoParcelaM: _interpretarOpcionalArea(
+              _parcelaComprimentoControlador.text,
+            ),
             observacoes: _observacoesControlador.text,
           );
 
@@ -1116,7 +1151,9 @@ class _RapidoTalhaoFormularioPainelEstado extends ConsumerState<_RapidoTalhaoFor
       return;
     }
 
-    final selecionadoAindaExiste = especies.any((item) => item.id == _especieId);
+    final selecionadoAindaExiste = especies.any(
+      (item) => item.id == _especieId,
+    );
     if (_especieId == null || !selecionadoAindaExiste) {
       _especieId = especies.first.id;
       _modeloMatematicoSelecao = null;
@@ -1185,7 +1222,7 @@ class _RapidoTalhaoCriacao {
     required this.modeloMatematicoSelecao,
   });
 
-  final String talhaoId;
+  final int talhaoId;
   final LevantamentoModeloMatematicoSelecao? modeloMatematicoSelecao;
 }
 

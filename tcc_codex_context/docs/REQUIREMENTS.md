@@ -19,7 +19,7 @@ Revisão em 13/09/2026, versão refatorada em português (base 82f29e2). Os iden
 | RF-011 | Estimar valor econômico bruto | Não implementado: objetivo original do TCC, sem fluxo de preço da madeira ou cálculo monetário no código atual. Não incluir como caso de uso entregue. |
 | RF-012 | Corrigir dados coletados | Implementado: edição de cadastros e medições. Datas e atividades apoiam organização; não constituem auditoria completa de versões. |
 | RF-013 | Operar offline | Implementado para os fluxos locais de coleta, consulta e cálculo; não há backend. |
-| RF-014 | Persistir localmente | Implementado com SQLite/Drift, esquema v10. |
+| RF-014 | Persistir localmente | Implementado com SQLite/Drift, esquema v11. |
 | RF-015 | Exibir progresso da coleta | Implementado: parcelas pendentes, em andamento e coletadas; contagens e retomada. |
 | RF-016 | Exportar | Implementado: PDF, CSV, XLSX, CSV bruto, XLSX bruto e KML; KMZ e XLS binário não implementados. |
 | RF-017 | Gerenciar levantamentos | Implementado: planejamento, início/retomada, conclusão, edição do contexto de talhões e exclusão. Coletas ativas da mesma propriedade são reunidas; pode haver atividade simultânea em propriedades distintas. |
@@ -42,7 +42,7 @@ Ambos preservam as medições originais sem estimativa de altura ou volume. Expo
 |---|---|
 | RNF-001 — Mobile | Flutter com alvo inicial Android; houve build de APK e preparação de emulador de tablet. Validação formal em múltiplos dispositivos não realizada. |
 | RNF-002 — Offline | Dados e processamento essenciais locais. |
-| RNF-003 — Persistência | SQLite/Drift com migrações até v9. |
+| RNF-003 — Persistência | SQLite/Drift com migrações até v11; estrutura física em português e preservação dos dados legados. |
 | RNF-004 — Usabilidade | Interface pt-BR para coleta sequencial; avaliação com usuários ainda pendente. |
 | RNF-005 — Confiabilidade matemática | Testes automatizados de casos conhecidos existem; comparação independente de inventário completo ainda pendente. |
 | RNF-006 — Entradas | Formulários validam campos e valores numéricos; não há validação agronômica universal ou garantia sobre qualquer expressão cadastrada. |
@@ -59,3 +59,7 @@ Não foram implementados backend, login, nuvem, estimativa econômica, regressã
 O método de referência é amostragem sistemática com parcelas de área fixa, mas a execução e adequação do protocolo dependem do responsável técnico. Não há resultados documentados de validação com usuários/engenheiro que sustentem ganhos de tempo ou precisão florestal.
 
 A decisão de encerrar alterações no aplicativo não transforma requisitos não atendidos em implementados: eles são limitações da versão final de desenvolvimento.
+
+## Identificadores — schema v11
+
+As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a PK composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional: os padrões conservam seus códigos estáveis; cadastros personalizados não precisam gerar códigos nem UUID. As regras de escolha de modelos usam codigo, sem alterar expressões ou coeficientes. registros_atividade usa entidade_id inteiro opcional, sem FK polimórfica; referencia_legada conserva apenas referências antigas sem entidade correspondente. São 15 tabelas e 115 colunas.

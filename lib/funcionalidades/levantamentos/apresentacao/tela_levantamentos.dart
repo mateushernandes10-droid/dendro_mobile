@@ -38,7 +38,8 @@ class TelaLevantamentos extends ConsumerWidget {
                 for (final resumo in itens)
                   _LevantamentoCartao(
                     resumo: resumo,
-                    aoAbrir: () => _abrirLevantamento(context, resumo.levantamento.id),
+                    aoAbrir: () =>
+                        _abrirLevantamento(context, resumo.levantamento.id),
                   ),
               ],
             );
@@ -55,9 +56,12 @@ class TelaLevantamentos extends ConsumerWidget {
     );
   }
 
-  Future<void> _abrirNovoLevantamento(BuildContext context, WidgetRef ref) async {
-    final levantamentoId = await Navigator.of(context).push<String>(
-      MaterialPageRoute<String>(
+  Future<void> _abrirNovoLevantamento(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final levantamentoId = await Navigator.of(context).push<int>(
+      MaterialPageRoute<int>(
         builder: (context) => const TelaNovoLevantamento(),
       ),
     );
@@ -70,10 +74,11 @@ class TelaLevantamentos extends ConsumerWidget {
     await _abrirLevantamento(context, levantamentoId);
   }
 
-  Future<void> _abrirLevantamento(BuildContext context, String levantamentoId) {
+  Future<void> _abrirLevantamento(BuildContext context, int levantamentoId) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => TelaDetalheLevantamento(levantamentoId: levantamentoId),
+        builder: (context) =>
+            TelaDetalheLevantamento(levantamentoId: levantamentoId),
       ),
     );
   }
@@ -97,9 +102,7 @@ class _LevantamentoCartao extends StatelessWidget {
         onTap: aoAbrir,
         child: CartaoDendro(
           fundoCor: destacado ? const Color(0xFFE0F2E8) : Colors.white,
-          bordaCor: destacado
-              ? const Color(0xFFA4D1B4)
-              : CoresDendro.contorno,
+          bordaCor: destacado ? const Color(0xFFA4D1B4) : CoresDendro.contorno,
           filho: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -124,7 +127,9 @@ class _LevantamentoCartao extends StatelessWidget {
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: SituacaoIndicador(rotulo: _situacaoRotulo(situacao)),
+                      child: SituacaoIndicador(
+                        rotulo: _situacaoRotulo(situacao),
+                      ),
                     ),
                     const SizedBox(height: 7),
                     Text(

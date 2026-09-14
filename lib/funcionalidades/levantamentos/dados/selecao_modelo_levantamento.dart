@@ -5,7 +5,7 @@ class LevantamentoModeloMatematicoSelecao {
     this.modeloMatematicoNome,
   });
 
-  final String modeloMatematicoId;
+  final int modeloMatematicoId;
   final Map<String, double?> coeficienteValoresPorSimbolo;
   final String? modeloMatematicoNome;
 }

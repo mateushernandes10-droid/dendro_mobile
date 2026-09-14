@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../nucleo/banco/banco_dendro.dart';
 import '../../../nucleo/provedores/provedores_banco.dart';
@@ -10,20 +9,24 @@ final provedorRepositorioTalhoes = Provider<RepositorioTalhoes>((ref) {
   return RepositorioTalhoes(ref.watch(provedorBancoDendro));
 });
 
-final provedorAtivoEspecie = StreamProvider.autoDispose<List<Especie>>((
-  ref,
-) {
+final provedorAtivoEspecie = StreamProvider.autoDispose<List<Especie>>((ref) {
   return ref.watch(provedorRepositorioTalhoes).observarAtivoEspecie();
 });
 
 final provedorPropriedadeTalhoes = StreamProvider.autoDispose
-    .family<List<TalhaoResumo>, String>((ref, propriedadeId) {
-      return ref.watch(provedorRepositorioTalhoes).observarPorPropriedade(propriedadeId);
+    .family<List<TalhaoResumo>, int>((ref, propriedadeId) {
+      return ref
+          .watch(provedorRepositorioTalhoes)
+          .observarPorPropriedade(propriedadeId);
     });
 
 final provedorLevantamentoIniciarOpcoes =
-    StreamProvider.autoDispose<List<LevantamentoIniciarPropriedadeOpcao>>((ref) {
-      return ref.watch(provedorRepositorioTalhoes).observarLevantamentoIniciarOpcoes();
+    StreamProvider.autoDispose<List<LevantamentoIniciarPropriedadeOpcao>>((
+      ref,
+    ) {
+      return ref
+          .watch(provedorRepositorioTalhoes)
+          .observarLevantamentoIniciarOpcoes();
     });
 
 class LevantamentoIniciarPropriedadeOpcao {
@@ -81,7 +84,7 @@ class _LevantamentoIniciarPropriedadeAcumulador {
   _LevantamentoIniciarPropriedadeAcumulador(this.propriedade);
 
   final Propriedade propriedade;
-  final Map<String, _TalhaoResumoAcumulador> talhoesPorId = {};
+  final Map<int, _TalhaoResumoAcumulador> talhoesPorId = {};
 
   LevantamentoIniciarPropriedadeOpcao paraOpcao() {
     final talhoes =
@@ -89,7 +92,10 @@ class _LevantamentoIniciarPropriedadeAcumulador {
           (a, b) => a.talhao.identificacao.compareTo(b.talhao.identificacao),
         );
 
-    return LevantamentoIniciarPropriedadeOpcao(propriedade: propriedade, talhoes: talhoes);
+    return LevantamentoIniciarPropriedadeOpcao(
+      propriedade: propriedade,
+      talhoes: talhoes,
+    );
   }
 }
 
@@ -97,7 +103,6 @@ class RepositorioTalhoes {
   RepositorioTalhoes(this._bancoDados);
 
   final BancoDendro _bancoDados;
-  final _uuid = const Uuid();
   late final RepositorioAtividades _registroAtividade = RepositorioAtividades(
     _bancoDados,
   );
@@ -109,7 +114,7 @@ class RepositorioTalhoes {
         .watch();
   }
 
-  Stream<List<TalhaoResumo>> observarPorPropriedade(String propriedadeId) {
+  Stream<List<TalhaoResumo>> observarPorPropriedade(int propriedadeId) {
     final consulta =
         _bancoDados.select(_bancoDados.talhoes).join([
             innerJoin(
@@ -133,7 +138,7 @@ class RepositorioTalhoes {
           ..orderBy([OrderingTerm.asc(_bancoDados.talhoes.identificacao)]);
 
     return consulta.watch().map((linhas) {
-      final resumosPorTalhao = <String, _TalhaoResumoAcumulador>{};
+      final resumosPorTalhao = <int, _TalhaoResumoAcumulador>{};
 
       for (final linha in linhas) {
         final talhao = linha.readTable(_bancoDados.talhoes);
@@ -163,12 +168,15 @@ class RepositorioTalhoes {
     });
   }
 
-  Stream<List<LevantamentoIniciarPropriedadeOpcao>> observarLevantamentoIniciarOpcoes() {
+  Stream<List<LevantamentoIniciarPropriedadeOpcao>>
+  observarLevantamentoIniciarOpcoes() {
     final consulta =
         _bancoDados.select(_bancoDados.propriedades).join([
           leftOuterJoin(
             _bancoDados.talhoes,
-            _bancoDados.talhoes.propriedadeId.equalsExp(_bancoDados.propriedades.id),
+            _bancoDados.talhoes.propriedadeId.equalsExp(
+              _bancoDados.propriedades.id,
+            ),
           ),
           leftOuterJoin(
             _bancoDados.especies,
@@ -192,7 +200,8 @@ class RepositorioTalhoes {
         ]);
 
     return consulta.watch().map((linhas) {
-      final propriedadesPorId = <String, _LevantamentoIniciarPropriedadeAcumulador>{};
+      final propriedadesPorId =
+          <int, _LevantamentoIniciarPropriedadeAcumulador>{};
 
       for (final linha in linhas) {
         final propriedade = linha.readTable(_bancoDados.propriedades);
@@ -228,10 +237,10 @@ class RepositorioTalhoes {
     });
   }
 
-  Future<String> criar({
-    required String propriedadeId,
+  Future<int> criar({
+    required int propriedadeId,
     required String identificacao,
-    required String especieId,
+    required int especieId,
     required double areaHa,
     int? anoPlantio,
     String? espacamento,
@@ -240,17 +249,16 @@ class RepositorioTalhoes {
     double? comprimentoParcelaM,
     String? observacoes,
   }) async {
-    final id = _uuid.v4();
+    late final int id;
     final agora = DateTime.now();
     final talhaoNome = identificacao.trim();
     final propriedade = await _propriedadePorId(propriedadeId);
 
     await _bancoDados.transaction(() async {
-      await _bancoDados
+      id = await _bancoDados
           .into(_bancoDados.talhoes)
           .insert(
             TalhoesCompanion.insert(
-              id: id,
               propriedadeId: propriedadeId,
               identificacao: talhaoNome,
               especieId: especieId,
@@ -280,9 +288,9 @@ class RepositorioTalhoes {
   }
 
   Future<void> atualizar({
-    required String id,
+    required int id,
     required String identificacao,
-    required String especieId,
+    required int especieId,
     required double areaHa,
     int? anoPlantio,
     String? espacamento,
@@ -327,7 +335,7 @@ class RepositorioTalhoes {
     });
   }
 
-  Future<void> excluir(String id) async {
+  Future<void> excluir(int id) async {
     final talhao = await _talhaoPorId(id);
     final propriedade = talhao == null
         ? null
@@ -349,7 +357,7 @@ class RepositorioTalhoes {
     });
   }
 
-  Future<TalhaoResumo?> obterResumo(String id) async {
+  Future<TalhaoResumo?> obterResumo(int id) async {
     final consulta = _bancoDados.select(_bancoDados.talhoes).join([
       innerJoin(
         _bancoDados.especies,
@@ -364,24 +372,28 @@ class RepositorioTalhoes {
     return TalhaoResumo(
       talhao: talhao,
       especie: linha.readTable(_bancoDados.especies),
-      talhaoLevantamentoQuantidade: await _quantidadeTalhaoLevantamentos(talhao.id),
+      talhaoLevantamentoQuantidade: await _quantidadeTalhaoLevantamentos(
+        talhao.id,
+      ),
       possuiAtivoLevantamento: await _possuiAtivoLevantamento(talhao.id),
     );
   }
 
-  Future<int> _quantidadeTalhaoLevantamentos(String talhaoId) async {
+  Future<int> _quantidadeTalhaoLevantamentos(int talhaoId) async {
     final quantidade = _bancoDados.talhaoLevantamentos.id.count();
 
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.talhaoLevantamentos)
               ..addColumns([quantidade])
-              ..where(_bancoDados.talhaoLevantamentos.talhaoId.equals(talhaoId)))
+              ..where(
+                _bancoDados.talhaoLevantamentos.talhaoId.equals(talhaoId),
+              ))
             .getSingle();
 
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<bool> _possuiAtivoLevantamento(String talhaoId) async {
+  Future<bool> _possuiAtivoLevantamento(int talhaoId) async {
     final consulta =
         _bancoDados.select(_bancoDados.talhaoLevantamentos).join([
             innerJoin(
@@ -402,13 +414,13 @@ class RepositorioTalhoes {
     return await consulta.getSingleOrNull() != null;
   }
 
-  Future<Talhao?> _talhaoPorId(String id) {
+  Future<Talhao?> _talhaoPorId(int id) {
     return (_bancoDados.select(
       _bancoDados.talhoes,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();
   }
 
-  Future<Propriedade?> _propriedadePorId(String id) {
+  Future<Propriedade?> _propriedadePorId(int id) {
     return (_bancoDados.select(
       _bancoDados.propriedades,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();

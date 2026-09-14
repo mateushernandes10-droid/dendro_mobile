@@ -110,15 +110,17 @@ class _DendroEstruturaEstado extends ConsumerState<EstruturaDendro> {
   }
 
   void _abrirResultadosAba({
-    String? propriedadeId,
-    Set<String>? talhaoIds,
-    String? especieId,
+    int? propriedadeId,
+    Set<int>? talhaoIds,
+    int? especieId,
   }) {
-    ref.read(provedorResultadosPropriedadeFiltro.notifier).state = propriedadeId;
+    ref.read(provedorResultadosPropriedadeFiltro.notifier).state =
+        propriedadeId;
     ref.read(provedorResultadosTalhaoFiltro.notifier).state = {...?talhaoIds};
     ref.read(provedorResultadosEspecieFiltro.notifier).state = especieId;
 
-    final resultadosNavegador = _navegadorKeys[_resultadosAbaIndex].currentState;
+    final resultadosNavegador =
+        _navegadorKeys[_resultadosAbaIndex].currentState;
     if (resultadosNavegador != null && resultadosNavegador.canPop()) {
       resultadosNavegador.popUntil((rota) => rota.isFirst);
     }

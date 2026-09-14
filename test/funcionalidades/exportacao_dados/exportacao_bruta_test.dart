@@ -38,10 +38,13 @@ void main() {
           final talhaoId = await RepositorioTalhoes(bancoDados).criar(
             propriedadeId: propriedadeId,
             identificacao: 'T-0$i',
-            especieId: 'species_pinus',
+            especieId: (await bancoDados.select(bancoDados.especies).get())
+                .singleWhere((e) => e.codigo == 'species_pinus')
+                .id,
             areaHa: 10,
           );
-          final levantamentoTalhao = await parcelas.iniciarNovoLevantamentoParaTalhao(talhaoId);
+          final levantamentoTalhao = await parcelas
+              .iniciarNovoLevantamentoParaTalhao(talhaoId);
           levantamentoTalhoes.add(levantamentoTalhao);
           final parcelaId = await parcelas.criarParcelaParaTalhaoLevantamento(
             talhaoLevantamentoId: levantamentoTalhao.id,
@@ -86,14 +89,19 @@ void main() {
         expect(texto, isNot(contains('Volume')));
         expect(csv.nomeArquivo, contains('dados_brutos'));
 
-        final segundoParcelaId = await parcelas.criarParcelaParaTalhaoLevantamento(
-          talhaoLevantamentoId: levantamentoTalhoes.first.id,
-          areaHa: 0.04,
-        );
+        final segundoParcelaId = await parcelas
+            .criarParcelaParaTalhaoLevantamento(
+              talhaoLevantamentoId: levantamentoTalhoes.first.id,
+              areaHa: 0.04,
+            );
         for (final dap in [25.25, 26.75]) {
           await arvores.criarArvore(
             parcelaId: segundoParcelaId,
-            rascunho: RascunhoArvore(dapCm: dap, alturaM: 12.5, possuiTroncoTortuoso: false),
+            rascunho: RascunhoArvore(
+              dapCm: dap,
+              alturaM: 12.5,
+              possuiTroncoTortuoso: false,
+            ),
           );
         }
         await parcelas.criarParcelaParaTalhaoLevantamento(
@@ -106,7 +114,9 @@ void main() {
           formato: FormatoExportacaoDados.brutoXlsx,
           talhaoLevantamentoIds: selecionado,
         );
-        final planilha = Excel.decodeBytes(await File(xlsx.caminho).readAsBytes());
+        final planilha = Excel.decodeBytes(
+          await File(xlsx.caminho).readAsBytes(),
+        );
         expect(planilha.tables.keys, ['Talhão 1', 'Talhão 2']);
         CellValue? celula(String endereco, [String aba = 'Talhão 1']) =>
             planilha[aba].cell(CellIndex.indexByString(endereco)).value;

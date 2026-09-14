@@ -193,25 +193,32 @@ void main() {
         areaHa: 8,
       );
 
-      final primeiroTalhao = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(
-        primeiroTalhaoId,
-      );
-      final primeiroParcelaId = await repositorioParcelas.criarParcelaParaTalhaoLevantamento(
-        talhaoLevantamentoId: primeiroTalhao.id,
-        areaHa: 0.04,
+      final primeiroTalhao = await repositorioParcelas
+          .iniciarNovoLevantamentoParaTalhao(primeiroTalhaoId);
+      final primeiroParcelaId = await repositorioParcelas
+          .criarParcelaParaTalhaoLevantamento(
+            talhaoLevantamentoId: primeiroTalhao.id,
+            areaHa: 0.04,
+          );
+      await repositorioArvores.criarArvore(
+        parcelaId: primeiroParcelaId,
+        rascunho: const RascunhoArvore(
+          dapCm: 20,
+          alturaM: 12,
+          possuiTroncoTortuoso: false,
+        ),
       );
       await repositorioArvores.criarArvore(
         parcelaId: primeiroParcelaId,
-        rascunho: const RascunhoArvore(dapCm: 20, alturaM: 12, possuiTroncoTortuoso: false),
-      );
-      await repositorioArvores.criarArvore(
-        parcelaId: primeiroParcelaId,
-        rascunho: const RascunhoArvore(dapCm: 22, alturaM: 13, possuiTroncoTortuoso: false),
+        rascunho: const RascunhoArvore(
+          dapCm: 22,
+          alturaM: 13,
+          possuiTroncoTortuoso: false,
+        ),
       );
 
-      final segundoTalhao = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(
-        segundoTalhaoId,
-      );
+      final segundoTalhao = await repositorioParcelas
+          .iniciarNovoLevantamentoParaTalhao(segundoTalhaoId);
       final segundoParcelaId = await repositorioParcelas
           .criarParcelaParaTalhaoLevantamento(
             talhaoLevantamentoId: segundoTalhao.id,
@@ -219,7 +226,11 @@ void main() {
           );
       await repositorioArvores.criarArvore(
         parcelaId: segundoParcelaId,
-        rascunho: const RascunhoArvore(dapCm: 25, alturaM: 14, possuiTroncoTortuoso: false),
+        rascunho: const RascunhoArvore(
+          dapCm: 25,
+          alturaM: 14,
+          possuiTroncoTortuoso: false,
+        ),
       );
     });
 
@@ -391,8 +402,13 @@ void main() {
       final repositorioTalhoes = RepositorioTalhoes(bancoDados);
 
       await repositorioAjustes.definirEspecieModeloMatematicoVinculado(
-        especieId: 'species_pinus',
-        modeloMatematicoId: 'formula_schumacher_hall',
+        especieId: (await bancoDados.select(bancoDados.especies).get())
+            .singleWhere((e) => e.codigo == 'species_pinus')
+            .id,
+        modeloMatematicoId:
+            (await bancoDados.select(bancoDados.modelosMatematicos).get())
+                .singleWhere((m) => m.codigo == 'formula_schumacher_hall')
+                .id,
         vinculado: false,
       );
 
@@ -404,7 +420,9 @@ void main() {
       await repositorioTalhoes.criar(
         propriedadeId: propriedadeId,
         identificacao: 'T-01',
-        especieId: 'species_pinus',
+        especieId: (await bancoDados.select(bancoDados.especies).get())
+            .singleWhere((e) => e.codigo == 'species_pinus')
+            .id,
         areaHa: 10,
       );
     });
@@ -462,7 +480,10 @@ void main() {
     await testador.pumpWidget(
       ProviderScope(
         overrides: [provedorBancoDendro.overrideWithValue(bancoDados)],
-        child: MaterialApp(theme: TemaDendro.claro, home: const EstruturaDendro()),
+        child: MaterialApp(
+          theme: TemaDendro.claro,
+          home: const EstruturaDendro(),
+        ),
       ),
     );
     await testador.pumpAndSettle();
@@ -531,7 +552,10 @@ void main() {
     await testador.pumpWidget(
       ProviderScope(
         overrides: [provedorBancoDendro.overrideWithValue(bancoDados)],
-        child: MaterialApp(theme: TemaDendro.claro, home: const EstruturaDendro()),
+        child: MaterialApp(
+          theme: TemaDendro.claro,
+          home: const EstruturaDendro(),
+        ),
       ),
     );
     await testador.pumpAndSettle();
@@ -571,7 +595,10 @@ void main() {
     await testador.pumpWidget(
       ProviderScope(
         overrides: [provedorBancoDendro.overrideWithValue(bancoDados)],
-        child: MaterialApp(theme: TemaDendro.claro, home: const EstruturaDendro()),
+        child: MaterialApp(
+          theme: TemaDendro.claro,
+          home: const EstruturaDendro(),
+        ),
       ),
     );
     await testador.pumpAndSettle();

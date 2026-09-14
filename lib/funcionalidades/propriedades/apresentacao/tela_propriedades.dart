@@ -16,7 +16,8 @@ Future<bool?> mostrarPropriedadeFormularioPainel(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (context) => _PropriedadeFormularioPainel(propriedade: propriedade),
+    builder: (context) =>
+        _PropriedadeFormularioPainel(propriedade: propriedade),
   );
 }
 
@@ -86,9 +87,12 @@ class _PropriedadesTelaEstado extends ConsumerState<TelaPropriedades> {
                 for (final item in itens)
                   _PropriedadeItem(
                     resumo: item,
-                    aoAbrir: () => _abrirPropriedadeDetalhe(context, item.propriedade),
-                    aoEditar: () =>
-                        _abrirPropriedadeFormulario(context, propriedade: item.propriedade),
+                    aoAbrir: () =>
+                        _abrirPropriedadeDetalhe(context, item.propriedade),
+                    aoEditar: () => _abrirPropriedadeFormulario(
+                      context,
+                      propriedade: item.propriedade,
+                    ),
                     aoExcluir: () => _confirmarExcluir(context, item),
                   ),
               ],
@@ -283,10 +287,14 @@ class _PropriedadeAvancadoFiltrosPainelEstado
     final filtros = widget.inicialFiltros;
     _municipioControlador = TextEditingController(text: filtros.municipio);
     _minimoAreaControlador = TextEditingController(
-      text: filtros.minimoAreaHa == null ? '' : _formatoArea(filtros.minimoAreaHa!),
+      text: filtros.minimoAreaHa == null
+          ? ''
+          : _formatoArea(filtros.minimoAreaHa!),
     );
     _maximoAreaControlador = TextEditingController(
-      text: filtros.maximoAreaHa == null ? '' : _formatoArea(filtros.maximoAreaHa!),
+      text: filtros.maximoAreaHa == null
+          ? ''
+          : _formatoArea(filtros.maximoAreaHa!),
     );
     _minimoTalhaoControlador = TextEditingController(
       text: filtros.minimoTalhaoQuantidade?.toString() ?? '',
@@ -430,8 +438,12 @@ class _PropriedadeAvancadoFiltrosPainelEstado
   void _aplicar() {
     final minimoArea = _interpretarOpcionalArea(_minimoAreaControlador.text);
     final maximoArea = _interpretarOpcionalArea(_maximoAreaControlador.text);
-    final minimoTalhao = _interpretarOpcionalInteiro(_minimoTalhaoControlador.text);
-    final maximoTalhao = _interpretarOpcionalInteiro(_maximoTalhaoControlador.text);
+    final minimoTalhao = _interpretarOpcionalInteiro(
+      _minimoTalhaoControlador.text,
+    );
+    final maximoTalhao = _interpretarOpcionalInteiro(
+      _maximoTalhaoControlador.text,
+    );
 
     if (_invalidoOpcionalNumero(_minimoAreaControlador.text, minimoArea) ||
         _invalidoOpcionalNumero(_maximoAreaControlador.text, maximoArea) ||
@@ -444,7 +456,9 @@ class _PropriedadeAvancadoFiltrosPainelEstado
       _mostrarFiltroErro('A área mínima não pode ser maior que a máxima.');
       return;
     }
-    if (minimoTalhao != null && maximoTalhao != null && minimoTalhao > maximoTalhao) {
+    if (minimoTalhao != null &&
+        maximoTalhao != null &&
+        minimoTalhao > maximoTalhao) {
       _mostrarFiltroErro(
         'A quantidade mínima de talhões não pode ser maior que a máxima.',
       );
@@ -514,7 +528,8 @@ class _PropriedadeItem extends StatelessWidget {
                       children: [
                         _PropriedadeMetadados(
                           icone: Icons.place,
-                          rotulo: '${propriedade.municipio}-${propriedade.estado}',
+                          rotulo:
+                              '${propriedade.municipio}-${propriedade.estado}',
                         ),
                         _PropriedadeMetadados(
                           icone: Icons.area_chart,
@@ -522,7 +537,9 @@ class _PropriedadeItem extends StatelessWidget {
                         ),
                         _PropriedadeMetadados(
                           icone: Icons.grid_view,
-                          rotulo: _formatoTalhaoQuantidade(resumo.talhaoQuantidade),
+                          rotulo: _formatoTalhaoQuantidade(
+                            resumo.talhaoQuantidade,
+                          ),
                         ),
                       ],
                     ),
@@ -603,10 +620,12 @@ class _PropriedadeFormularioPainel extends ConsumerStatefulWidget {
   final Propriedade? propriedade;
 
   @override
-  ConsumerState<_PropriedadeFormularioPainel> createState() => _PropriedadeFormularioPainelEstado();
+  ConsumerState<_PropriedadeFormularioPainel> createState() =>
+      _PropriedadeFormularioPainelEstado();
 }
 
-class _PropriedadeFormularioPainelEstado extends ConsumerState<_PropriedadeFormularioPainel> {
+class _PropriedadeFormularioPainelEstado
+    extends ConsumerState<_PropriedadeFormularioPainel> {
   final _chaveFormulario = GlobalKey<FormState>();
   late final TextEditingController _nomeControlador;
   late final TextEditingController _municipioControlador;
@@ -625,7 +644,9 @@ class _PropriedadeFormularioPainelEstado extends ConsumerState<_PropriedadeFormu
     _municipioControlador = TextEditingController(
       text: propriedade?.municipio ?? '',
     );
-    _estadoControlador = TextEditingController(text: propriedade?.estado ?? 'RS');
+    _estadoControlador = TextEditingController(
+      text: propriedade?.estado ?? 'RS',
+    );
     _areaControlador = TextEditingController(
       text: propriedade == null ? '' : _formatoArea(propriedade.areaTotalHa),
     );
@@ -737,7 +758,9 @@ class _PropriedadeFormularioPainelEstado extends ConsumerState<_PropriedadeFormu
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_outlined),
-                  label: Text(_estaEditando ? 'Salvar alterações' : 'Cadastrar'),
+                  label: Text(
+                    _estaEditando ? 'Salvar alterações' : 'Cadastrar',
+                  ),
                 ),
               ),
             ],
@@ -779,7 +802,9 @@ class _PropriedadeFormularioPainelEstado extends ConsumerState<_PropriedadeFormu
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _estaEditando ? 'Propriedade atualizada.' : 'Propriedade cadastrada.',
+            _estaEditando
+                ? 'Propriedade atualizada.'
+                : 'Propriedade cadastrada.',
           ),
         ),
       );
@@ -872,7 +897,10 @@ class _VazioPropriedadesEstado extends StatelessWidget {
 }
 
 class _CarregarErroCartao extends StatelessWidget {
-  const _CarregarErroCartao({required this.mensagem, required this.aoTentarNovamente});
+  const _CarregarErroCartao({
+    required this.mensagem,
+    required this.aoTentarNovamente,
+  });
 
   final String mensagem;
   final VoidCallback aoTentarNovamente;
@@ -915,7 +943,8 @@ List<String> _ativoFiltroRotulos(PropriedadeAvancadoFiltros filtros) {
       'Área: ${_intervaloRotulo(filtros.minimoAreaHa, filtros.maximoAreaHa, sufixo: ' ha')}',
     );
   }
-  if (filtros.minimoTalhaoQuantidade != null || filtros.maximoTalhaoQuantidade != null) {
+  if (filtros.minimoTalhaoQuantidade != null ||
+      filtros.maximoTalhaoQuantidade != null) {
     rotulos.add(
       'Talhões: ${_intervaloRotulo(filtros.minimoTalhaoQuantidade, filtros.maximoTalhaoQuantidade)}',
     );

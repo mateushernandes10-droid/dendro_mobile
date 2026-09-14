@@ -19,7 +19,10 @@ class ItemRegistroAtividade extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: CartaoDendro(
-        espacamentoInterno: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        espacamentoInterno: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
         filho: Row(
           children: [
             Container(
@@ -120,7 +123,11 @@ IconData atividadeIcon(TipoAtividade tipo) {
 }
 
 String formatoRegistroAtividadeData(DateTime ocorridoEm, DateTime agora) {
-  final eventoData = DateTime(ocorridoEm.year, ocorridoEm.month, ocorridoEm.day);
+  final eventoData = DateTime(
+    ocorridoEm.year,
+    ocorridoEm.month,
+    ocorridoEm.day,
+  );
   final hoje = DateTime(agora.year, agora.month, agora.day);
   final ontem = hoje.subtract(const Duration(days: 1));
 

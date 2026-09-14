@@ -71,7 +71,8 @@ class TelaHistoricoAtividades extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     OutlinedButton.icon(
-                      onPressed: () => ref.invalidate(provedorHistoricoAtividades),
+                      onPressed: () =>
+                          ref.invalidate(provedorHistoricoAtividades),
                       icon: const Icon(Icons.refresh),
                       label: const Text('Tentar novamente'),
                     ),

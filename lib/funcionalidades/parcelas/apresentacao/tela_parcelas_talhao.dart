@@ -20,8 +20,8 @@ class TelaParcelasTalhao extends ConsumerWidget {
     super.key,
   });
 
-  final String talhaoId;
-  final String? talhaoLevantamentoId;
+  final int talhaoId;
+  final int? talhaoLevantamentoId;
   final bool mostrarIniciarLevantamentoAcao;
   final bool habilitarColetaArvores;
 
@@ -57,7 +57,8 @@ class TelaParcelasTalhao extends ConsumerWidget {
             estado: dados,
             mostrarIniciarLevantamentoAcao: mostrarIniciarLevantamentoAcao,
             aoAdicionar: () => _abrirParcelaFormulario(context, ref, dados),
-            aoIniciarLevantamento: () => _iniciarLevantamento(context, ref, dados),
+            aoIniciarLevantamento: () =>
+                _iniciarLevantamento(context, ref, dados),
             aoConcluirLevantamento: () =>
                 _confirmarConcluirLevantamento(context, ref, dados),
             aoAbrirResultados: () => _abrirResultados(context, dados),
@@ -81,9 +82,13 @@ class TelaParcelasTalhao extends ConsumerWidget {
     TalhaoParcelasEstado estado,
   ) async {
     final levantamento = estado.atualLevantamento;
-    if (levantamento == null || levantamento.situacao != SituacaoLevantamento.emAndamento) return;
+    if (levantamento == null ||
+        levantamento.situacao != SituacaoLevantamento.emAndamento) {
+      return;
+    }
 
-    final possuiAbrirParcelas = estado.abrirParcelas > 0 || estado.totalParcelas == 0;
+    final possuiAbrirParcelas =
+        estado.abrirParcelas > 0 || estado.totalParcelas == 0;
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -91,7 +96,9 @@ class TelaParcelasTalhao extends ConsumerWidget {
           possuiAbrirParcelas
               ? Icons.warning_amber_rounded
               : Icons.check_circle_outline,
-          color: possuiAbrirParcelas ? Colors.red.shade700 : CoresDendro.principal,
+          color: possuiAbrirParcelas
+              ? Colors.red.shade700
+              : CoresDendro.principal,
         ),
         title: const Text('Encerrar levantamento'),
         content: Text(_concluirLevantamentoMensagem(estado)),
@@ -117,7 +124,9 @@ class TelaParcelasTalhao extends ConsumerWidget {
     if (confirmado != true || !context.mounted) return;
 
     try {
-      await ref.read(provedorRepositorioLevantamentos).concluirLevantamento(levantamento.id);
+      await ref
+          .read(provedorRepositorioLevantamentos)
+          .concluirLevantamento(levantamento.id);
       ref.invalidate(provedorAtivoLevantamentos);
       ref.invalidate(provedorAtivoLevantamento);
       ref.invalidate(provedorLevantamentoDetalhe(levantamento.id));
@@ -178,10 +187,11 @@ class TelaParcelasTalhao extends ConsumerWidget {
     }
   }
 
-  Future<void> _abrirLevantamento(BuildContext context, String levantamentoId) {
+  Future<void> _abrirLevantamento(BuildContext context, int levantamentoId) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => TelaDetalheLevantamento(levantamentoId: levantamentoId),
+        builder: (context) =>
+            TelaDetalheLevantamento(levantamentoId: levantamentoId),
       ),
     );
   }
@@ -219,7 +229,9 @@ class TelaParcelasTalhao extends ConsumerWidget {
   ) async {
     final repositorio = ref.read(provedorRepositorioParcelas);
     final arvores = await repositorio.arvoresParaParcela(resumo.parcela.id);
-    final pontos = await repositorio.geograficoPontosParaParcela(resumo.parcela.id);
+    final pontos = await repositorio.geograficoPontosParaParcela(
+      resumo.parcela.id,
+    );
 
     if (!context.mounted) return;
 
@@ -227,8 +239,11 @@ class TelaParcelasTalhao extends ConsumerWidget {
       context: context,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (context) =>
-          _ParcelaDetalhesPainel(resumo: resumo, arvores: arvores, pontos: pontos),
+      builder: (context) => _ParcelaDetalhesPainel(
+        resumo: resumo,
+        arvores: arvores,
+        pontos: pontos,
+      ),
     );
   }
 
@@ -258,7 +273,8 @@ class TelaParcelasTalhao extends ConsumerWidget {
     ParcelaResumo resumo,
   ) async {
     final parcela = resumo.parcela;
-    final possuiFilhos = resumo.arvoreQuantidade > 0 || resumo.geograficoPontoQuantidade > 0;
+    final possuiFilhos =
+        resumo.arvoreQuantidade > 0 || resumo.geograficoPontoQuantidade > 0;
     final mensagem = possuiFilhos
         ? 'A parcela ${parcela.identificacao} já contém dados armazenados. Se confirmar, árvores e coordenadas vinculadas serão apagadas. Deseja continuar?'
         : 'Deseja excluir a parcela ${parcela.identificacao}?';
@@ -337,7 +353,8 @@ class _ParcelasCorpo extends StatelessWidget {
           estado: estado,
           aoAbrirResultados: aoAbrirResultados,
           aoConcluirLevantamento:
-              estado.atualLevantamento?.situacao == SituacaoLevantamento.emAndamento
+              estado.atualLevantamento?.situacao ==
+                  SituacaoLevantamento.emAndamento
               ? aoConcluirLevantamento
               : null,
         ),
@@ -348,7 +365,9 @@ class _ParcelasCorpo extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: aoIniciarLevantamento,
               icon: Icon(
-                possuiAtivoLevantamento ? Icons.forest : Icons.play_arrow_rounded,
+                possuiAtivoLevantamento
+                    ? Icons.forest
+                    : Icons.play_arrow_rounded,
               ),
               label: Text(
                 possuiAtivoLevantamento
@@ -566,7 +585,10 @@ class _ParcelaItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final parcela = resumo.parcela;
-    final cores = _situacaoCores(parcela.situacao, resumo.levantamento.situacao);
+    final cores = _situacaoCores(
+      parcela.situacao,
+      resumo.levantamento.situacao,
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 9),
@@ -684,9 +706,7 @@ class _ParcelaSituacaoIndicador extends StatelessWidget {
 
     return SituacaoIndicador(
       rotulo: rotulo,
-      cor: estaEscuro
-          ? Colors.white.withValues(alpha: 0.16)
-          : cores.iconFundo,
+      cor: estaEscuro ? Colors.white.withValues(alpha: 0.16) : cores.iconFundo,
       textoCor: estaEscuro ? Colors.white : cores.iconCor,
     );
   }
@@ -774,16 +794,18 @@ class _ParcelaFormularioPainel extends ConsumerStatefulWidget {
     this.resumo,
   });
 
-  final String talhaoId;
-  final String? talhaoLevantamentoId;
+  final int talhaoId;
+  final int? talhaoLevantamentoId;
   final TalhaoParcelasEstado estado;
   final ParcelaResumo? resumo;
 
   @override
-  ConsumerState<_ParcelaFormularioPainel> createState() => _ParcelaFormularioPainelEstado();
+  ConsumerState<_ParcelaFormularioPainel> createState() =>
+      _ParcelaFormularioPainelEstado();
 }
 
-class _ParcelaFormularioPainelEstado extends ConsumerState<_ParcelaFormularioPainel> {
+class _ParcelaFormularioPainelEstado
+    extends ConsumerState<_ParcelaFormularioPainel> {
   final _chaveFormulario = GlobalKey<FormState>();
   late final TextEditingController _identificacaoControlador;
   late final TextEditingController _areaControlador;
@@ -879,7 +901,9 @@ class _ParcelaFormularioPainelEstado extends ConsumerState<_ParcelaFormularioPai
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_outlined),
-                  label: Text(_estaEditando ? 'Salvar alterações' : 'Cadastrar'),
+                  label: Text(
+                    _estaEditando ? 'Salvar alterações' : 'Cadastrar',
+                  ),
                 ),
               ),
             ],
@@ -983,7 +1007,10 @@ class _ParcelaDetalhesPainel extends StatelessWidget {
                 ),
               ),
               SituacaoIndicador(
-                rotulo: _situacaoRotulo(parcela.situacao, resumo.levantamento.situacao),
+                rotulo: _situacaoRotulo(
+                  parcela.situacao,
+                  resumo.levantamento.situacao,
+                ),
               ),
             ],
           ),
@@ -1043,7 +1070,8 @@ class _ParcelaDetalhesPainel extends StatelessWidget {
               ),
             )
           else
-            for (final ponto in pontos) _GeograficoPontoLerSomenteItem(ponto: ponto),
+            for (final ponto in pontos)
+              _GeograficoPontoLerSomenteItem(ponto: ponto),
         ],
       ),
     );
@@ -1060,7 +1088,10 @@ class _ArvoreLerSomenteItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: CartaoDendro(
-        espacamentoInterno: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        espacamentoInterno: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
         filho: Row(
           children: [
             Container(
@@ -1114,7 +1145,10 @@ class _GeograficoPontoLerSomenteItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: CartaoDendro(
-        espacamentoInterno: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        espacamentoInterno: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
         filho: Row(
           children: [
             Container(
@@ -1250,14 +1284,20 @@ _ParcelaSituacaoCores _situacaoCores(
 
 String _parcelaSubtitulo(ParcelaResumo resumo) {
   final parcela = resumo.parcela;
-  final area = parcela.areaHa == null ? null : '${_formatoArea(parcela.areaHa!)} ha';
+  final area = parcela.areaHa == null
+      ? null
+      : '${_formatoArea(parcela.areaHa!)} ha';
 
   switch (parcela.situacao) {
     case SituacaoParcela.coletada:
       final coordenada = resumo.possuiCoordinates
           ? _formatarCoordenada(resumo.primeiroGeograficoPonto!)
           : 'Sem coordenadas';
-      return ['${resumo.arvoreQuantidade} árvores', coordenada, ?area].join(' • ');
+      return [
+        '${resumo.arvoreQuantidade} árvores',
+        coordenada,
+        ?area,
+      ].join(' • ');
     case SituacaoParcela.emAndamento:
       return [
         'Em andamento',
@@ -1265,15 +1305,21 @@ String _parcelaSubtitulo(ParcelaResumo resumo) {
         ?area,
       ].join(' • ');
     case SituacaoParcela.pendente:
-      final situacao = resumo.levantamento.situacao == SituacaoLevantamento.planejamento
+      final situacao =
+          resumo.levantamento.situacao == SituacaoLevantamento.planejamento
           ? 'Planejada'
           : 'Pendente';
       return area == null ? situacao : '$situacao • $area';
   }
 }
 
-String _situacaoRotulo(SituacaoParcela situacao, SituacaoLevantamento levantamentoSituacao) {
-  if (levantamentoSituacao == SituacaoLevantamento.planejamento) return 'Planejada';
+String _situacaoRotulo(
+  SituacaoParcela situacao,
+  SituacaoLevantamento levantamentoSituacao,
+) {
+  if (levantamentoSituacao == SituacaoLevantamento.planejamento) {
+    return 'Planejada';
+  }
 
   switch (situacao) {
     case SituacaoParcela.coletada:

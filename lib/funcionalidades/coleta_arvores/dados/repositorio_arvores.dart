@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../nucleo/banco/banco_dendro.dart';
 import '../../../nucleo/provedores/provedores_banco.dart';
@@ -11,7 +10,7 @@ final provedorRepositorioArvores = Provider<RepositorioArvores>((ref) {
 });
 
 final provedorColetaArvores = StreamProvider.autoDispose
-    .family<EstadoColetaArvores, String>((ref, parcelaId) {
+    .family<EstadoColetaArvores, int>((ref, parcelaId) {
       return ref.watch(provedorRepositorioArvores).observarColeta(parcelaId);
     });
 
@@ -38,7 +37,10 @@ class EstadoColetaArvores {
 
   int get proximoArvoreNumero {
     if (arvores.isEmpty) return 1;
-    return arvores.map((arvore) => arvore.numero).reduce((a, b) => a > b ? a : b) + 1;
+    return arvores
+            .map((arvore) => arvore.numero)
+            .reduce((a, b) => a > b ? a : b) +
+        1;
   }
 
   Set<PosicaoReferenciaParcela> get capturadoReferenciaPosicoes => {
@@ -76,12 +78,11 @@ class RepositorioArvores {
   RepositorioArvores(this._bancoDados);
 
   final BancoDendro _bancoDados;
-  final _uuid = const Uuid();
   late final RepositorioAtividades _registroAtividade = RepositorioAtividades(
     _bancoDados,
   );
 
-  Stream<EstadoColetaArvores> observarColeta(String parcelaId) {
+  Stream<EstadoColetaArvores> observarColeta(int parcelaId) {
     final arvoresConsulta = _bancoDados.select(_bancoDados.arvores)
       ..where((tabela) => tabela.parcelaId.equals(parcelaId))
       ..orderBy([(tabela) => OrderingTerm.asc(tabela.numero)]);
@@ -106,11 +107,11 @@ class RepositorioArvores {
     });
   }
 
-  Future<String> criarArvore({
-    required String parcelaId,
+  Future<int> criarArvore({
+    required int parcelaId,
     required RascunhoArvore rascunho,
   }) async {
-    final id = _uuid.v4();
+    late final int id;
     final agora = DateTime.now();
     final numero = await proximoArvoreNumero(parcelaId);
 
@@ -122,11 +123,10 @@ class RepositorioArvores {
         );
       }
 
-      await _bancoDados
+      id = await _bancoDados
           .into(_bancoDados.arvores)
           .insert(
             ArvoresCompanion.insert(
-              id: id,
               parcelaId: parcelaId,
               numero: numero,
               dapCm: rascunho.dapCm,
@@ -136,7 +136,9 @@ class RepositorioArvores {
               longitude: Value(rascunho.longitude),
               precisaoMetros: Value(rascunho.precisaoMetros),
               localizacaoCapturadaEm: Value(rascunho.localizacaoCapturadaEm),
-              posicaoReferenciaParcela: Value(rascunho.posicaoReferenciaParcela),
+              posicaoReferenciaParcela: Value(
+                rascunho.posicaoReferenciaParcela,
+              ),
               criadoEm: agora,
               atualizadoEm: agora,
             ),
@@ -150,7 +152,7 @@ class RepositorioArvores {
   }
 
   Future<void> atualizarArvore({
-    required String arvoreId,
+    required int arvoreId,
     required RascunhoArvore rascunho,
   }) async {
     final arvore = await _arvorePorId(arvoreId);
@@ -184,7 +186,7 @@ class RepositorioArvores {
     });
   }
 
-  Future<void> excluirArvore(String arvoreId) async {
+  Future<void> excluirArvore(int arvoreId) async {
     final arvore = await _arvorePorId(arvoreId);
 
     await _bancoDados.transaction(() async {
@@ -194,7 +196,8 @@ class RepositorioArvores {
 
       final restante = await _quantidadeArvores(arvore.parcelaId);
       final parcela = await _parcelaPorId(arvore.parcelaId);
-      final situacao = restante == 0 && parcela.situacao == SituacaoParcela.emAndamento
+      final situacao =
+          restante == 0 && parcela.situacao == SituacaoParcela.emAndamento
           ? SituacaoParcela.pendente
           : null;
 
@@ -203,7 +206,7 @@ class RepositorioArvores {
     });
   }
 
-  Future<void> marcaParcelaColetada(String parcelaId) async {
+  Future<void> marcaParcelaColetada(int parcelaId) async {
     final context = await _lerColetaContexto(parcelaId);
     final jaColetada = context.parcela.situacao == SituacaoParcela.coletada;
     final agora = DateTime.now();
@@ -224,16 +227,19 @@ class RepositorioArvores {
     });
   }
 
-  Future<int> proximoArvoreNumero(String parcelaId) async {
+  Future<int> proximoArvoreNumero(int parcelaId) async {
     final arvores = await (_bancoDados.select(
       _bancoDados.arvores,
     )..where((tabela) => tabela.parcelaId.equals(parcelaId))).get();
 
     if (arvores.isEmpty) return 1;
-    return arvores.map((arvore) => arvore.numero).reduce((a, b) => a > b ? a : b) + 1;
+    return arvores
+            .map((arvore) => arvore.numero)
+            .reduce((a, b) => a > b ? a : b) +
+        1;
   }
 
-  Future<_ColetaContexto> _lerColetaContexto(String parcelaId) async {
+  Future<_ColetaContexto> _lerColetaContexto(int parcelaId) async {
     final consulta = _bancoDados.select(_bancoDados.parcelas).join([
       innerJoin(
         _bancoDados.talhaoLevantamentos,
@@ -249,11 +255,15 @@ class RepositorioArvores {
       ),
       innerJoin(
         _bancoDados.talhoes,
-        _bancoDados.talhoes.id.equalsExp(_bancoDados.talhaoLevantamentos.talhaoId),
+        _bancoDados.talhoes.id.equalsExp(
+          _bancoDados.talhaoLevantamentos.talhaoId,
+        ),
       ),
       innerJoin(
         _bancoDados.especies,
-        _bancoDados.especies.id.equalsExp(_bancoDados.talhaoLevantamentos.especieId),
+        _bancoDados.especies.id.equalsExp(
+          _bancoDados.talhaoLevantamentos.especieId,
+        ),
       ),
     ])..where(_bancoDados.parcelas.id.equals(parcelaId));
 
@@ -267,11 +277,15 @@ class RepositorioArvores {
     );
   }
 
-  Future<void> _atualizarParcela(String parcelaId, {SituacaoParcela? situacao}) async {
+  Future<void> _atualizarParcela(
+    int parcelaId, {
+    SituacaoParcela? situacao,
+  }) async {
     final parcela = await _parcelaPorId(parcelaId);
     final talhaoLevantamento =
-        await (_bancoDados.select(_bancoDados.talhaoLevantamentos)
-              ..where((tabela) => tabela.id.equals(parcela.talhaoLevantamentoId)))
+        await (_bancoDados.select(_bancoDados.talhaoLevantamentos)..where(
+              (tabela) => tabela.id.equals(parcela.talhaoLevantamentoId),
+            ))
             .getSingle();
     final agora = DateTime.now();
 
@@ -288,13 +302,15 @@ class RepositorioArvores {
           ..where((tabela) => tabela.id.equals(talhaoLevantamento.id)))
         .write(TalhaoLevantamentosCompanion(atualizadoEm: Value(agora)));
 
-    await (_bancoDados.update(
-          _bancoDados.levantamentos,
-        )..where((tabela) => tabela.id.equals(talhaoLevantamento.levantamentoId)))
+    await (_bancoDados.update(_bancoDados.levantamentos)..where(
+          (tabela) => tabela.id.equals(talhaoLevantamento.levantamentoId),
+        ))
         .write(LevantamentosCompanion(atualizadoEm: Value(agora)));
   }
 
-  Future<void> _reconstruirPontosGeograficosParcelaDeArvores(String parcelaId) async {
+  Future<void> _reconstruirPontosGeograficosParcelaDeArvores(
+    int parcelaId,
+  ) async {
     await (_bancoDados.delete(
       _bancoDados.pontosGeograficosParcela,
     )..where((tabela) => tabela.parcelaId.equals(parcelaId))).go();
@@ -320,7 +336,6 @@ class RepositorioArvores {
           .into(_bancoDados.pontosGeograficosParcela)
           .insert(
             PontosGeograficosParcelaCompanion.insert(
-              id: _uuid.v4(),
               parcelaId: parcelaId,
               ordemPonto: _ordemPonto(referencia),
               posicaoReferencia: Value(referencia),
@@ -333,19 +348,19 @@ class RepositorioArvores {
     }
   }
 
-  Future<Arvore> _arvorePorId(String arvoreId) {
+  Future<Arvore> _arvorePorId(int arvoreId) {
     return (_bancoDados.select(
       _bancoDados.arvores,
     )..where((tabela) => tabela.id.equals(arvoreId))).getSingle();
   }
 
-  Future<Parcela> _parcelaPorId(String parcelaId) {
+  Future<Parcela> _parcelaPorId(int parcelaId) {
     return (_bancoDados.select(
       _bancoDados.parcelas,
     )..where((tabela) => tabela.id.equals(parcelaId))).getSingle();
   }
 
-  Future<int> _quantidadeArvores(String parcelaId) async {
+  Future<int> _quantidadeArvores(int parcelaId) async {
     final quantidade = _bancoDados.arvores.id.count();
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.arvores)
@@ -357,7 +372,7 @@ class RepositorioArvores {
   }
 
   Future<void> _limparReferenciaPosicaoDeArvores({
-    required String parcelaId,
+    required int parcelaId,
     required PosicaoReferenciaParcela posicaoReferencia,
   }) {
     return (_bancoDados.update(_bancoDados.arvores)..where(
@@ -367,7 +382,9 @@ class RepositorioArvores {
         ))
         .write(
           ArvoresCompanion(
-            posicaoReferenciaParcela: const Value<PosicaoReferenciaParcela?>(null),
+            posicaoReferenciaParcela: const Value<PosicaoReferenciaParcela?>(
+              null,
+            ),
             atualizadoEm: Value(DateTime.now()),
           ),
         );

@@ -16,23 +16,73 @@ classDiagram
     Especie "1" --> "0..*" CoeficienteEspecieModelo
     ModeloMatematico "1" --> "0..*" CoeficienteEspecieModelo
     class Arvore {
-        String id
-        String parcelaId
+        int id
+        int parcelaId
         int numero
         double dapCm
         double alturaM
         bool possuiTroncoTortuoso
     }
     class TalhaoLevantamento {
-        String id
-        String levantamentoId
-        String talhaoId
-        String especieId
-        String modeloMatematicoId
+        int id
+        int levantamentoId
+        int talhaoId
+        int especieId
+        int modeloMatematicoId
+    }
+    class Propriedade {
+        int id
+    }
+    class Talhao {
+        int id
+        int propriedadeId
+        int especieId
+    }
+    class Levantamento {
+        int id
+        int propriedadeId
+    }
+    class Especie {
+        int id
+        String codigo
+    }
+    class ModeloMatematico {
+        int id
+        String codigo
+    }
+    class Parcela {
+        int id
+        int talhaoLevantamentoId
+    }
+    class PontoGeograficoParcela {
+        int id
+        int parcelaId
+    }
+    class VariavelModelo {
+        int id
+        int modeloMatematicoId
+    }
+    class CoeficienteModelo {
+        int id
+        int modeloMatematicoId
+    }
+    class EspecieModelo {
+        int especieId
+        int modeloMatematicoId
+    }
+    class CoeficienteEspecieModelo {
+        int id
+        int especieId
+        int modeloMatematicoId
+    }
+    class RegistroAtividade {
+        int id
+        int entidadeId
+        String referenciaLegada
     }
     class PainelResultados
     class RepositorioResultados {
-        observarPainel(filters)
+        observarPainel(filtros)
     }
     class CalculadoraVolumeFlorestal {
         volumeArvoreM3()

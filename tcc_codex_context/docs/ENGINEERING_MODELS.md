@@ -62,7 +62,7 @@ Não incluir estimativa econômica, parser genérico, sincronização ou KMZ com
 ```mermaid
 flowchart TB
     UI["Telas e widgets Flutter<br/>features/*/presentation"]
-    RP["Providers Riverpod<br/>estado e acesso aos repositórios"]
+    RP["Provedores Riverpod<br/>estado e acesso aos repositórios"]
     REPO["Repositórios por funcionalidade<br/>persistência, orquestração e agregações"]
     CALC["CalculadoraVolumeFlorestal<br/>equações por árvore e conversões"]
     DB["BancoDendro / Drift<br/>migrações e SQL explícito"]
@@ -107,23 +107,73 @@ classDiagram
     Especie "1" --> "0..*" CoeficienteEspecieModelo
     ModeloMatematico "1" --> "0..*" CoeficienteEspecieModelo
     class Arvore {
-        String id
-        String parcelaId
+        int id
+        int parcelaId
         int numero
         double dapCm
         double alturaM
         bool possuiTroncoTortuoso
     }
     class TalhaoLevantamento {
-        String id
-        String levantamentoId
-        String talhaoId
-        String especieId
-        String modeloMatematicoId
+        int id
+        int levantamentoId
+        int talhaoId
+        int especieId
+        int modeloMatematicoId
+    }
+    class Propriedade {
+        int id
+    }
+    class Talhao {
+        int id
+        int propriedadeId
+        int especieId
+    }
+    class Levantamento {
+        int id
+        int propriedadeId
+    }
+    class Especie {
+        int id
+        String codigo
+    }
+    class ModeloMatematico {
+        int id
+        String codigo
+    }
+    class Parcela {
+        int id
+        int talhaoLevantamentoId
+    }
+    class PontoGeograficoParcela {
+        int id
+        int parcelaId
+    }
+    class VariavelModelo {
+        int id
+        int modeloMatematicoId
+    }
+    class CoeficienteModelo {
+        int id
+        int modeloMatematicoId
+    }
+    class EspecieModelo {
+        int especieId
+        int modeloMatematicoId
+    }
+    class CoeficienteEspecieModelo {
+        int id
+        int especieId
+        int modeloMatematicoId
+    }
+    class RegistroAtividade {
+        int id
+        int entidadeId
+        String referenciaLegada
     }
     class PainelResultados
     class RepositorioResultados {
-        observarPainel(filters)
+        observarPainel(filtros)
     }
     class CalculadoraVolumeFlorestal {
         volumeArvoreM3()
@@ -141,6 +191,7 @@ São nomes reais de registros gerados pelo Drift e de classes de cálculo/result
 
 ```mermaid
 erDiagram
+    %% Schema v11: PKs e FKs inteiras; cardinalidades preservadas.
     propriedades ||--o{ talhoes : possui
     propriedades ||--o{ levantamentos : possui
     especies ||--o{ talhoes : classifica
@@ -171,7 +222,7 @@ registros_atividade é independente: tipo_entidade/entidade_id são referências
 
 ## 5. Modelo físico completo — 15 tabelas
 
-Fonte: classes Table e comandos CREATE TABLE em dendro_database.dart, schemaVersion 10. IDs textuais, números reais, booleanos armazenados como inteiros, enums como texto e datas no armazenamento inteiro padrão do Drift. “nullable” identifica campo opcional.
+Fonte: classes Table e comandos CREATE TABLE em banco_dendro.dart, schemaVersion 11. IDs inteiros autoincrementados; FKs inteiras, números reais, booleanos armazenados como inteiros, enums como texto e datas no armazenamento inteiro padrão do Drift. “nullable” identifica campo opcional.
 
 ```mermaid
 erDiagram
@@ -193,7 +244,7 @@ erDiagram
     modelos_matematicos ||--o{ coeficientes_especie_modelo : parametriza
     talhao_levantamentos ||--o{ coeficientes_talhao_levantamento : preserva
     propriedades {
-        text id PK
+        integer id PK
         text nome
         text municipio
         text estado
@@ -202,7 +253,8 @@ erDiagram
         integer atualizado_em
     }
     especies {
-        text id PK
+        integer id PK
+        text codigo UK "nullable"
         text nome UK
         text nome_cientifico "nullable"
         text descricao "nullable"
@@ -211,7 +263,8 @@ erDiagram
         integer atualizado_em
     }
     modelos_matematicos {
-        text id PK
+        integer id PK
+        text codigo UK "nullable"
         text nome UK
         text descricao "nullable"
         text expressao
@@ -220,8 +273,8 @@ erDiagram
         integer atualizado_em
     }
     variaveis_modelo {
-        text id PK
-        text modelo_matematico_id FK
+        integer id PK
+        integer modelo_matematico_id FK
         text simbolo
         text rotulo
         text unidade
@@ -229,32 +282,32 @@ erDiagram
         text chave_variavel
     }
     coeficientes_modelo {
-        text id PK
-        text modelo_matematico_id FK
+        integer id PK
+        integer modelo_matematico_id FK
         text simbolo
         text rotulo
         real valor "nullable"
     }
     especies_modelos {
-        text especie_id PK,FK
-        text modelo_matematico_id PK,FK
+        integer especie_id PK,FK
+        integer modelo_matematico_id PK,FK
         integer padrao
         integer criado_em
     }
     coeficientes_especie_modelo {
-        text id PK
-        text especie_id FK
-        text modelo_matematico_id FK
+        integer id PK
+        integer especie_id FK
+        integer modelo_matematico_id FK
         text simbolo
         text rotulo
         real valor "nullable"
         integer atualizado_em
     }
     talhoes {
-        text id PK
-        text propriedade_id FK
+        integer id PK
+        integer propriedade_id FK
         text identificacao
-        text especie_id FK
+        integer especie_id FK
         real area_ha
         integer ano_plantio "nullable"
         text espacamento "nullable"
@@ -266,33 +319,33 @@ erDiagram
         integer atualizado_em
     }
     levantamentos {
-        text id PK
-        text propriedade_id FK
+        integer id PK
+        integer propriedade_id FK
         text situacao
         integer iniciado_em
         integer atualizado_em
         integer concluido_em "nullable"
     }
     talhao_levantamentos {
-        text id PK
-        text levantamento_id FK
-        text talhao_id FK
-        text especie_id FK
-        text modelo_matematico_id FK
+        integer id PK
+        integer levantamento_id FK
+        integer talhao_id FK
+        integer especie_id FK
+        integer modelo_matematico_id FK
         real area_padrao_parcela_ha "nullable"
         integer criado_em
         integer atualizado_em
     }
     coeficientes_talhao_levantamento {
-        text id PK
-        text talhao_levantamento_id FK
+        integer id PK
+        integer talhao_levantamento_id FK
         text simbolo
         text rotulo
         real valor "nullable"
     }
     parcelas {
-        text id PK
-        text talhao_levantamento_id FK
+        integer id PK
+        integer talhao_levantamento_id FK
         text identificacao
         text situacao
         real area_ha "nullable"
@@ -301,8 +354,8 @@ erDiagram
         integer atualizado_em
     }
     pontos_geograficos_parcela {
-        text id PK
-        text parcela_id FK
+        integer id PK
+        integer parcela_id FK
         integer ordem_ponto
         text posicao_referencia "nullable"
         real latitude
@@ -311,8 +364,8 @@ erDiagram
         integer capturado_em
     }
     arvores {
-        text id PK
-        text parcela_id FK
+        integer id PK
+        integer parcela_id FK
         integer numero
         real dap_cm
         real altura_m
@@ -326,12 +379,13 @@ erDiagram
         integer atualizado_em
     }
     registros_atividade {
-        text id PK
+        integer id PK
         text tipo
         text titulo
         text subtitulo
         text tipo_entidade "nullable"
-        text entidade_id "nullable"
+        integer entidade_id "nullable"
+        text referencia_legada "nullable"
         integer ocorrido_em
     }
 ```
@@ -391,13 +445,13 @@ Este é um percurso de uso, não uma regra que obrigue finalizar tudo antes de c
 sequenceDiagram
     actor U as Usuário
     participant T as Tela de resultados
-    participant P as Provider Riverpod
+    participant P as Provedor Riverpod
     participant R as RepositorioResultados
     participant D as BancoDendro
     participant C as CalculadoraVolumeFlorestal
     U->>T: Selecionar filtros
     T->>P: Observar painel filtrado
-    P->>R: observarPainel(filters)
+    P->>R: observarPainel(filtros)
     R->>D: Consultar parcelas, vínculos, fórmulas e árvores
     D-->>R: Registros locais
     R->>D: Ler coeficientes da coleta ou catálogo
@@ -435,3 +489,9 @@ Parcelas têm pendente, emAndamento e coletada. A gravação de árvores e a fin
 A visão de relacionamentos é mais legível no corpo do artigo; o modelo com todos os atributos pode ser apêndice ou dividido em coleta e catálogos. Manter nomes/cardinalidades ao redesenhar. Legendas sugeridas: “Funções implementadas do DENDRO Mobile”, “Arquitetura da aplicação” e “Modelo de dados da aplicação”. Indicar elaboração própria com base na implementação.
 
 Para descrever resultados, observar as limitações em BUSINESS_RULES.md: fórmulas genéricas não interpretadas, valores padrão, ausência de estimativa econômica, escopos históricos distintos e validação acadêmica pendente.
+
+No diagrama de classes, codigo de Especie/ModeloMatematico e entidadeId/referenciaLegada de RegistroAtividade são opcionais. A nulabilidade física está detalhada no diagrama completo. EspecieModelo conserva PK composta; RegistroAtividade não tem FK para uma entidade única.
+
+## Identificadores — schema v11
+
+As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a PK composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional: os padrões conservam seus códigos estáveis; cadastros personalizados não precisam gerar códigos nem UUID. As regras de escolha de modelos usam codigo, sem alterar expressões ou coeficientes. registros_atividade usa entidade_id inteiro opcional, sem FK polimórfica; referencia_legada conserva apenas referências antigas sem entidade correspondente. São 15 tabelas e 115 colunas.

@@ -172,7 +172,8 @@ class _AberturaTelaEstado extends ConsumerState<TelaAbertura> {
                     duration: const Duration(milliseconds: 180),
                     child: _possuiErro
                         ? TextButton(
-                            onPressed: () => unawaited(_prepararEAbrirAplicativo()),
+                            onPressed: () =>
+                                unawaited(_prepararEAbrirAplicativo()),
                             child: const Text(
                               'Tentar novamente',
                               style: TextStyle(color: Colors.white),

@@ -1,16 +1,19 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../nucleo/banco/banco_dendro.dart';
 import '../../../nucleo/provedores/provedores_banco.dart';
 import '../../atividades/dados/repositorio_atividades.dart';
 
-final provedorRepositorioPropriedades = Provider<RepositorioPropriedades>((ref) {
+final provedorRepositorioPropriedades = Provider<RepositorioPropriedades>((
+  ref,
+) {
   return RepositorioPropriedades(ref.watch(provedorBancoDendro));
 });
 
-final provedorPropriedadeBuscaConsulta = StateProvider.autoDispose<String>((ref) {
+final provedorPropriedadeBuscaConsulta = StateProvider.autoDispose<String>((
+  ref,
+) {
   return '';
 });
 
@@ -73,7 +76,6 @@ class RepositorioPropriedades {
   RepositorioPropriedades(this._bancoDados);
 
   final BancoDendro _bancoDados;
-  final _uuid = const Uuid();
   late final RepositorioAtividades _registroAtividade = RepositorioAtividades(
     _bancoDados,
   );
@@ -89,19 +91,23 @@ class RepositorioPropriedades {
       ..orderBy([(tabela) => OrderingTerm.asc(tabela.nome)]);
 
     if (normalizadoConsulta.isNotEmpty) {
-      instrucaoSql.where((tabela) => tabela.nome.like('%$normalizadoConsulta%'));
+      instrucaoSql.where(
+        (tabela) => tabela.nome.like('%$normalizadoConsulta%'),
+      );
     }
     if (municipio.isNotEmpty) {
       instrucaoSql.where((tabela) => tabela.municipio.like('%$municipio%'));
     }
     if (filtros.minimoAreaHa != null) {
       instrucaoSql.where(
-        (tabela) => tabela.areaTotalHa.isBiggerOrEqualValue(filtros.minimoAreaHa!),
+        (tabela) =>
+            tabela.areaTotalHa.isBiggerOrEqualValue(filtros.minimoAreaHa!),
       );
     }
     if (filtros.maximoAreaHa != null) {
       instrucaoSql.where(
-        (tabela) => tabela.areaTotalHa.isSmallerOrEqualValue(filtros.maximoAreaHa!),
+        (tabela) =>
+            tabela.areaTotalHa.isSmallerOrEqualValue(filtros.maximoAreaHa!),
       );
     }
 
@@ -112,7 +118,9 @@ class RepositorioPropriedades {
         final resumo = PropriedadeResumo(
           propriedade: propriedade,
           talhaoQuantidade: await _quantidadeTalhoes(propriedade.id),
-          levantamentoQuantidade: await _quantidadeLevantamentos(propriedade.id),
+          levantamentoQuantidade: await _quantidadeLevantamentos(
+            propriedade.id,
+          ),
         );
 
         if (filtros.minimoTalhaoQuantidade != null &&
@@ -138,25 +146,27 @@ class RepositorioPropriedades {
       ..orderBy([(tabela) => OrderingTerm.asc(tabela.nome)]);
 
     if (normalizadoConsulta.isNotEmpty) {
-      instrucaoSql.where((tabela) => tabela.nome.like('%$normalizadoConsulta%'));
+      instrucaoSql.where(
+        (tabela) => tabela.nome.like('%$normalizadoConsulta%'),
+      );
     }
 
     return instrucaoSql.get();
   }
 
-  Future<Propriedade?> buscarPorId(String id) {
+  Future<Propriedade?> buscarPorId(int id) {
     return (_bancoDados.select(
       _bancoDados.propriedades,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();
   }
 
-  Future<String> criar({
+  Future<int> criar({
     required String nome,
     required String municipio,
     String estado = 'RS',
     required double areaTotalHa,
   }) async {
-    final id = _uuid.v4();
+    late final int id;
     final agora = DateTime.now();
 
     final propriedadeNome = nome.trim();
@@ -164,11 +174,10 @@ class RepositorioPropriedades {
     final estadoCode = estado.trim();
 
     await _bancoDados.transaction(() async {
-      await _bancoDados
+      id = await _bancoDados
           .into(_bancoDados.propriedades)
           .insert(
             PropriedadesCompanion.insert(
-              id: id,
               nome: propriedadeNome,
               municipio: municipioNome,
               estado: Value(estadoCode),
@@ -192,7 +201,7 @@ class RepositorioPropriedades {
   }
 
   Future<void> atualizar({
-    required String id,
+    required int id,
     required String nome,
     required String municipio,
     required String estado,
@@ -227,7 +236,7 @@ class RepositorioPropriedades {
     });
   }
 
-  Future<void> excluir(String id) async {
+  Future<void> excluir(int id) async {
     final propriedade = await buscarPorId(id);
 
     await _bancoDados.transaction(() async {
@@ -247,7 +256,7 @@ class RepositorioPropriedades {
     });
   }
 
-  Future<PropriedadeResumo?> obterResumo(String id) async {
+  Future<PropriedadeResumo?> obterResumo(int id) async {
     final propriedade = await buscarPorId(id);
     if (propriedade == null) return null;
 
@@ -258,7 +267,7 @@ class RepositorioPropriedades {
     );
   }
 
-  Future<int> _quantidadeTalhoes(String propriedadeId) async {
+  Future<int> _quantidadeTalhoes(int propriedadeId) async {
     final quantidade = _bancoDados.talhoes.id.count();
 
     final linha =
@@ -270,13 +279,15 @@ class RepositorioPropriedades {
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<int> _quantidadeLevantamentos(String propriedadeId) async {
+  Future<int> _quantidadeLevantamentos(int propriedadeId) async {
     final quantidade = _bancoDados.levantamentos.id.count();
 
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.levantamentos)
               ..addColumns([quantidade])
-              ..where(_bancoDados.levantamentos.propriedadeId.equals(propriedadeId)))
+              ..where(
+                _bancoDados.levantamentos.propriedadeId.equals(propriedadeId),
+              ))
             .getSingle();
 
     return linha.read(quantidade) ?? 0;

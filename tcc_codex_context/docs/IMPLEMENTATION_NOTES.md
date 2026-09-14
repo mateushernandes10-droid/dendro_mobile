@@ -1,6 +1,6 @@
 # Estado da implementação e evidências
 
-Revisão documental em 13/09/2026, versão refatorada em português (base 82f29e2). Os documentos foram alinhados à versão atual por solicitação do usuário, que encerrou o escopo de desenvolvimento. Esta revisão não altera o código do aplicativo.
+Revisão em 13/09/2026: schema v11, com IDs inteiros autoincrementados e FKs inteiras. A migração preserva dados e relacionamentos. Consultar REFATORACAO_IDS_INTEIROS.md para os arquivos e verificações desta etapa; REFATORACAO_NOMENCLATURA.md é o relatório histórico da v10.
 
 ## Implementação disponível
 
@@ -40,7 +40,7 @@ A tela Novo levantamento reutiliza o formulário de propriedade; salvar atualiza
 
 | Tema | Fonte |
 |---|---|
-| Banco v10, 15 tabelas, carga inicial | lib/nucleo/banco/banco_dendro.dart |
+| Banco v11, 15 tabelas, carga inicial | lib/nucleo/banco/banco_dendro.dart |
 | Fórmulas e conversões | lib/nucleo/floresta/calculadora_volume_florestal.dart |
 | Painel e filtros | lib/funcionalidades/resultados/dados/repositorio_resultados.dart |
 | Formatos, conteúdo e escopo de exportação | lib/funcionalidades/exportacao_dados/dados/repositorio_exportacao_dados.dart |
@@ -51,9 +51,9 @@ A tela Novo levantamento reutiliza o formulário de propriedade; salvar atualiza
 
 ## Testes e build
 
-Na última execução registrada nesta conversa: 36 testes automatizados aprovados e flutter analyze sem problemas. Há arquivos de teste para banco, migração do modelo, calculadora, exportação bruta, tema, propriedades e interface geral. Esta revisão documental não executou novamente testes do aplicativo e não deve ser citada como novo ensaio.
+Antes da refatoração, os 36 testes existentes passaram. Além de mantê-los, foram acrescentados testes de migração com estrutura SQL legada, comparação de dados, chaves estrangeiras e índices, tradução dos enums e reversão de alterações em caso de falha. Os resultados finais estão em REFATORACAO_NOMENCLATURA.md. Isso é verificação de software, não validação florestal com usuários.
 
-Foi gerado APK debug em build/app/outputs/flutter-apk/app-debug.apk durante o desenvolvimento. A existência desse build não garante que todos os aparelhos estejam com a mesma versão instalada. Não há serviço de distribuição do APK integrado ao app.
+Na conclusão da refatoração, flutter analyze não apresentou apontamentos, os 53 testes passaram e foi compilado o APK debug em build/app/outputs/flutter-apk/app-debug.apk. Ele não foi instalado automaticamente. A existência desse build não garante que todos os aparelhos estejam com a mesma versão instalada. Não há serviço de distribuição do APK integrado ao app.
 
 Configuração e uso de emulador são atividades de desenvolvimento. Testes com usuários, comparação manual independente de um inventário e validação técnica continuam pendentes para o artigo.
 
@@ -61,4 +61,8 @@ Configuração e uso de emulador são atividades de desenvolvimento. Testes com 
 
 ENGINEERING_MODELS.md reúne as figuras atualizadas. O diretório diagrams/ guarda fontes Mermaid editáveis. ARCHITECTURE.md descreve componentes reais e REQUIREMENTS.md classifica o atendimento de cada requisito. BUSINESS_RULES.md registra inclusive os comportamentos alternativos e limitações do cálculo.
 
-DECISIONS.md preserva decisões históricas: ler primeiro D-043. BRANDING.md e UI_REFERENCE.md são referências de identidade/projeto visual; seus exemplos não demonstram que uma função foi implementada.
+DECISIONS.md preserva decisões históricas: ler primeiro D-045. BRANDING.md e UI_REFERENCE.md são referências de identidade/projeto visual; seus exemplos não demonstram que uma função foi implementada.
+
+## Identificadores — schema v11
+
+As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a PK composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional: os padrões conservam seus códigos estáveis; cadastros personalizados não precisam gerar códigos nem UUID. As regras de escolha de modelos usam codigo, sem alterar expressões ou coeficientes. registros_atividade usa entidade_id inteiro opcional, sem FK polimórfica; referencia_legada conserva apenas referências antigas sem entidade correspondente. São 15 tabelas e 115 colunas.

@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 typedef AbrirAbaResultados =
-    void Function({
-      String? propriedadeId,
-      Set<String>? talhaoIds,
-      String? especieId,
-    });
+    void Function({int? propriedadeId, Set<int>? talhaoIds, int? especieId});
 
 class NavegacaoEstruturaDendro extends InheritedWidget {
   const NavegacaoEstruturaDendro({

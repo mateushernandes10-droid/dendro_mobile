@@ -72,8 +72,7 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
               selecionadoIndex: _selecionadoAtivoLevantamentoIndex,
               aoPaginaAlterado: (indice) =>
                   setState(() => _selecionadoAtivoLevantamentoIndex = indice),
-              aoContinuar: (coleta) =>
-                  _abrirAtivoColeta(context, coleta),
+              aoContinuar: (coleta) => _abrirAtivoColeta(context, coleta),
             );
           },
           loading: () => const _AtivoColetaCarregandoCartao(),
@@ -88,7 +87,8 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
             Expanded(
               child: IndicadorBloco(
                 rotulo: 'Árvores medidas',
-                valor: (selecionadoLevantamentoResumo?.arvoreQuantidade ?? 0).toString(),
+                valor: (selecionadoLevantamentoResumo?.arvoreQuantidade ?? 0)
+                    .toString(),
                 icone: Icons.park_outlined,
               ),
             ),
@@ -96,7 +96,9 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
             Expanded(
               child: IndicadorBloco(
                 rotulo: 'Área medida',
-                valor: _formatoArea(selecionadoLevantamentoResumo?.medidaAreaHa ?? 0),
+                valor: _formatoArea(
+                  selecionadoLevantamentoResumo?.medidaAreaHa ?? 0,
+                ),
                 icone: Icons.area_chart_outlined,
               ),
             ),
@@ -164,8 +166,8 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
   }
 
   Future<void> _abrirNovoLevantamentoPainel(BuildContext context) async {
-    final levantamentoId = await Navigator.of(context).push<String>(
-      MaterialPageRoute<String>(
+    final levantamentoId = await Navigator.of(context).push<int>(
+      MaterialPageRoute<int>(
         builder: (context) => const TelaNovoLevantamento(),
       ),
     );
@@ -174,18 +176,16 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
     _abrirLevantamento(context, levantamentoId);
   }
 
-  void _abrirLevantamento(BuildContext context, String levantamentoId) {
+  void _abrirLevantamento(BuildContext context, int levantamentoId) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => TelaDetalheLevantamento(levantamentoId: levantamentoId),
+        builder: (context) =>
+            TelaDetalheLevantamento(levantamentoId: levantamentoId),
       ),
     );
   }
 
-  void _abrirAtivoColeta(
-    BuildContext context,
-    _AtivoColetaItem coleta,
-  ) {
+  void _abrirAtivoColeta(BuildContext context, _AtivoColetaItem coleta) {
     final talhaoResumo = coleta.talhaoResumo;
     if (talhaoResumo == null) {
       _abrirLevantamento(context, coleta.levantamentoResumo.levantamento.id);
@@ -204,14 +204,14 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
     );
   }
 
-  _AtivoColetaItem? _selecionadoColeta(
-    List<_AtivoColetaItem> coletas,
-  ) {
+  _AtivoColetaItem? _selecionadoColeta(List<_AtivoColetaItem> coletas) {
     if (coletas.isEmpty) return null;
     if (_selecionadoAtivoLevantamentoIndex >= coletas.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          setState(() => _selecionadoAtivoLevantamentoIndex = coletas.length - 1);
+          setState(
+            () => _selecionadoAtivoLevantamentoIndex = coletas.length - 1,
+          );
         }
       });
       return coletas.last;
@@ -230,9 +230,7 @@ class _AtivoColetaItem {
   final LevantamentoTalhaoResumo? talhaoResumo;
 }
 
-List<_AtivoColetaItem> _ativoColetaItens(
-  List<LevantamentoResumo> resumos,
-) {
+List<_AtivoColetaItem> _ativoColetaItens(List<LevantamentoResumo> resumos) {
   return [
     for (final resumo in resumos)
       if (resumo.talhoes.isEmpty)
@@ -337,10 +335,7 @@ class _AtivoColetaPontos extends StatelessWidget {
 }
 
 class _AtivoColetaCartao extends StatelessWidget {
-  const _AtivoColetaCartao({
-    required this.coleta,
-    required this.aoContinuar,
-  });
+  const _AtivoColetaCartao({required this.coleta, required this.aoContinuar});
 
   final _AtivoColetaItem? coleta;
   final VoidCallback? aoContinuar;
@@ -381,14 +376,16 @@ class _AtivoColetaCartao extends StatelessWidget {
 
     final levantamentoResumo = ativoColeta.levantamentoResumo;
     final talhaoResumo = ativoColeta.talhaoResumo;
-    final titulo = talhaoResumo?.talhao.identificacao ?? levantamentoResumo.talhaoRotulo;
+    final titulo =
+        talhaoResumo?.talhao.identificacao ?? levantamentoResumo.talhaoRotulo;
     final subtituloPrefixo = talhaoResumo?.especie.nome;
     final propriedadeRotulo =
         '${levantamentoResumo.propriedade.nome} - ${levantamentoResumo.propriedade.municipio}-${levantamentoResumo.propriedade.estado}';
     final subtitulo = subtituloPrefixo == null
         ? propriedadeRotulo
         : '$subtituloPrefixo • $propriedadeRotulo';
-    final arvoreQuantidade = talhaoResumo?.arvoreQuantidade ?? levantamentoResumo.arvoreQuantidade;
+    final arvoreQuantidade =
+        talhaoResumo?.arvoreQuantidade ?? levantamentoResumo.arvoreQuantidade;
     final medidaAreaHa =
         talhaoResumo?.medidaAreaHa ?? levantamentoResumo.medidaAreaHa;
 
@@ -509,17 +506,20 @@ class _NovoLevantamentoPainel extends ConsumerStatefulWidget {
   const _NovoLevantamentoPainel();
 
   @override
-  ConsumerState<_NovoLevantamentoPainel> createState() => _NovoLevantamentoPainelEstado();
+  ConsumerState<_NovoLevantamentoPainel> createState() =>
+      _NovoLevantamentoPainelEstado();
 }
 
-class _NovoLevantamentoPainelEstado extends ConsumerState<_NovoLevantamentoPainel> {
-  static const _novoTalhaoOpcaoValor = '__new_stand__';
+class _NovoLevantamentoPainelEstado
+    extends ConsumerState<_NovoLevantamentoPainel> {
+  static const _novoTalhaoOpcaoValor = -1;
 
-  String? _propriedadeId;
-  String? _talhaoId;
-  String? _pendenteCriadoTalhaoId;
+  int? _propriedadeId;
+  int? _talhaoId;
+  int? _pendenteCriadoTalhaoId;
   String? _iniciarErroMensagem;
-  final Map<String, LevantamentoModeloMatematicoSelecao> _selecoesModeloPorTalhaoId = {};
+  final Map<int, LevantamentoModeloMatematicoSelecao>
+  _selecoesModeloPorTalhaoId = {};
   bool _salvando = false;
 
   @override
@@ -549,7 +549,7 @@ class _NovoLevantamentoPainelEstado extends ConsumerState<_NovoLevantamentoPaine
                         'Cadastre uma propriedade e seus talhões antes de iniciar a coleta.',
                   )
                 else ...[
-                  DropdownButtonFormField<String>(
+                  DropdownButtonFormField<int>(
                     key: ValueKey('property-$_propriedadeId'),
                     initialValue: _propriedadeId,
                     decoration: const InputDecoration(
@@ -598,7 +598,7 @@ class _NovoLevantamentoPainelEstado extends ConsumerState<_NovoLevantamentoPaine
     );
   }
 
-  Widget _talhaoSeletor({required String propriedadeId}) {
+  Widget _talhaoSeletor({required int propriedadeId}) {
     final talhoes = ref.watch(provedorPropriedadeTalhoes(propriedadeId));
 
     return talhoes.when(
@@ -612,7 +612,9 @@ class _NovoLevantamentoPainelEstado extends ConsumerState<_NovoLevantamentoPaine
             mensagem:
                 'Cadastre ao menos um talhão nessa propriedade antes de iniciar o levantamento.',
             acao: OutlinedButton.icon(
-              onPressed: _salvando ? null : () => _abrirNovoTalhaoPainel(propriedadeId),
+              onPressed: _salvando
+                  ? null
+                  : () => _abrirNovoTalhaoPainel(propriedadeId),
               icon: const Icon(Icons.add),
               label: const Text('Novo talhão'),
             ),
@@ -633,7 +635,7 @@ class _NovoLevantamentoPainelEstado extends ConsumerState<_NovoLevantamentoPaine
               _PainelErroMensagem(mensagem: visivelErro),
               const SizedBox(height: 12),
             ],
-            DropdownButtonFormField<String>(
+            DropdownButtonFormField<int>(
               key: ValueKey('stand-$propriedadeId-$_talhaoId'),
               initialValue: _talhaoId,
               decoration: const InputDecoration(
@@ -685,7 +687,9 @@ class _NovoLevantamentoPainelEstado extends ConsumerState<_NovoLevantamentoPaine
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.play_arrow_rounded),
-                label: Text(_salvando ? 'Iniciando...' : 'Iniciar levantamento'),
+                label: Text(
+                  _salvando ? 'Iniciando...' : 'Iniciar levantamento',
+                ),
               ),
             ),
           ],
@@ -697,7 +701,8 @@ class _NovoLevantamentoPainelEstado extends ConsumerState<_NovoLevantamentoPaine
         titulo: 'Não foi possível carregar os talhões',
         mensagem: 'Tente novamente para escolher o talhão do levantamento.',
         acao: OutlinedButton.icon(
-          onPressed: () => ref.invalidate(provedorPropriedadeTalhoes(propriedadeId)),
+          onPressed: () =>
+              ref.invalidate(provedorPropriedadeTalhoes(propriedadeId)),
           icon: const Icon(Icons.refresh),
           label: const Text('Tentar novamente'),
         ),
@@ -745,7 +750,7 @@ class _NovoLevantamentoPainelEstado extends ConsumerState<_NovoLevantamentoPaine
     }
   }
 
-  void _aoTalhaoAlterado(String? valor) {
+  void _aoTalhaoAlterado(int? valor) {
     if (valor == _novoTalhaoOpcaoValor) {
       final propriedadeId = _propriedadeId;
       if (propriedadeId != null) {
@@ -760,13 +765,14 @@ class _NovoLevantamentoPainelEstado extends ConsumerState<_NovoLevantamentoPaine
     });
   }
 
-  Future<void> _abrirNovoTalhaoPainel(String propriedadeId) async {
+  Future<void> _abrirNovoTalhaoPainel(int propriedadeId) async {
     final criacao = await showModalBottomSheet<_RapidoTalhaoCriacao>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (context) => _RapidoTalhaoFormularioPainel(propriedadeId: propriedadeId),
+      builder: (context) =>
+          _RapidoTalhaoFormularioPainel(propriedadeId: propriedadeId),
     );
 
     if (criacao == null || !mounted) return;
@@ -871,14 +877,15 @@ class _PainelErroMensagem extends StatelessWidget {
 class _RapidoTalhaoFormularioPainel extends ConsumerStatefulWidget {
   const _RapidoTalhaoFormularioPainel({required this.propriedadeId});
 
-  final String propriedadeId;
+  final int propriedadeId;
 
   @override
   ConsumerState<_RapidoTalhaoFormularioPainel> createState() =>
       _RapidoTalhaoFormularioPainelEstado();
 }
 
-class _RapidoTalhaoFormularioPainelEstado extends ConsumerState<_RapidoTalhaoFormularioPainel> {
+class _RapidoTalhaoFormularioPainelEstado
+    extends ConsumerState<_RapidoTalhaoFormularioPainel> {
   final _chaveFormulario = GlobalKey<FormState>();
   final _identificacaoControlador = TextEditingController();
   final _areaControlador = TextEditingController();
@@ -889,7 +896,7 @@ class _RapidoTalhaoFormularioPainelEstado extends ConsumerState<_RapidoTalhaoFor
   final _parcelaComprimentoControlador = TextEditingController();
   final _observacoesControlador = TextEditingController();
   LevantamentoModeloMatematicoSelecao? _modeloMatematicoSelecao;
-  String? _especieId;
+  int? _especieId;
   bool _salvando = false;
 
   @override
@@ -954,7 +961,7 @@ class _RapidoTalhaoFormularioPainelEstado extends ConsumerState<_RapidoTalhaoFor
               especies.when(
                 data: (itens) {
                   _sincronizarEspecieSelecao(itens);
-                  return DropdownButtonFormField<String>(
+                  return DropdownButtonFormField<int>(
                     key: ValueKey('quick-species-$_especieId'),
                     initialValue: _especieId,
                     decoration: const InputDecoration(
@@ -1103,11 +1110,17 @@ class _RapidoTalhaoFormularioPainelEstado extends ConsumerState<_RapidoTalhaoFor
             identificacao: _identificacaoControlador.text,
             especieId: _especieId!,
             areaHa: _interpretarArea(_areaControlador.text)!,
-            anoPlantio: _interpretarOpcionalInteiro(_plantioAnoControlador.text),
+            anoPlantio: _interpretarOpcionalInteiro(
+              _plantioAnoControlador.text,
+            ),
             espacamento: _espacamentoControlador.text,
             regimeManejo: _manejoRegimeControlador.text,
-            larguraParcelaM: _interpretarOpcionalArea(_parcelaLarguraControlador.text),
-            comprimentoParcelaM: _interpretarOpcionalArea(_parcelaComprimentoControlador.text),
+            larguraParcelaM: _interpretarOpcionalArea(
+              _parcelaLarguraControlador.text,
+            ),
+            comprimentoParcelaM: _interpretarOpcionalArea(
+              _parcelaComprimentoControlador.text,
+            ),
             observacoes: _observacoesControlador.text,
           );
 
@@ -1140,7 +1153,9 @@ class _RapidoTalhaoFormularioPainelEstado extends ConsumerState<_RapidoTalhaoFor
       return;
     }
 
-    final selecionadoAindaExiste = especies.any((item) => item.id == _especieId);
+    final selecionadoAindaExiste = especies.any(
+      (item) => item.id == _especieId,
+    );
     if (_especieId == null || !selecionadoAindaExiste) {
       _especieId = especies.first.id;
       _modeloMatematicoSelecao = null;
@@ -1209,7 +1224,7 @@ class _RapidoTalhaoCriacao {
     required this.modeloMatematicoSelecao,
   });
 
-  final String talhaoId;
+  final int talhaoId;
   final LevantamentoModeloMatematicoSelecao? modeloMatematicoSelecao;
 }
 

@@ -15,7 +15,7 @@ import 'componentes/painel_selecao_modelo_levantamento.dart';
 class TelaDetalheLevantamento extends ConsumerWidget {
   const TelaDetalheLevantamento({required this.levantamentoId, super.key});
 
-  final String levantamentoId;
+  final int levantamentoId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,17 +40,26 @@ class TelaDetalheLevantamento extends ConsumerWidget {
 
             return _LevantamentoCorpo(
               resumo: resumo,
-              aoConcluirLevantamento: () => _confirmarConcluirLevantamento(context, ref, resumo),
-              aoExcluirLevantamento: () => _confirmarExcluirLevantamento(context, ref, resumo),
+              aoConcluirLevantamento: () =>
+                  _confirmarConcluirLevantamento(context, ref, resumo),
+              aoExcluirLevantamento: () =>
+                  _confirmarExcluirLevantamento(context, ref, resumo),
               aoExportacaoLevantamento: () => _abrirExportacao(context, resumo),
-              aoEditarTalhao: (talhao) => _abrirTalhaoFormulario(context, talhao),
+              aoEditarTalhao: (talhao) =>
+                  _abrirTalhaoFormulario(context, talhao),
               aoRemoverTalhao: (talhao) =>
-                  _confirmarRemoverTalhaoDeLevantamento(context, ref, resumo, talhao),
+                  _confirmarRemoverTalhaoDeLevantamento(
+                    context,
+                    ref,
+                    resumo,
+                    talhao,
+                  ),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (erro, pilhaTrace) => _CarregarErro(
-            aoTentarNovamente: () => ref.invalidate(provedorLevantamentoDetalhe(levantamentoId)),
+            aoTentarNovamente: () =>
+                ref.invalidate(provedorLevantamentoDetalhe(levantamentoId)),
           ),
         ),
       ),
@@ -62,7 +71,8 @@ class TelaDetalheLevantamento extends ConsumerWidget {
     WidgetRef ref,
     LevantamentoResumo resumo,
   ) async {
-    final possuiAbrirParcelas = resumo.abrirParcelaQuantidade > 0 || resumo.parcelaQuantidade == 0;
+    final possuiAbrirParcelas =
+        resumo.abrirParcelaQuantidade > 0 || resumo.parcelaQuantidade == 0;
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -70,7 +80,9 @@ class TelaDetalheLevantamento extends ConsumerWidget {
           possuiAbrirParcelas
               ? Icons.warning_amber_rounded
               : Icons.check_circle_outline,
-          color: possuiAbrirParcelas ? Colors.red.shade700 : CoresDendro.principal,
+          color: possuiAbrirParcelas
+              ? Colors.red.shade700
+              : CoresDendro.principal,
         ),
         title: const Text('Encerrar levantamento'),
         content: Text(_concluirLevantamentoMensagem(resumo)),
@@ -152,7 +164,9 @@ class TelaDetalheLevantamento extends ConsumerWidget {
     final navegador = Navigator.of(context);
 
     try {
-      await ref.read(provedorRepositorioLevantamentos).excluirLevantamento(resumo.levantamento.id);
+      await ref
+          .read(provedorRepositorioLevantamentos)
+          .excluirLevantamento(resumo.levantamento.id);
       ref.invalidate(provedorLevantamentoDetalhe(resumo.levantamento.id));
       ref.invalidate(provedorLevantamentos);
       ref.invalidate(provedorAtivoLevantamentos);
@@ -184,12 +198,17 @@ class TelaDetalheLevantamento extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (context) =>
-          _LevantamentoTalhaoFormularioPainel(levantamentoId: levantamentoId, resumo: resumo),
+      builder: (context) => _LevantamentoTalhaoFormularioPainel(
+        levantamentoId: levantamentoId,
+        resumo: resumo,
+      ),
     );
   }
 
-  Future<void> _abrirExportacao(BuildContext context, LevantamentoResumo resumo) {
+  Future<void> _abrirExportacao(
+    BuildContext context,
+    LevantamentoResumo resumo,
+  ) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (context) => TelaExportacaoDados(
@@ -206,7 +225,8 @@ class TelaDetalheLevantamento extends ConsumerWidget {
     LevantamentoResumo levantamentoResumo,
     LevantamentoTalhaoResumo talhaoResumo,
   ) async {
-    final possuiDados = talhaoResumo.parcelaQuantidade > 0 || talhaoResumo.arvoreQuantidade > 0;
+    final possuiDados =
+        talhaoResumo.parcelaQuantidade > 0 || talhaoResumo.arvoreQuantidade > 0;
     final mensagem = possuiDados
         ? 'O talhão ${talhaoResumo.talhao.identificacao} já possui ${talhaoResumo.parcelaQuantidade} ${_plural(talhaoResumo.parcelaQuantidade, 'parcela')} e ${talhaoResumo.arvoreQuantidade} ${_plural(talhaoResumo.arvoreQuantidade, 'árvore')} registrada${talhaoResumo.arvoreQuantidade == 1 ? '' : 's'} neste levantamento. Se confirmar, todos os dados desse talhão dentro do levantamento serão apagados permanentemente. O cadastro do talhão na propriedade será mantido. Deseja continuar?'
         : 'Deseja remover o talhão ${talhaoResumo.talhao.identificacao} deste levantamento? O cadastro do talhão na propriedade será mantido.';
@@ -265,11 +285,15 @@ class TelaDetalheLevantamento extends ConsumerWidget {
     WidgetRef ref,
     LevantamentoResumo levantamentoResumo,
   ) {
-    ref.invalidate(provedorLevantamentoDetalhe(levantamentoResumo.levantamento.id));
+    ref.invalidate(
+      provedorLevantamentoDetalhe(levantamentoResumo.levantamento.id),
+    );
     ref.invalidate(provedorLevantamentos);
     ref.invalidate(provedorAtivoLevantamentos);
     ref.invalidate(provedorAtivoLevantamento);
-    ref.invalidate(provedorPropriedadeTalhoes(levantamentoResumo.propriedade.id));
+    ref.invalidate(
+      provedorPropriedadeTalhoes(levantamentoResumo.propriedade.id),
+    );
     ref.invalidate(provedorLevantamentoIniciarOpcoes);
   }
 }
@@ -297,7 +321,8 @@ class _LevantamentoCorpo extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         _LevantamentoResumoCartao(resumo: resumo),
-        if (resumo.levantamento.situacao == SituacaoLevantamento.emAndamento) ...[
+        if (resumo.levantamento.situacao ==
+            SituacaoLevantamento.emAndamento) ...[
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -353,7 +378,9 @@ class _LevantamentoCorpo extends StatelessWidget {
         const SizedBox(height: 18),
         SecaoTitulo(
           titulo: 'Talhões do levantamento',
-          complemento: SituacaoIndicador(rotulo: '${resumo.talhoes.length} total'),
+          complemento: SituacaoIndicador(
+            rotulo: '${resumo.talhoes.length} total',
+          ),
         ),
         if (resumo.talhoes.isEmpty)
           const CartaoDendro(
@@ -402,7 +429,9 @@ class _LevantamentoResumoCartao extends StatelessWidget {
         children: [
           Row(
             children: [
-              SituacaoIndicador(rotulo: _situacaoRotulo(resumo.levantamento.situacao)),
+              SituacaoIndicador(
+                rotulo: _situacaoRotulo(resumo.levantamento.situacao),
+              ),
               const Spacer(),
               const Icon(Icons.assignment, color: CoresDendro.principal),
             ],
@@ -512,7 +541,8 @@ class _LevantamentoTalhaoCartao extends StatelessWidget {
                   ),
                 ),
                 SituacaoIndicador(
-                  rotulo: '${resumo.coletadaParcelaQuantidade}/${resumo.parcelaQuantidade}',
+                  rotulo:
+                      '${resumo.coletadaParcelaQuantidade}/${resumo.parcelaQuantidade}',
                 ),
                 PopupMenuButton<_LevantamentoTalhaoAcao>(
                   tooltip: 'Ações',
@@ -593,9 +623,12 @@ class _LevantamentoTalhaoCartao extends StatelessWidget {
 enum _LevantamentoTalhaoAcao { editar, remover }
 
 class _LevantamentoTalhaoFormularioPainel extends ConsumerStatefulWidget {
-  const _LevantamentoTalhaoFormularioPainel({required this.levantamentoId, required this.resumo});
+  const _LevantamentoTalhaoFormularioPainel({
+    required this.levantamentoId,
+    required this.resumo,
+  });
 
-  final String levantamentoId;
+  final int levantamentoId;
   final LevantamentoTalhaoResumo resumo;
 
   @override
@@ -615,7 +648,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
   late final TextEditingController _parcelaComprimentoControlador;
   late final TextEditingController _observacoesControlador;
   LevantamentoModeloMatematicoSelecao? _modeloMatematicoSelecao;
-  String? _especieId;
+  int? _especieId;
   bool _salvando = false;
 
   @override
@@ -632,7 +665,9 @@ class _LevantamentoTalhaoFormularioPainelEstado
     _plantioAnoControlador = TextEditingController(
       text: talhao.anoPlantio?.toString() ?? '',
     );
-    _espacamentoControlador = TextEditingController(text: talhao.espacamento ?? '');
+    _espacamentoControlador = TextEditingController(
+      text: talhao.espacamento ?? '',
+    );
     _manejoRegimeControlador = TextEditingController(
       text: talhao.regimeManejo ?? '',
     );
@@ -646,7 +681,9 @@ class _LevantamentoTalhaoFormularioPainelEstado
           ? ''
           : talhao.comprimentoParcelaM!.toStringAsFixed(2).replaceAll('.', ','),
     );
-    _observacoesControlador = TextEditingController(text: talhao.observacoes ?? '');
+    _observacoesControlador = TextEditingController(
+      text: talhao.observacoes ?? '',
+    );
     _especieId = widget.resumo.talhaoLevantamento.especieId;
     _modeloMatematicoSelecao = LevantamentoModeloMatematicoSelecao(
       modeloMatematicoId: widget.resumo.talhaoLevantamento.modeloMatematicoId,
@@ -720,7 +757,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
               especies.when(
                 data: (itens) {
                   _sincronizarEspecieSelecao(itens);
-                  return DropdownButtonFormField<String>(
+                  return DropdownButtonFormField<int>(
                     key: ValueKey('inventory-stand-species-$_especieId'),
                     initialValue: _especieId,
                     isExpanded: true,
@@ -873,11 +910,17 @@ class _LevantamentoTalhaoFormularioPainelEstado
             identificacao: _identificacaoControlador.text,
             especieId: _especieId!,
             areaHa: _interpretarArea(_areaControlador.text)!,
-            anoPlantio: _interpretarOpcionalInteiro(_plantioAnoControlador.text),
+            anoPlantio: _interpretarOpcionalInteiro(
+              _plantioAnoControlador.text,
+            ),
             espacamento: _espacamentoControlador.text,
             regimeManejo: _manejoRegimeControlador.text,
-            larguraParcelaM: _interpretarOpcionalArea(_parcelaLarguraControlador.text),
-            comprimentoParcelaM: _interpretarOpcionalArea(_parcelaComprimentoControlador.text),
+            larguraParcelaM: _interpretarOpcionalArea(
+              _parcelaLarguraControlador.text,
+            ),
+            comprimentoParcelaM: _interpretarOpcionalArea(
+              _parcelaComprimentoControlador.text,
+            ),
             observacoes: _observacoesControlador.text,
             modeloMatematicoSelecao: _modeloMatematicoSelecao,
           );
@@ -886,7 +929,9 @@ class _LevantamentoTalhaoFormularioPainelEstado
       ref.invalidate(provedorLevantamentos);
       ref.invalidate(provedorAtivoLevantamentos);
       ref.invalidate(provedorAtivoLevantamento);
-      ref.invalidate(provedorPropriedadeTalhoes(widget.resumo.talhao.propriedadeId));
+      ref.invalidate(
+        provedorPropriedadeTalhoes(widget.resumo.talhao.propriedadeId),
+      );
       ref.invalidate(provedorLevantamentoIniciarOpcoes);
 
       if (!mounted) return;
@@ -925,7 +970,9 @@ class _LevantamentoTalhaoFormularioPainelEstado
       return;
     }
 
-    final selecionadoAindaExiste = especies.any((item) => item.id == _especieId);
+    final selecionadoAindaExiste = especies.any(
+      (item) => item.id == _especieId,
+    );
     if (_especieId == null || !selecionadoAindaExiste) {
       _especieId = especies.first.id;
       _modeloMatematicoSelecao = null;

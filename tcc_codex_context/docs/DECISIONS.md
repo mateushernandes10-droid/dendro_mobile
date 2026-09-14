@@ -1,5 +1,35 @@
 # DECISIONS.md
 
+## D-045 — IDs inteiros autoincrementados, schema v11 (13/09/2026)
+
+Por solicitação do usuário, as 14 PKs simples textuais passaram para INTEGER PRIMARY KEY AUTOINCREMENT; especies_modelos mantém PK composta com FKs inteiras. Não foram criadas entidades ou camadas apenas para os diagramas.
+
+Espécies e modelos possuem codigo opcional e único. Os códigos de modelos padrão substituem a dependência anterior do conteúdo da PK na seleção dos cálculos. Códigos significativos legados são preservados; UUIDs sem significado deixam de ser necessários. Modelos personalizados continuam sendo reconhecidos pela expressão com o mesmo comportamento anterior.
+
+A migração v10 → v11 cria tabelas novas e copia registros em ordem de dependências, mantendo mapas temporários de ID textual para inteiro. Valores e relações são preservados, IDs internos mudam. Renomeação temporária, criação, cópia, remoção das tabelas antigas e validação ocorrem na mesma transação. PRAGMA foreign_keys é temporariamente desativado fora da transação e restaurado ao final; foreign_key_check é exigido antes do commit. Falhas causam rollback. Não exige reinstalação nem reset.
+
+O histórico mantém entidade_id inteiro nullable sem FK direta; referencias a entidades já excluídas permanecem em referencia_legada, com entidade_id nulo. Eventos de exportação usam o ID da propriedade, conforme o comportamento existente.
+
+UUID foi removido dos imports/código próprio e dependências diretas. Continua transitivamente por share_plus_platform_interface e geolocator_android, sem interferir nas PKs do aplicativo. Nomes externos e contratos das plataformas permanecem intactos.
+
+REFATORACAO_IDS_INTEIROS.md registra validações e arquivos. As decisões anteriores são históricas; para o estado atual, prevalece D-045.
+
+
+## D-044 — Nomenclatura em português e migração v9 → v10 (13/09/2026)
+
+Por solicitação expressa do usuário, o código próprio, os caminhos internos, as tabelas físicas e suas colunas foram refatorados para português, sem mudança de regras de negócio, fórmulas ou funcionalidades. A nova autorização substitui apenas a restrição anterior de não editar o código; não amplia o escopo funcional.
+
+- `BancoDendro`, `Propriedade`, `Talhao`, `Especie`, `ModeloMatematico`, `Levantamento`, `Parcela`, `Arvore` e `RegistroAtividade` representam os mesmos componentes anteriores.
+- Usar ModeloMatematico para o cadastro que reúne expressão, variáveis e coeficientes. A expressão continua chamada `expressao`; identificadores históricos como `formula_spurr` são preservados como valores de dados.
+- Repositórios e provedores próprios têm nomes em português. APIs externas e seus overrides continuam com os nomes exigidos pelas dependências.
+- O banco passa da versão 9 para 10, com as mesmas 15 tabelas e 112 colunas. `talhao_levantamentos` mantém seu nome; suas referências foram traduzidas.
+- A migração usa ALTER TABLE RENAME TO / RENAME COLUMN, em transação. Não apaga/recria tabelas com dados. Valores de enums são convertidos para a nomenclatura nova.
+- Para bancos anteriores à v9, a tradução precede as etapas históricas de atualização, agora operando nos nomes novos. O nome do arquivo `dendro_mobile` e os IDs existentes permanecem estáveis.
+- Consultas SQL manuais, código gerado, testes, documentação e fontes Mermaid foram atualizados. A referência legada para testes está em test/fixtures/esquema_v9.sql e enums_v9.json.
+- Nomes legados permanecem no código de migração e fixtures; nomes de arquivos de preferência, chaves de serialização e contratos Android permanecem para compatibilidade.
+
+O relatório REFATORACAO_NOMENCLATURA.md registra os arquivos, a estratégia e a validação final. As decisões anteriores abaixo são históricas e usam a nomenclatura da época.
+
 ## D-043 — Documentação da versão de encerramento do desenvolvimento (13/09/2026)
 
 Por solicitação do usuário, a documentação foi revisada contra o código ce282bb para representar o aplicativo atual, sem novas alterações funcionais. PROJECT_CONTEXT, REQUIREMENTS, BUSINESS_RULES, ARCHITECTURE, ENGINEERING_MODELS e IMPLEMENTATION_NOTES descrevem o estado vigente.

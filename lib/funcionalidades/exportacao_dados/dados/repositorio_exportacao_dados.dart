@@ -14,13 +14,20 @@ import '../../../nucleo/floresta/calculadora_volume_florestal.dart';
 import '../../../nucleo/provedores/provedores_banco.dart';
 import '../../atividades/dados/repositorio_atividades.dart';
 
-final provedorRepositorioExportacaoDados = Provider<RepositorioExportacaoDados>((ref) {
-  return RepositorioExportacaoDados(ref.watch(provedorBancoDendro));
-});
+final provedorRepositorioExportacaoDados = Provider<RepositorioExportacaoDados>(
+  (ref) {
+    return RepositorioExportacaoDados(ref.watch(provedorBancoDendro));
+  },
+);
 
 final provedorExportacaoDados = FutureProvider.autoDispose
-    .family<EstadoExportacaoDados, ExportacaoDadosSolicitacao>((ref, solicitacao) {
-      return ref.watch(provedorRepositorioExportacaoDados).carregar(solicitacao);
+    .family<EstadoExportacaoDados, ExportacaoDadosSolicitacao>((
+      ref,
+      solicitacao,
+    ) {
+      return ref
+          .watch(provedorRepositorioExportacaoDados)
+          .carregar(solicitacao);
     });
 
 enum FormatoExportacaoDados {
@@ -63,9 +70,9 @@ class ExportacaoDadosSolicitacao {
     this.especieId,
   });
 
-  final String? propriedadeId;
-  final String? levantamentoId;
-  final String? especieId;
+  final int? propriedadeId;
+  final int? levantamentoId;
+  final int? especieId;
 
   @override
   bool operator ==(Object other) {
@@ -114,7 +121,10 @@ class ExportacaoDadosTalhaoOpcao {
   final double medidaAreaHa;
   final int geograficoPontoQuantidade;
 
-  bool get possuiDados => parcelaQuantidade > 0 || arvoreQuantidade > 0 || geograficoPontoQuantidade > 0;
+  bool get possuiDados =>
+      parcelaQuantidade > 0 ||
+      arvoreQuantidade > 0 ||
+      geograficoPontoQuantidade > 0;
 }
 
 class GeradoExportacaoDadosArquivo {
@@ -150,7 +160,9 @@ class ExportacaoDadosConjuntoDados {
     (total, talhao) =>
         total +
         talhao.parcelas
-            .where((parcela) => parcela.parcela.situacao == SituacaoParcela.coletada)
+            .where(
+              (parcela) => parcela.parcela.situacao == SituacaoParcela.coletada,
+            )
             .length,
   );
 
@@ -186,7 +198,10 @@ class ExportacaoDadosConjuntoDados {
         for (final parcela in talhao.parcelas) ...parcela.arvores,
     ];
     if (todosArvores.isEmpty) return null;
-    return todosArvores.fold<double>(0, (total, arvore) => total + arvore.dapCm) /
+    return todosArvores.fold<double>(
+          0,
+          (total, arvore) => total + arvore.dapCm,
+        ) /
         todosArvores.length;
   }
 
@@ -196,7 +211,10 @@ class ExportacaoDadosConjuntoDados {
         for (final parcela in talhao.parcelas) ...parcela.arvores,
     ];
     if (todosArvores.isEmpty) return null;
-    return todosArvores.fold<double>(0, (total, arvore) => total + arvore.alturaM) /
+    return todosArvores.fold<double>(
+          0,
+          (total, arvore) => total + arvore.alturaM,
+        ) /
         todosArvores.length;
   }
 }
@@ -221,7 +239,9 @@ class ExportacaoDadosTalhaoConjuntoDados {
     0,
     (total, parcela) =>
         total +
-        (parcela.parcela.situacao == SituacaoParcela.pendente ? 0 : parcela.parcela.areaHa ?? 0),
+        (parcela.parcela.situacao == SituacaoParcela.pendente
+            ? 0
+            : parcela.parcela.areaHa ?? 0),
   );
 
   Map<String, double?> get coeficienteValoresPorSimbolo => {
@@ -267,7 +287,8 @@ class ExportacaoDadosTalhaoConjuntoDados {
           parcela.arvores.fold<double>(
             0,
             (parcelaTotal, arvore) =>
-                parcelaTotal + math.pi * (arvore.dapCm / 200) * (arvore.dapCm / 200),
+                parcelaTotal +
+                math.pi * (arvore.dapCm / 200) * (arvore.dapCm / 200),
           ),
     );
   }
@@ -283,7 +304,7 @@ class ExportacaoDadosTalhaoConjuntoDados {
       dapCm: arvore.dapCm,
       alturaM: arvore.alturaM,
       coeficientes: coeficienteValoresPorSimbolo,
-      modeloMatematicoId: modeloMatematico?.id,
+      modeloMatematicoCodigo: modeloMatematico?.codigo,
       modeloMatematicoExpressao: modeloMatematico?.expressao,
     );
   }
@@ -291,14 +312,20 @@ class ExportacaoDadosTalhaoConjuntoDados {
   double? get mediaDapCm {
     final todosArvores = [for (final parcela in parcelas) ...parcela.arvores];
     if (todosArvores.isEmpty) return null;
-    return todosArvores.fold<double>(0, (total, arvore) => total + arvore.dapCm) /
+    return todosArvores.fold<double>(
+          0,
+          (total, arvore) => total + arvore.dapCm,
+        ) /
         todosArvores.length;
   }
 
   double? get mediaAlturaM {
     final todosArvores = [for (final parcela in parcelas) ...parcela.arvores];
     if (todosArvores.isEmpty) return null;
-    return todosArvores.fold<double>(0, (total, arvore) => total + arvore.alturaM) /
+    return todosArvores.fold<double>(
+          0,
+          (total, arvore) => total + arvore.alturaM,
+        ) /
         todosArvores.length;
   }
 }
@@ -335,12 +362,15 @@ class RepositorioExportacaoDados {
     _bancoDados,
   );
 
-  Future<EstadoExportacaoDados> carregar(ExportacaoDadosSolicitacao solicitacao) async {
+  Future<EstadoExportacaoDados> carregar(
+    ExportacaoDadosSolicitacao solicitacao,
+  ) async {
     final propriedades = await _propriedades();
     final levantamento = solicitacao.levantamentoId == null
         ? null
         : await _levantamentoPorId(solicitacao.levantamentoId!);
-    final propriedadeId = levantamento?.propriedadeId ?? solicitacao.propriedadeId;
+    final propriedadeId =
+        levantamento?.propriedadeId ?? solicitacao.propriedadeId;
     final propriedade = propriedadeId == null
         ? null
         : await _propriedadePorId(propriedadeId);
@@ -365,7 +395,7 @@ class RepositorioExportacaoDados {
   Future<GeradoExportacaoDadosArquivo> gerarArquivo({
     required ExportacaoDadosSolicitacao solicitacao,
     required FormatoExportacaoDados formato,
-    required Set<String> talhaoLevantamentoIds,
+    required Set<int> talhaoLevantamentoIds,
   }) async {
     final conjuntoDados = await _conjuntoDadosParaExportacao(
       solicitacao: solicitacao,
@@ -406,7 +436,9 @@ class RepositorioExportacaoDados {
     required int talhaoQuantidade,
   }) {
     final formatoRotulo = formatos.join(', ');
-    final talhaoRotulo = talhaoQuantidade == 1 ? '1 talhão' : '$talhaoQuantidade talhões';
+    final talhaoRotulo = talhaoQuantidade == 1
+        ? '1 talhão'
+        : '$talhaoQuantidade talhões';
     return _registroAtividade.registroExportacao(
       formato: '$formatoRotulo - $talhaoRotulo',
       propriedadeNome: propriedade.nome,
@@ -416,7 +448,7 @@ class RepositorioExportacaoDados {
 
   Future<ExportacaoDadosConjuntoDados> _conjuntoDadosParaExportacao({
     required ExportacaoDadosSolicitacao solicitacao,
-    required Set<String> talhaoLevantamentoIds,
+    required Set<int> talhaoLevantamentoIds,
   }) async {
     final estado = await carregar(solicitacao);
     final propriedade = estado.propriedade;
@@ -438,7 +470,9 @@ class RepositorioExportacaoDados {
     final talhoes = <ExportacaoDadosTalhaoConjuntoDados>[];
     for (final opcao in selecionadoOpcoes) {
       final parcelas = await _parcelasParaTalhao(opcao.talhaoLevantamento.id);
-      final modeloMatematico = await _modeloMatematicoPorId(opcao.talhaoLevantamento.modeloMatematicoId);
+      final modeloMatematico = await _modeloMatematicoPorId(
+        opcao.talhaoLevantamento.modeloMatematicoId,
+      );
       final coeficientes = await _coeficientesParaTalhao(
         talhaoLevantamentoId: opcao.talhaoLevantamento.id,
         especieId: opcao.talhaoLevantamento.especieId,
@@ -455,7 +489,9 @@ class RepositorioExportacaoDados {
               ExportacaoDadosParcelaConjuntoDados(
                 parcela: parcela,
                 arvores: await _arvoresParaParcela(parcela.id),
-                geograficoPontos: await _geograficoPontosParaParcela(parcela.id),
+                geograficoPontos: await _geograficoPontosParaParcela(
+                  parcela.id,
+                ),
               ),
           ],
         ),
@@ -475,28 +511,28 @@ class RepositorioExportacaoDados {
     )..orderBy([(tabela) => OrderingTerm.asc(tabela.nome)])).get();
   }
 
-  Future<Propriedade?> _propriedadePorId(String id) {
+  Future<Propriedade?> _propriedadePorId(int id) {
     return (_bancoDados.select(
       _bancoDados.propriedades,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();
   }
 
-  Future<Levantamento?> _levantamentoPorId(String id) {
+  Future<Levantamento?> _levantamentoPorId(int id) {
     return (_bancoDados.select(
       _bancoDados.levantamentos,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();
   }
 
-  Future<ModeloMatematico?> _modeloMatematicoPorId(String id) {
+  Future<ModeloMatematico?> _modeloMatematicoPorId(int id) {
     return (_bancoDados.select(
       _bancoDados.modelosMatematicos,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();
   }
 
   Future<List<ExportacaoDadosCoeficiente>> _coeficientesParaTalhao({
-    required String talhaoLevantamentoId,
-    required String especieId,
-    required String modeloMatematicoId,
+    required int talhaoLevantamentoId,
+    required int especieId,
+    required int modeloMatematicoId,
   }) async {
     final linhas = await _bancoDados
         .customSelect(
@@ -506,7 +542,7 @@ FROM coeficientes_talhao_levantamento
 WHERE talhao_levantamento_id = ?
 ORDER BY simbolo
 ''',
-          variables: [Variable<String>(talhaoLevantamentoId)],
+          variables: [Variable<int>(talhaoLevantamentoId)],
           readsFrom: const {},
         )
         .get();
@@ -523,7 +559,9 @@ ORDER BY simbolo
             simbolo: linha.read<String>('simbolo'),
             rotulo: linha.read<String>('rotulo'),
             valor: _efetivoCoeficienteValor(
-              modeloMatematicoId: modeloMatematicoId,
+              modeloMatematicoCodigo: await _bancoDados.codigoModeloPorId(
+                modeloMatematicoId,
+              ),
               simbolo: linha.read<String>('simbolo'),
               valor: linha.readNullable<double>('valor'),
               especieValores: especieValores,
@@ -535,7 +573,10 @@ ORDER BY simbolo
 
     final coeficientes =
         await (_bancoDados.select(_bancoDados.coeficientesModelo)
-              ..where((tabela) => tabela.modeloMatematicoId.equals(modeloMatematicoId))
+              ..where(
+                (tabela) =>
+                    tabela.modeloMatematicoId.equals(modeloMatematicoId),
+              )
               ..orderBy([(tabela) => OrderingTerm.asc(tabela.simbolo)]))
             .get();
 
@@ -545,7 +586,9 @@ ORDER BY simbolo
           simbolo: coeficiente.simbolo,
           rotulo: coeficiente.rotulo,
           valor: _efetivoCoeficienteValor(
-            modeloMatematicoId: modeloMatematicoId,
+            modeloMatematicoCodigo: await _bancoDados.codigoModeloPorId(
+              modeloMatematicoId,
+            ),
             simbolo: coeficiente.simbolo,
             valor: coeficiente.valor,
             especieValores: especieValores,
@@ -556,8 +599,8 @@ ORDER BY simbolo
   }
 
   Future<Map<String, double?>> _especieCoeficienteValores({
-    required String especieId,
-    required String modeloMatematicoId,
+    required int especieId,
+    required int modeloMatematicoId,
   }) async {
     final coeficientes =
         await (_bancoDados.select(_bancoDados.coeficientesEspecieModelo)..where(
@@ -573,11 +616,13 @@ ORDER BY simbolo
   }
 
   Future<Map<String, double?>> _globalCoeficienteValores(
-    String modeloMatematicoId,
+    int modeloMatematicoId,
   ) async {
-    final coeficientes = await (_bancoDados.select(
-      _bancoDados.coeficientesModelo,
-    )..where((tabela) => tabela.modeloMatematicoId.equals(modeloMatematicoId))).get();
+    final coeficientes =
+        await (_bancoDados.select(_bancoDados.coeficientesModelo)..where(
+              (tabela) => tabela.modeloMatematicoId.equals(modeloMatematicoId),
+            ))
+            .get();
     return {
       for (final coeficiente in coeficientes)
         coeficiente.simbolo: coeficiente.valor,
@@ -585,7 +630,7 @@ ORDER BY simbolo
   }
 
   double? _efetivoCoeficienteValor({
-    required String modeloMatematicoId,
+    required String? modeloMatematicoCodigo,
     required String simbolo,
     required double? valor,
     required Map<String, double?> especieValores,
@@ -595,20 +640,22 @@ ORDER BY simbolo
         especieValores[simbolo] ??
         globalValores[simbolo] ??
         CalculadoraVolumeFlorestal.valorPadraoCoeficiente(
-          modeloMatematicoId: modeloMatematicoId,
+          modeloMatematicoCodigo: modeloMatematicoCodigo,
           simbolo: simbolo,
         );
   }
 
   Future<List<ExportacaoDadosTalhaoOpcao>> _talhaoOpcoesParaLevantamento({
-    required String levantamentoId,
-    String? especieId,
+    required int levantamentoId,
+    int? especieId,
   }) async {
     final condicoes = <Expression<bool>>[
       _bancoDados.talhaoLevantamentos.levantamentoId.equals(levantamentoId),
     ];
     if (especieId != null) {
-      condicoes.add(_bancoDados.talhaoLevantamentos.especieId.equals(especieId));
+      condicoes.add(
+        _bancoDados.talhaoLevantamentos.especieId.equals(especieId),
+      );
     }
 
     final consulta =
@@ -632,9 +679,10 @@ ORDER BY simbolo
     return _opcoesDeLinhas(await consulta.get());
   }
 
-  Future<List<ExportacaoDadosTalhaoOpcao>> _maisRecenteTalhaoOpcoesParaPropriedade({
-    required String? propriedadeId,
-    String? especieId,
+  Future<List<ExportacaoDadosTalhaoOpcao>>
+  _maisRecenteTalhaoOpcoesParaPropriedade({
+    required int? propriedadeId,
+    int? especieId,
   }) async {
     if (propriedadeId == null) return const [];
 
@@ -642,7 +690,9 @@ ORDER BY simbolo
       _bancoDados.talhoes.propriedadeId.equals(propriedadeId),
     ];
     if (especieId != null) {
-      condicoes.add(_bancoDados.talhaoLevantamentos.especieId.equals(especieId));
+      condicoes.add(
+        _bancoDados.talhaoLevantamentos.especieId.equals(especieId),
+      );
     }
 
     final consulta =
@@ -672,7 +722,7 @@ ORDER BY simbolo
             OrderingTerm.desc(_bancoDados.talhaoLevantamentos.atualizadoEm),
           ]);
 
-    final maisRecenteLinhasPorTalhaoId = <String, TypedResult>{};
+    final maisRecenteLinhasPorTalhaoId = <int, TypedResult>{};
     for (final linha in await consulta.get()) {
       final talhao = linha.readTable(_bancoDados.talhoes);
       maisRecenteLinhasPorTalhaoId.putIfAbsent(talhao.id, () => linha);
@@ -687,17 +737,23 @@ ORDER BY simbolo
     final opcoes = <ExportacaoDadosTalhaoOpcao>[];
 
     for (final linha in linhas) {
-      final talhaoLevantamento = linha.readTable(_bancoDados.talhaoLevantamentos);
+      final talhaoLevantamento = linha.readTable(
+        _bancoDados.talhaoLevantamentos,
+      );
       opcoes.add(
         ExportacaoDadosTalhaoOpcao(
           talhaoLevantamento: talhaoLevantamento,
           talhao: linha.readTable(_bancoDados.talhoes),
           especie: linha.readTable(_bancoDados.especies),
           parcelaQuantidade: await _quantidadeParcelas(talhaoLevantamento.id),
-          coletadaParcelaQuantidade: await _quantidadeColetadaParcelas(talhaoLevantamento.id),
+          coletadaParcelaQuantidade: await _quantidadeColetadaParcelas(
+            talhaoLevantamento.id,
+          ),
           arvoreQuantidade: await _quantidadeArvores(talhaoLevantamento.id),
           medidaAreaHa: await _somaMedidaArea(talhaoLevantamento.id),
-          geograficoPontoQuantidade: await _quantidadeGeograficoPontos(talhaoLevantamento.id),
+          geograficoPontoQuantidade: await _quantidadeGeograficoPontos(
+            talhaoLevantamento.id,
+          ),
         ),
       );
     }
@@ -708,7 +764,7 @@ ORDER BY simbolo
     return opcoes;
   }
 
-  Future<int> _quantidadeParcelas(String talhaoLevantamentoId) async {
+  Future<int> _quantidadeParcelas(int talhaoLevantamentoId) async {
     final quantidade = _bancoDados.parcelas.id.count();
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.parcelas)
@@ -723,7 +779,7 @@ ORDER BY simbolo
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<int> _quantidadeColetadaParcelas(String talhaoLevantamentoId) async {
+  Future<int> _quantidadeColetadaParcelas(int talhaoLevantamentoId) async {
     final quantidade = _bancoDados.parcelas.id.count();
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.parcelas)
@@ -732,20 +788,24 @@ ORDER BY simbolo
                 _bancoDados.parcelas.talhaoLevantamentoId.equals(
                       talhaoLevantamentoId,
                     ) &
-                    _bancoDados.parcelas.situacao.equalsValue(SituacaoParcela.coletada),
+                    _bancoDados.parcelas.situacao.equalsValue(
+                      SituacaoParcela.coletada,
+                    ),
               ))
             .getSingle();
 
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<int> _quantidadeArvores(String talhaoLevantamentoId) async {
+  Future<int> _quantidadeArvores(int talhaoLevantamentoId) async {
     final quantidade = _bancoDados.arvores.id.count();
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.arvores).join([
                 innerJoin(
                   _bancoDados.parcelas,
-                  _bancoDados.parcelas.id.equalsExp(_bancoDados.arvores.parcelaId),
+                  _bancoDados.parcelas.id.equalsExp(
+                    _bancoDados.arvores.parcelaId,
+                  ),
                 ),
               ])
               ..addColumns([quantidade])
@@ -759,7 +819,7 @@ ORDER BY simbolo
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<double> _somaMedidaArea(String talhaoLevantamentoId) async {
+  Future<double> _somaMedidaArea(int talhaoLevantamentoId) async {
     final linha = await _bancoDados
         .customSelect(
           '''
@@ -769,7 +829,7 @@ WHERE talhao_levantamento_id = ?
   AND situacao != ?
 ''',
           variables: [
-            Variable<String>(talhaoLevantamentoId),
+            Variable<int>(talhaoLevantamentoId),
             Variable<String>(SituacaoParcela.pendente.name),
           ],
         )
@@ -778,7 +838,7 @@ WHERE talhao_levantamento_id = ?
     return linha.read<double>('area');
   }
 
-  Future<int> _quantidadeGeograficoPontos(String talhaoLevantamentoId) async {
+  Future<int> _quantidadeGeograficoPontos(int talhaoLevantamentoId) async {
     final parcelaPontoLinhas = await _bancoDados
         .customSelect(
           '''
@@ -787,7 +847,7 @@ FROM pontos_geograficos_parcela point
 INNER JOIN parcelas plot ON plot.id = point.parcela_id
 WHERE plot.talhao_levantamento_id = ?
 ''',
-          variables: [Variable<String>(talhaoLevantamentoId)],
+          variables: [Variable<int>(talhaoLevantamentoId)],
         )
         .getSingle();
     final arvorePontoLinhas = await _bancoDados
@@ -800,7 +860,7 @@ WHERE plot.talhao_levantamento_id = ?
   AND tree.latitude IS NOT NULL
   AND tree.longitude IS NOT NULL
 ''',
-          variables: [Variable<String>(talhaoLevantamentoId)],
+          variables: [Variable<int>(talhaoLevantamentoId)],
         )
         .getSingle();
 
@@ -808,10 +868,11 @@ WHERE plot.talhao_levantamento_id = ?
         (arvorePontoLinhas.read<int>('count'));
   }
 
-  Future<List<Parcela>> _parcelasParaTalhao(String talhaoLevantamentoId) {
+  Future<List<Parcela>> _parcelasParaTalhao(int talhaoLevantamentoId) {
     return (_bancoDados.select(_bancoDados.parcelas)
           ..where(
-            (tabela) => tabela.talhaoLevantamentoId.equals(talhaoLevantamentoId),
+            (tabela) =>
+                tabela.talhaoLevantamentoId.equals(talhaoLevantamentoId),
           )
           ..orderBy([
             (tabela) => OrderingTerm.asc(tabela.identificacao),
@@ -820,14 +881,16 @@ WHERE plot.talhao_levantamento_id = ?
         .get();
   }
 
-  Future<List<Arvore>> _arvoresParaParcela(String parcelaId) {
+  Future<List<Arvore>> _arvoresParaParcela(int parcelaId) {
     return (_bancoDados.select(_bancoDados.arvores)
           ..where((tabela) => tabela.parcelaId.equals(parcelaId))
           ..orderBy([(tabela) => OrderingTerm.asc(tabela.numero)]))
         .get();
   }
 
-  Future<List<PontoGeograficoParcela>> _geograficoPontosParaParcela(String parcelaId) {
+  Future<List<PontoGeograficoParcela>> _geograficoPontosParaParcela(
+    int parcelaId,
+  ) {
     return (_bancoDados.select(_bancoDados.pontosGeograficosParcela)
           ..where((tabela) => tabela.parcelaId.equals(parcelaId))
           ..orderBy([
@@ -878,7 +941,10 @@ Future<List<int>> _pdfBytes(ExportacaoDadosConjuntoDados conjuntoDados) async {
               _dataHora(conjuntoDados.levantamento!.iniciadoEm),
             ],
           if (conjuntoDados.levantamento != null)
-            ['Status', _levantamentoSituacaoRotulo(conjuntoDados.levantamento!.situacao)],
+            [
+              'Status',
+              _levantamentoSituacaoRotulo(conjuntoDados.levantamento!.situacao),
+            ],
         ]),
         pw.SizedBox(height: 12),
         _pdfSecaoTitulo('2. Objetivo'),
@@ -904,7 +970,10 @@ Future<List<int>> _pdfBytes(ExportacaoDadosConjuntoDados conjuntoDados) async {
           ['Talhões inventariados', conjuntoDados.talhoes.length.toString()],
           ['Parcelas avaliadas', conjuntoDados.parcelaQuantidade.toString()],
           ['Árvores amostradas', conjuntoDados.arvoreQuantidade.toString()],
-          ['Área total inventariada', '${_decimal(conjuntoDados.talhaoAreaHa)} ha'],
+          [
+            'Área total inventariada',
+            '${_decimal(conjuntoDados.talhaoAreaHa)} ha',
+          ],
           ['Área total medida', '${_decimal(conjuntoDados.medidaAreaHa)} ha'],
           ['Árvores/ha', _opcionalDecimal(conjuntoDados.arvoresPorHa)],
           [
@@ -919,7 +988,10 @@ Future<List<int>> _pdfBytes(ExportacaoDadosConjuntoDados conjuntoDados) async {
             'Volume estimado total',
             _opcionalDecimal(conjuntoDados.estimadoVolumeM3, sufixo: ' m³'),
           ],
-          ['DAP médio', _opcionalDecimal(conjuntoDados.mediaDapCm, sufixo: ' cm')],
+          [
+            'DAP médio',
+            _opcionalDecimal(conjuntoDados.mediaDapCm, sufixo: ' cm'),
+          ],
           [
             'Altura média',
             _opcionalDecimal(conjuntoDados.mediaAlturaM, sufixo: ' m'),
@@ -973,9 +1045,15 @@ Future<List<int>> _pdfBytes(ExportacaoDadosConjuntoDados conjuntoDados) async {
                     _parcelaSituacaoRotulo(parcela.parcela.situacao),
                     _opcionalDecimal(parcela.parcela.areaHa),
                     parcela.arvores.length.toString(),
-                    _opcionalDecimal(_parcelaVolumeM3(talhao, parcela), sufixo: ' m³'),
+                    _opcionalDecimal(
+                      _parcelaVolumeM3(talhao, parcela),
+                      sufixo: ' m³',
+                    ),
                     _opcionalDecimal(_mediaDap(parcela.arvores), sufixo: ' cm'),
-                    _opcionalDecimal(_mediaAltura(parcela.arvores), sufixo: ' m'),
+                    _opcionalDecimal(
+                      _mediaAltura(parcela.arvores),
+                      sufixo: ' m',
+                    ),
                     parcela.geograficoPontos.length.toString(),
                   ],
               ],
@@ -991,7 +1069,9 @@ Future<List<int>> _pdfBytes(ExportacaoDadosConjuntoDados conjuntoDados) async {
   return documento.save();
 }
 
-Iterable<List<Object?>> _brutoLinhas(ExportacaoDadosConjuntoDados conjuntoDados) sync* {
+Iterable<List<Object?>> _brutoLinhas(
+  ExportacaoDadosConjuntoDados conjuntoDados,
+) sync* {
   yield [
     'Propriedade',
     'Talhão',
@@ -1058,13 +1138,21 @@ List<int> _brutoCsvBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
 
 List<int> _brutoXlsxBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
   final planilha = excel.Excel.createExcel();
-  for (var talhaoIndex = 0; talhaoIndex < conjuntoDados.talhoes.length; talhaoIndex++) {
+  for (
+    var talhaoIndex = 0;
+    talhaoIndex < conjuntoDados.talhoes.length;
+    talhaoIndex++
+  ) {
     final talhao = conjuntoDados.talhoes[talhaoIndex];
     final painelNome = 'Talhão ${talhaoIndex + 1}';
     final painel = planilha[painelNome];
     if (talhaoIndex == 0) planilha.setDefaultSheet(painelNome);
-    painel.appendRow(_excelLinha(['Propriedade', conjuntoDados.propriedade.nome]));
-    painel.appendRow(_excelLinha(['Talhão', talhao.opcao.talhao.identificacao]));
+    painel.appendRow(
+      _excelLinha(['Propriedade', conjuntoDados.propriedade.nome]),
+    );
+    painel.appendRow(
+      _excelLinha(['Talhão', talhao.opcao.talhao.identificacao]),
+    );
     painel.appendRow(
       _excelLinha([
         'Levantamento',
@@ -1074,7 +1162,11 @@ List<int> _brutoXlsxBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
     painel.appendRow(
       _excelLinha(['Colunas de cada parcela: Árvore | DAP (cm) | Altura (m)']),
     );
-    for (var parcelaIndex = 0; parcelaIndex < talhao.parcelas.length; parcelaIndex++) {
+    for (
+      var parcelaIndex = 0;
+      parcelaIndex < talhao.parcelas.length;
+      parcelaIndex++
+    ) {
       final parcela = talhao.parcelas[parcelaIndex];
       final coluna = parcelaIndex * 4;
       final titulo = painel.cell(
@@ -1082,10 +1174,22 @@ List<int> _brutoXlsxBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
       );
       titulo.value = excel.TextCellValue(parcela.parcela.identificacao);
       titulo.cellStyle = excel.CellStyle(bold: true);
-      for (var arvoreIndex = 0; arvoreIndex < parcela.arvores.length; arvoreIndex++) {
+      for (
+        var arvoreIndex = 0;
+        arvoreIndex < parcela.arvores.length;
+        arvoreIndex++
+      ) {
         final arvore = parcela.arvores[arvoreIndex];
-        final values = _excelLinha([arvore.numero, arvore.dapCm, arvore.alturaM]);
-        for (var deslocamento = 0; deslocamento < values.length; deslocamento++) {
+        final values = _excelLinha([
+          arvore.numero,
+          arvore.dapCm,
+          arvore.alturaM,
+        ]);
+        for (
+          var deslocamento = 0;
+          deslocamento < values.length;
+          deslocamento++
+        ) {
           painel
                   .cell(
                     excel.CellIndex.indexByColumnRow(
@@ -1104,7 +1208,8 @@ List<int> _brutoXlsxBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
 }
 
 List<int> _csvBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
-  final referenciaData = conjuntoDados.levantamento?.iniciadoEm ?? DateTime.now();
+  final referenciaData =
+      conjuntoDados.levantamento?.iniciadoEm ?? DateTime.now();
   final buffer = StringBuffer()
     ..writeln(
       _csvLinha([
@@ -1148,7 +1253,9 @@ List<int> _csvBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
 
   for (final talhao in conjuntoDados.talhoes) {
     for (final parcela in talhao.parcelas) {
-      final primeiroPonto = parcela.geograficoPontos.isEmpty ? null : parcela.geograficoPontos.first;
+      final primeiroPonto = parcela.geograficoPontos.isEmpty
+          ? null
+          : parcela.geograficoPontos.first;
       if (parcela.arvores.isEmpty) {
         buffer.writeln(
           _csvLinha([
@@ -1160,7 +1267,9 @@ List<int> _csvBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
                 : _dataHora(conjuntoDados.levantamento!.iniciadoEm),
             conjuntoDados.levantamento == null
                 ? ''
-                : _levantamentoSituacaoRotulo(conjuntoDados.levantamento!.situacao),
+                : _levantamentoSituacaoRotulo(
+                    conjuntoDados.levantamento!.situacao,
+                  ),
             talhao.opcao.talhao.identificacao,
             talhao.opcao.especie.nome,
             _decimal(talhao.opcao.talhao.areaHa),
@@ -1197,7 +1306,8 @@ List<int> _csvBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
       }
 
       for (final arvore in parcela.arvores) {
-        final parcelaPonto = _correspondenteParcelaPonto(parcela, arvore) ?? primeiroPonto;
+        final parcelaPonto =
+            _correspondenteParcelaPonto(parcela, arvore) ?? primeiroPonto;
 
         buffer.writeln(
           _csvLinha([
@@ -1209,7 +1319,9 @@ List<int> _csvBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
                 : _dataHora(conjuntoDados.levantamento!.iniciadoEm),
             conjuntoDados.levantamento == null
                 ? ''
-                : _levantamentoSituacaoRotulo(conjuntoDados.levantamento!.situacao),
+                : _levantamentoSituacaoRotulo(
+                    conjuntoDados.levantamento!.situacao,
+                  ),
             talhao.opcao.talhao.identificacao,
             talhao.opcao.especie.nome,
             _decimal(talhao.opcao.talhao.areaHa),
@@ -1250,7 +1362,8 @@ List<int> _csvBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
 }
 
 List<int> _xlsxBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
-  final referenciaData = conjuntoDados.levantamento?.iniciadoEm ?? DateTime.now();
+  final referenciaData =
+      conjuntoDados.levantamento?.iniciadoEm ?? DateTime.now();
   final planilha = excel.Excel.createExcel();
   final resumo = planilha['Resumo'];
   final arvores = planilha['Árvores'];
@@ -1271,7 +1384,10 @@ List<int> _xlsxBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
       ]),
     )
     ..appendRow(
-      _excelLinha(['Área cadastrada (ha)', conjuntoDados.propriedade.areaTotalHa]),
+      _excelLinha([
+        'Área cadastrada (ha)',
+        conjuntoDados.propriedade.areaTotalHa,
+      ]),
     )
     ..appendRow(_excelLinha(['Gerado em', _dataHora(DateTime.now())]))
     ..appendRow(_excelLinha([]))
@@ -1459,7 +1575,9 @@ List<int> _kmlBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
     ..writeln('<?xml version="1.0" encoding="UTF-8"?>')
     ..writeln('<kml xmlns="http://www.opengis.net/kml/2.2">')
     ..writeln('<Document>')
-    ..writeln('<name>${_xml('DENDRO - ${conjuntoDados.propriedade.nome}')}</name>')
+    ..writeln(
+      '<name>${_xml('DENDRO - ${conjuntoDados.propriedade.nome}')}</name>',
+    )
     ..writeln('''
 <Style id="plotPoint">
   <IconStyle><color>ff6ac46a</color><scale>1.1</scale></IconStyle>
@@ -1544,7 +1662,10 @@ List<int> _kmlBytes(ExportacaoDadosConjuntoDados conjuntoDados) {
   return utf8.encode(buffer.toString());
 }
 
-pw.Widget _pdfCabecalho(ExportacaoDadosConjuntoDados conjuntoDados, DateTime geradoEm) {
+pw.Widget _pdfCabecalho(
+  ExportacaoDadosConjuntoDados conjuntoDados,
+  DateTime geradoEm,
+) {
   return pw.Container(
     width: double.infinity,
     padding: const pw.EdgeInsets.all(14),
@@ -1586,7 +1707,10 @@ pw.Widget _pdfCabecalho(ExportacaoDadosConjuntoDados conjuntoDados, DateTime ger
   );
 }
 
-String _objetivoTexto(ExportacaoDadosConjuntoDados conjuntoDados, DateTime referenciaData) {
+String _objetivoTexto(
+  ExportacaoDadosConjuntoDados conjuntoDados,
+  DateTime referenciaData,
+) {
   final especies = _especieFrase(conjuntoDados);
   final idade = _idadeFrase(conjuntoDados, referenciaData);
   return 'O objetivo deste levantamento é apresentar uma análise quantitativa e qualitativa da floresta de $especies$idade, localizada na propriedade ${conjuntoDados.propriedade.nome}, município de ${conjuntoDados.propriedade.municipio}/${conjuntoDados.propriedade.estado}, com área total cadastrada de ${_decimal(conjuntoDados.propriedade.areaTotalHa)} hectares. O relatório consolida os dados coletados nas parcelas selecionadas e estima o volume de madeira para a área inventariada.';
@@ -1640,7 +1764,9 @@ pw.Widget _pdfMarcadorLista(List<String> itens) {
   );
 }
 
-pw.Widget _pdfModeloMatematicoTabela(ExportacaoDadosConjuntoDados conjuntoDados) {
+pw.Widget _pdfModeloMatematicoTabela(
+  ExportacaoDadosConjuntoDados conjuntoDados,
+) {
   return pw.TableHelper.fromTextArray(
     border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
     headerDecoration: const pw.BoxDecoration(color: PdfColors.green900),
@@ -1665,7 +1791,9 @@ pw.Widget _pdfModeloMatematicoTabela(ExportacaoDadosConjuntoDados conjuntoDados)
   );
 }
 
-pw.Widget _pdfEspecieResultadosTabela(ExportacaoDadosConjuntoDados conjuntoDados) {
+pw.Widget _pdfEspecieResultadosTabela(
+  ExportacaoDadosConjuntoDados conjuntoDados,
+) {
   return pw.TableHelper.fromTextArray(
     border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
     headerDecoration: const pw.BoxDecoration(color: PdfColors.green900),
@@ -1819,7 +1947,9 @@ PontoGeograficoParcela? _correspondenteParcelaPonto(
 ) {
   if (arvore.posicaoReferenciaParcela == null) return null;
   for (final ponto in parcela.geograficoPontos) {
-    if (ponto.posicaoReferencia == arvore.posicaoReferenciaParcela) return ponto;
+    if (ponto.posicaoReferencia == arvore.posicaoReferenciaParcela) {
+      return ponto;
+    }
   }
   return null;
 }
@@ -1841,7 +1971,8 @@ String _arquivoNome(Propriedade propriedade, FormatoExportacaoDados formato) {
   final geradoEm = DateTime.now();
   final nome = _seguroArquivoParte(propriedade.nome);
   final tipo =
-      formato == FormatoExportacaoDados.brutoCsv || formato == FormatoExportacaoDados.brutoXlsx
+      formato == FormatoExportacaoDados.brutoCsv ||
+          formato == FormatoExportacaoDados.brutoXlsx
       ? 'dados_brutos_'
       : '';
   return 'dendro_$tipo${nome}_${_arquivoMarcaTempo(geradoEm)}.${formato.extensao}';
@@ -1924,7 +2055,9 @@ double? _parcelaVolumeM3(
   );
 }
 
-List<ExportacaoDadosTalhaoConjuntoDados> _unicoModeloMatematicoUtiliza(ExportacaoDadosConjuntoDados conjuntoDados) {
+List<ExportacaoDadosTalhaoConjuntoDados> _unicoModeloMatematicoUtiliza(
+  ExportacaoDadosConjuntoDados conjuntoDados,
+) {
   final porChave = <String, ExportacaoDadosTalhaoConjuntoDados>{};
   for (final talhao in conjuntoDados.talhoes) {
     final key = [
@@ -1938,8 +2071,10 @@ List<ExportacaoDadosTalhaoConjuntoDados> _unicoModeloMatematicoUtiliza(Exportaca
     ..sort((a, b) => a.opcao.especie.nome.compareTo(b.opcao.especie.nome));
 }
 
-List<_EspecieExportacaoResumo> _especieResumos(ExportacaoDadosConjuntoDados conjuntoDados) {
-  final porEspecie = <String, List<ExportacaoDadosTalhaoConjuntoDados>>{};
+List<_EspecieExportacaoResumo> _especieResumos(
+  ExportacaoDadosConjuntoDados conjuntoDados,
+) {
+  final porEspecie = <int, List<ExportacaoDadosTalhaoConjuntoDados>>{};
   for (final talhao in conjuntoDados.talhoes) {
     porEspecie.putIfAbsent(talhao.opcao.especie.id, () => []).add(talhao);
   }
@@ -1997,7 +2132,10 @@ String _especieFrase(ExportacaoDadosConjuntoDados conjuntoDados) {
   return _juntarLegivelLista(nomes.toList());
 }
 
-String _idadeFrase(ExportacaoDadosConjuntoDados conjuntoDados, DateTime referenciaData) {
+String _idadeFrase(
+  ExportacaoDadosConjuntoDados conjuntoDados,
+  DateTime referenciaData,
+) {
   final idades = <int>{};
   for (final talhao in conjuntoDados.talhoes) {
     final idade = _talhaoIdade(talhao, referenciaData);
@@ -2026,7 +2164,8 @@ double? _mediaParcelaAreaHa(ExportacaoDadosConjuntoDados conjuntoDados) {
   final areas = [
     for (final talhao in conjuntoDados.talhoes)
       for (final parcela in talhao.parcelas)
-        if (parcela.parcela.situacao != SituacaoParcela.pendente && parcela.parcela.areaHa != null)
+        if (parcela.parcela.situacao != SituacaoParcela.pendente &&
+            parcela.parcela.areaHa != null)
           parcela.parcela.areaHa!,
   ];
   if (areas.isEmpty) return null;
@@ -2048,10 +2187,15 @@ String? _parcelaDimensaoFrase(ExportacaoDadosConjuntoDados conjuntoDados) {
   return 'parcelas retangulares com dimensões de ${_juntarLegivelLista(dimensoes)} metros';
 }
 
-String? _talhaoParcelaDimensaoRotulo(ExportacaoDadosTalhaoConjuntoDados talhao) {
+String? _talhaoParcelaDimensaoRotulo(
+  ExportacaoDadosTalhaoConjuntoDados talhao,
+) {
   final largura = talhao.opcao.talhao.larguraParcelaM;
   final comprimento = talhao.opcao.talhao.comprimentoParcelaM;
-  if (largura == null || comprimento == null || largura <= 0 || comprimento <= 0) {
+  if (largura == null ||
+      comprimento == null ||
+      largura <= 0 ||
+      comprimento <= 0) {
     return null;
   }
   return '${_decimalCompacto(largura)} x ${_decimalCompacto(comprimento)}';
@@ -2060,7 +2204,10 @@ String? _talhaoParcelaDimensaoRotulo(ExportacaoDadosTalhaoConjuntoDados talhao) 
 double? _talhaoPadraoParcelaAreaHa(ExportacaoDadosTalhaoConjuntoDados talhao) {
   final largura = talhao.opcao.talhao.larguraParcelaM;
   final comprimento = talhao.opcao.talhao.comprimentoParcelaM;
-  if (largura == null || comprimento == null || largura <= 0 || comprimento <= 0) {
+  if (largura == null ||
+      comprimento == null ||
+      largura <= 0 ||
+      comprimento <= 0) {
     return null;
   }
   return largura * comprimento / 10000;
@@ -2073,7 +2220,10 @@ String _juntarLegivelLista(List<String> values) {
   return '${values.take(values.length - 1).join(', ')} e ${values.last}';
 }
 
-int? _talhaoIdade(ExportacaoDadosTalhaoConjuntoDados talhao, DateTime referenciaData) {
+int? _talhaoIdade(
+  ExportacaoDadosTalhaoConjuntoDados talhao,
+  DateTime referenciaData,
+) {
   final anoPlantio = talhao.opcao.talhao.anoPlantio;
   if (anoPlantio == null || anoPlantio <= 0) return null;
   final idade = referenciaData.year - anoPlantio;
@@ -2083,7 +2233,7 @@ int? _talhaoIdade(ExportacaoDadosTalhaoConjuntoDados talhao, DateTime referencia
 String _volumeEquacaoComValores(ExportacaoDadosTalhaoConjuntoDados talhao) {
   final expressao = (talhao.modeloMatematico?.expressao ?? '').toLowerCase();
   if (expressao.contains('exp(') ||
-      (talhao.modeloMatematico?.id ?? '').contains('schumacher')) {
+      (talhao.modeloMatematico?.codigo ?? '').contains('schumacher')) {
     return 'v = exp(${_coeficienteValor(talhao, 'a')} + ${_coeficienteValor(talhao, 'b')} * Ln(DAP) + ${_coeficienteValor(talhao, 'c')} * Ln(h))';
   }
 
@@ -2100,7 +2250,10 @@ String _conversaoEquacao(ExportacaoDadosTalhaoConjuntoDados talhao) {
   return 'Sem conversão adicional';
 }
 
-String _coeficienteValor(ExportacaoDadosTalhaoConjuntoDados talhao, String simbolo) {
+String _coeficienteValor(
+  ExportacaoDadosTalhaoConjuntoDados talhao,
+  String simbolo,
+) {
   final valor = talhao.coeficienteValoresPorSimbolo[simbolo];
   if (valor == null) return simbolo;
   return _coeficienteNumero(valor);
@@ -2127,7 +2280,9 @@ List<String> _tecnicoObservacoes(ExportacaoDadosConjuntoDados conjuntoDados) {
     'A extrapolação para hectare e talhão considera o volume médio por unidade de área amostrada e a área cadastrada de cada talhão.',
   ];
 
-  if (conjuntoDados.talhoes.any((talhao) => talhao.opcao.talhao.anoPlantio == null)) {
+  if (conjuntoDados.talhoes.any(
+    (talhao) => talhao.opcao.talhao.anoPlantio == null,
+  )) {
     observacoes.add(
       'Há talhões sem ano de plantio informado; nesses casos, idade e IMA não são apresentados.',
     );
@@ -2135,14 +2290,17 @@ List<String> _tecnicoObservacoes(ExportacaoDadosConjuntoDados conjuntoDados) {
   if (conjuntoDados.talhoes.any(
     (talhao) => talhao.parcelas.any(
       (parcela) =>
-          parcela.parcela.situacao != SituacaoParcela.pendente && parcela.parcela.areaHa == null,
+          parcela.parcela.situacao != SituacaoParcela.pendente &&
+          parcela.parcela.areaHa == null,
     ),
   )) {
     observacoes.add(
       'Há parcelas coletadas sem área informada; elas permanecem no relatório, mas não contribuem para extrapolação por hectare.',
     );
   }
-  if (conjuntoDados.talhoes.any((talhao) => _talhaoParcelaDimensaoRotulo(talhao) == null)) {
+  if (conjuntoDados.talhoes.any(
+    (talhao) => _talhaoParcelaDimensaoRotulo(talhao) == null,
+  )) {
     observacoes.add(
       'Há talhões sem largura e comprimento padrão da parcela; nesses casos, o relatório usa a área cadastrada nas parcelas coletadas.',
     );

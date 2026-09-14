@@ -13,11 +13,10 @@ import '../dados/repositorio_arvores.dart';
 class TelaColetaArvores extends ConsumerStatefulWidget {
   const TelaColetaArvores({required this.parcelaId, super.key});
 
-  final String parcelaId;
+  final int parcelaId;
 
   @override
-  ConsumerState<TelaColetaArvores> createState() =>
-      _ColetaArvoresTelaEstado();
+  ConsumerState<TelaColetaArvores> createState() => _ColetaArvoresTelaEstado();
 }
 
 class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
@@ -88,7 +87,9 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _salvando ? null : () => _abrirNovoArvoreFormulario(estado),
+              onPressed: _salvando
+                  ? null
+                  : () => _abrirNovoArvoreFormulario(estado),
               icon: const Icon(Icons.add),
               label: const Text('Nova árvore'),
             ),
@@ -121,7 +122,9 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
         const SizedBox(height: 20),
         SecaoTitulo(
           titulo: 'Árvores registradas',
-          complemento: SituacaoIndicador(rotulo: '${estado.arvoreQuantidade} total'),
+          complemento: SituacaoIndicador(
+            rotulo: '${estado.arvoreQuantidade} total',
+          ),
         ),
         if (estado.arvores.isEmpty)
           const _VazioArvoresCartao()
@@ -264,7 +267,8 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
   ) {
     final editandoArvoreId = _editandoArvore?.id;
     for (final arvore in estado.arvores) {
-      if (arvore.id != editandoArvoreId && arvore.posicaoReferenciaParcela == referencia) {
+      if (arvore.id != editandoArvoreId &&
+          arvore.posicaoReferenciaParcela == referencia) {
         return arvore;
       }
     }
@@ -330,16 +334,24 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
     try {
       final editandoArvore = _editandoArvore;
       if (editandoArvore == null) {
-        await repositorio.criarArvore(parcelaId: widget.parcelaId, rascunho: rascunho);
+        await repositorio.criarArvore(
+          parcelaId: widget.parcelaId,
+          rascunho: rascunho,
+        );
       } else {
-        await repositorio.atualizarArvore(arvoreId: editandoArvore.id, rascunho: rascunho);
+        await repositorio.atualizarArvore(
+          arvoreId: editandoArvore.id,
+          rascunho: rascunho,
+        );
       }
 
       _invalidarRelacionadosProvedores(estado);
 
       if (!mounted) return;
       if (manterAbrir) {
-        final proximoNumero = await repositorio.proximoArvoreNumero(widget.parcelaId);
+        final proximoNumero = await repositorio.proximoArvoreNumero(
+          widget.parcelaId,
+        );
         setState(() {
           _editandoArvore = null;
           _arvoreNumero = proximoNumero;
@@ -421,7 +433,9 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
 
     if (confirmado != true) return;
 
-    await ref.read(provedorRepositorioArvores).marcaParcelaColetada(widget.parcelaId);
+    await ref
+        .read(provedorRepositorioArvores)
+        .marcaParcelaColetada(widget.parcelaId);
     _invalidarRelacionadosProvedores(estado);
 
     if (!mounted) return;
@@ -431,7 +445,9 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
 
   void _invalidarRelacionadosProvedores(EstadoColetaArvores estado) {
     ref.invalidate(provedorColetaArvores(widget.parcelaId));
-    ref.invalidate(provedorParcelasTalhaoLevantamento(estado.talhaoLevantamento.id));
+    ref.invalidate(
+      provedorParcelasTalhaoLevantamento(estado.talhaoLevantamento.id),
+    );
     ref.invalidate(provedorParcelasTalhao(estado.talhao.id));
     ref.invalidate(provedorAtivoLevantamentos);
     ref.invalidate(provedorAtivoLevantamento);
@@ -489,7 +505,9 @@ class _ParcelCabecalho extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              SituacaoIndicador(rotulo: _parcelaSituacaoRotulo(estado.parcela.situacao)),
+              SituacaoIndicador(
+                rotulo: _parcelaSituacaoRotulo(estado.parcela.situacao),
+              ),
               const SizedBox(width: 6),
               IconButton.filledTonal(
                 onPressed: aoFinalizar,
@@ -661,7 +679,9 @@ class _ArvoreFormularioCartao extends StatelessWidget {
                   ),
                 ),
                 IconButton.filledTonal(
-                  onPressed: capturandoLocalizacao ? null : aoCapturarLocalizacao,
+                  onPressed: capturandoLocalizacao
+                      ? null
+                      : aoCapturarLocalizacao,
                   tooltip: 'Capturar coordenada',
                   style: IconButton.styleFrom(
                     backgroundColor: CoresDendro.principalSuave,
@@ -863,7 +883,8 @@ class _ReferenciaSeletorPainel extends StatefulWidget {
   final Set<PosicaoReferenciaParcela> capturadoPosicoes;
 
   @override
-  State<_ReferenciaSeletorPainel> createState() => _ReferenciaSeletorPainelEstado();
+  State<_ReferenciaSeletorPainel> createState() =>
+      _ReferenciaSeletorPainelEstado();
 }
 
 class _ReferenciaSeletorPainelEstado extends State<_ReferenciaSeletorPainel> {
@@ -1065,7 +1086,9 @@ class _ArvoreItem extends StatelessWidget {
                         ),
                       ),
                       if (referencia != null)
-                        SituacaoIndicador(rotulo: _referenciaRotulo(referencia)),
+                        SituacaoIndicador(
+                          rotulo: _referenciaRotulo(referencia),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 3),

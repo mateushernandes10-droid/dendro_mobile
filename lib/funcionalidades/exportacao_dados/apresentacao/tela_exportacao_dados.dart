@@ -17,19 +17,20 @@ class TelaExportacaoDados extends ConsumerStatefulWidget {
     super.key,
   });
 
-  final String? propriedadeId;
-  final String? levantamentoId;
-  final String? especieId;
-  final Set<String> inicialTalhaoIds;
+  final int? propriedadeId;
+  final int? levantamentoId;
+  final int? especieId;
+  final Set<int> inicialTalhaoIds;
 
   @override
-  ConsumerState<TelaExportacaoDados> createState() => _ExportacaoDadosTelaEstado();
+  ConsumerState<TelaExportacaoDados> createState() =>
+      _ExportacaoDadosTelaEstado();
 }
 
 class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
-  String? _propriedadeId;
+  int? _propriedadeId;
   FormatoExportacaoDados _formato = FormatoExportacaoDados.pdf;
-  Set<String>? _selecionadoTalhaoIds;
+  Set<int>? _selecionadoTalhaoIds;
   String? _selecaoSincronizarChave;
   _ExportacaoAcao? _atualAcao;
 
@@ -64,7 +65,7 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
             _sincronizarPropriedadeSelecao(estado);
             _sincronizarTalhaoSelecao(estado);
 
-            final selecionadoTalhaoIds = _selecionadoTalhaoIds ?? const <String>{};
+            final selecionadoTalhaoIds = _selecionadoTalhaoIds ?? const <int>{};
             final selecionadoTalhaoQuantidade = selecionadoTalhaoIds.length;
 
             return ListView(
@@ -126,8 +127,10 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
                       selecionado: selecionadoTalhaoIds.contains(
                         talhao.talhaoLevantamento.id,
                       ),
-                      aoAlterado: (selecionado) =>
-                          _toggleTalhao(talhao.talhaoLevantamento.id, selecionado),
+                      aoAlterado: (selecionado) => _toggleTalhao(
+                        talhao.talhaoLevantamento.id,
+                        selecionado,
+                      ),
                     ),
                 const SizedBox(height: 18),
                 SizedBox(
@@ -138,7 +141,10 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
                             estado.propriedade == null ||
                             selecionadoTalhaoIds.isEmpty
                         ? null
-                        : () => _prepararExportacao(estado, _ExportacaoAcao.compartilhar),
+                        : () => _prepararExportacao(
+                            estado,
+                            _ExportacaoAcao.compartilhar,
+                          ),
                     icon: _atualAcao == _ExportacaoAcao.compartilhar
                         ? const SizedBox.square(
                             dimension: 18,
@@ -161,7 +167,10 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
                             estado.propriedade == null ||
                             selecionadoTalhaoIds.isEmpty
                         ? null
-                        : () => _prepararExportacao(estado, _ExportacaoAcao.salvar),
+                        : () => _prepararExportacao(
+                            estado,
+                            _ExportacaoAcao.salvar,
+                          ),
                     icon: _atualAcao == _ExportacaoAcao.salvar
                         ? const SizedBox.square(
                             dimension: 18,
@@ -180,7 +189,8 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (erro, pilhaTrace) => _ExportacaoCarregarErro(
-            aoTentarNovamente: () => ref.invalidate(provedorExportacaoDados(solicitacao)),
+            aoTentarNovamente: () =>
+                ref.invalidate(provedorExportacaoDados(solicitacao)),
           ),
         ),
       ),
@@ -219,12 +229,14 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
       if (!mounted || _selecaoSincronizarChave == key) return;
       setState(() {
         _selecaoSincronizarChave = key;
-        _selecionadoTalhaoIds = selecionado.isEmpty ? disponivelIds : selecionado;
+        _selecionadoTalhaoIds = selecionado.isEmpty
+            ? disponivelIds
+            : selecionado;
       });
     });
   }
 
-  void _alterarPropriedade(String? propriedadeId) {
+  void _alterarPropriedade(int? propriedadeId) {
     setState(() {
       _propriedadeId = propriedadeId;
       _selecionadoTalhaoIds = null;
@@ -233,17 +245,19 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
   }
 
   void _toggleTodosTalhoes(List<ExportacaoDadosTalhaoOpcao> talhoes) {
-    final todosIds = {for (final talhao in talhoes) talhao.talhaoLevantamento.id};
-    final selecionado = _selecionadoTalhaoIds ?? const <String>{};
+    final todosIds = {
+      for (final talhao in talhoes) talhao.talhaoLevantamento.id,
+    };
+    final selecionado = _selecionadoTalhaoIds ?? const <int>{};
 
     setState(() {
       _selecionadoTalhaoIds = selecionado.length == todosIds.length
-          ? <String>{}
+          ? <int>{}
           : todosIds;
     });
   }
 
-  void _toggleTalhao(String talhaoLevantamentoId, bool selecionado) {
+  void _toggleTalhao(int talhaoLevantamentoId, bool selecionado) {
     final proximo = {...?_selecionadoTalhaoIds};
     if (selecionado) {
       proximo.add(talhaoLevantamentoId);
@@ -258,7 +272,7 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
     _ExportacaoAcao acao,
   ) async {
     final propriedade = estado.propriedade;
-    final selecionadoTalhaoIds = _selecionadoTalhaoIds ?? const <String>{};
+    final selecionadoTalhaoIds = _selecionadoTalhaoIds ?? const <int>{};
     if (propriedade == null || selecionadoTalhaoIds.isEmpty) return;
 
     setState(() => _atualAcao = acao);
@@ -322,7 +336,9 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${arquivo.nomeArquivo} pronto para compartilhar.')),
+          SnackBar(
+            content: Text('${arquivo.nomeArquivo} pronto para compartilhar.'),
+          ),
         );
         return;
       }
@@ -364,14 +380,16 @@ extension _ExportacaoDadosFormatoUi on FormatoExportacaoDados {
 
   String get descricao {
     return switch (this) {
-      FormatoExportacaoDados.pdf => 'Resumo formatado para impressão e entrega.',
+      FormatoExportacaoDados.pdf =>
+        'Resumo formatado para impressão e entrega.',
       FormatoExportacaoDados.brutoXlsx =>
         'Parcelas lado a lado, com árvore, DAP e altura. Uma aba por talhão.',
       FormatoExportacaoDados.brutoCsv =>
         'Todas as árvores dos talhões selecionados: propriedade, talhão, parcela, DAP e altura registrados, sem resultados calculados.',
       FormatoExportacaoDados.csv =>
         'Tabelas simples para análise em outros softwares.',
-      FormatoExportacaoDados.xls => 'Dados organizados para conferência e cálculos.',
+      FormatoExportacaoDados.xls =>
+        'Dados organizados para conferência e cálculos.',
       FormatoExportacaoDados.kml =>
         'Arquivo com pontos GPS para abrir no Google Earth.',
     };
@@ -390,7 +408,10 @@ extension _ExportacaoDadosFormatoUi on FormatoExportacaoDados {
 }
 
 class _ExportacaoIntroducaoCartao extends StatelessWidget {
-  const _ExportacaoIntroducaoCartao({required this.propriedade, required this.levantamento});
+  const _ExportacaoIntroducaoCartao({
+    required this.propriedade,
+    required this.levantamento,
+  });
 
   final Propriedade? propriedade;
   final Levantamento? levantamento;
@@ -442,13 +463,13 @@ class _PropriedadeSeletor extends StatelessWidget {
   });
 
   final List<Propriedade> propriedades;
-  final String? selecionadoPropriedadeId;
-  final ValueChanged<String?> aoAlterado;
+  final int? selecionadoPropriedadeId;
+  final ValueChanged<int?> aoAlterado;
 
   @override
   Widget build(BuildContext context) {
     return CartaoDendro(
-      filho: DropdownButtonFormField<String>(
+      filho: DropdownButtonFormField<int>(
         key: ValueKey(selecionadoPropriedadeId),
         isExpanded: true,
         initialValue: selecionadoPropriedadeId,
@@ -539,7 +560,9 @@ class _ExportacaoFormatoBloco extends StatelessWidget {
               selecionado
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
-              color: selecionado ? CoresDendro.principal : CoresDendro.textoDiscreto,
+              color: selecionado
+                  ? CoresDendro.principal
+                  : CoresDendro.textoDiscreto,
             ),
           ],
         ),
@@ -598,9 +621,13 @@ class _ExportacaoTalhaoBloco extends StatelessWidget {
                     children: [
                       _TalhaoMetadados('${opcao.parcelaQuantidade} parcelas'),
                       _TalhaoMetadados('${opcao.arvoreQuantidade} árvores'),
-                      _TalhaoMetadados('${_formatoArea(opcao.medidaAreaHa)} ha'),
+                      _TalhaoMetadados(
+                        '${_formatoArea(opcao.medidaAreaHa)} ha',
+                      ),
                       if (opcao.geograficoPontoQuantidade > 0)
-                        _TalhaoMetadados('${opcao.geograficoPontoQuantidade} GPS'),
+                        _TalhaoMetadados(
+                          '${opcao.geograficoPontoQuantidade} GPS',
+                        ),
                     ],
                   ),
                 ],

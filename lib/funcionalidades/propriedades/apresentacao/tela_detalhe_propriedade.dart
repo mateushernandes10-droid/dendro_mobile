@@ -52,7 +52,8 @@ class TelaDetalhePropriedade extends ConsumerWidget {
               data: (itens) {
                 if (itens.isEmpty) {
                   return _VazioTalhoesCartao(
-                    aoCriar: () => _abrirTalhaoFormulario(context, propriedade.id),
+                    aoCriar: () =>
+                        _abrirTalhaoFormulario(context, propriedade.id),
                   );
                 }
 
@@ -62,9 +63,13 @@ class TelaDetalhePropriedade extends ConsumerWidget {
                       _TalhaoItem(
                         resumo: item,
                         aoAbrir: () => _abrirTalhaoParcelas(context, item),
-                        aoEditar: () =>
-                            _abrirTalhaoFormulario(context, propriedade.id, resumo: item),
-                        aoExcluir: () => _confirmarExcluirTalhao(context, ref, item),
+                        aoEditar: () => _abrirTalhaoFormulario(
+                          context,
+                          propriedade.id,
+                          resumo: item,
+                        ),
+                        aoExcluir: () =>
+                            _confirmarExcluirTalhao(context, ref, item),
                       ),
                   ],
                 );
@@ -87,7 +92,7 @@ class TelaDetalhePropriedade extends ConsumerWidget {
 
   Future<void> _abrirTalhaoFormulario(
     BuildContext context,
-    String propriedadeId, {
+    int propriedadeId, {
     TalhaoResumo? resumo,
   }) {
     return showModalBottomSheet<void>(
@@ -102,13 +107,16 @@ class TelaDetalhePropriedade extends ConsumerWidget {
   Future<void> _abrirExportacao(BuildContext context) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => TelaExportacaoDados(propriedadeId: propriedade.id),
+        builder: (context) =>
+            TelaExportacaoDados(propriedadeId: propriedade.id),
       ),
     );
   }
 
   void _abrirResultados(BuildContext context) {
-    NavegacaoEstruturaDendro.de(context).abrirResultados(propriedadeId: propriedade.id);
+    NavegacaoEstruturaDendro.de(
+      context,
+    ).abrirResultados(propriedadeId: propriedade.id);
   }
 
   Future<void> _abrirTalhaoParcelas(BuildContext context, TalhaoResumo resumo) {
@@ -293,7 +301,10 @@ class _TalhaoItem extends StatelessWidget {
                       spacing: 10,
                       runSpacing: 6,
                       children: [
-                        _MetadadosTexto(icone: Icons.eco, rotulo: resumo.especie.nome),
+                        _MetadadosTexto(
+                          icone: Icons.eco,
+                          rotulo: resumo.especie.nome,
+                        ),
                         _MetadadosTexto(
                           icone: Icons.area_chart,
                           rotulo: '${_formatoArea(talhao.areaHa)} ha',
@@ -306,7 +317,8 @@ class _TalhaoItem extends StatelessWidget {
                         if (_formatoParcelaDimensao(talhao) != null)
                           _MetadadosTexto(
                             icone: Icons.crop_free,
-                            rotulo: 'Parcela ${_formatoParcelaDimensao(talhao)} m',
+                            rotulo:
+                                'Parcela ${_formatoParcelaDimensao(talhao)} m',
                           ),
                       ],
                     ),
@@ -358,14 +370,16 @@ class _TalhaoItem extends StatelessWidget {
 class _TalhaoFormularioPainel extends ConsumerStatefulWidget {
   const _TalhaoFormularioPainel({required this.propriedadeId, this.resumo});
 
-  final String propriedadeId;
+  final int propriedadeId;
   final TalhaoResumo? resumo;
 
   @override
-  ConsumerState<_TalhaoFormularioPainel> createState() => _TalhaoFormularioPainelEstado();
+  ConsumerState<_TalhaoFormularioPainel> createState() =>
+      _TalhaoFormularioPainelEstado();
 }
 
-class _TalhaoFormularioPainelEstado extends ConsumerState<_TalhaoFormularioPainel> {
+class _TalhaoFormularioPainelEstado
+    extends ConsumerState<_TalhaoFormularioPainel> {
   final _chaveFormulario = GlobalKey<FormState>();
   late final TextEditingController _identificacaoControlador;
   late final TextEditingController _areaControlador;
@@ -375,7 +389,7 @@ class _TalhaoFormularioPainelEstado extends ConsumerState<_TalhaoFormularioPaine
   late final TextEditingController _parcelaLarguraControlador;
   late final TextEditingController _parcelaComprimentoControlador;
   late final TextEditingController _observacoesControlador;
-  String? _especieId;
+  int? _especieId;
   bool _salvando = false;
 
   bool get _estaEditando => widget.resumo != null;
@@ -394,17 +408,25 @@ class _TalhaoFormularioPainelEstado extends ConsumerState<_TalhaoFormularioPaine
     _plantioAnoControlador = TextEditingController(
       text: talhao?.anoPlantio?.toString() ?? '',
     );
-    _espacamentoControlador = TextEditingController(text: talhao?.espacamento ?? '');
+    _espacamentoControlador = TextEditingController(
+      text: talhao?.espacamento ?? '',
+    );
     _manejoRegimeControlador = TextEditingController(
       text: talhao?.regimeManejo ?? '',
     );
     _parcelaLarguraControlador = TextEditingController(
-      text: talhao?.larguraParcelaM == null ? '' : _formatoArea(talhao!.larguraParcelaM!),
+      text: talhao?.larguraParcelaM == null
+          ? ''
+          : _formatoArea(talhao!.larguraParcelaM!),
     );
     _parcelaComprimentoControlador = TextEditingController(
-      text: talhao?.comprimentoParcelaM == null ? '' : _formatoArea(talhao!.comprimentoParcelaM!),
+      text: talhao?.comprimentoParcelaM == null
+          ? ''
+          : _formatoArea(talhao!.comprimentoParcelaM!),
     );
-    _observacoesControlador = TextEditingController(text: talhao?.observacoes ?? '');
+    _observacoesControlador = TextEditingController(
+      text: talhao?.observacoes ?? '',
+    );
     _especieId = talhao?.especieId;
   }
 
@@ -468,7 +490,7 @@ class _TalhaoFormularioPainelEstado extends ConsumerState<_TalhaoFormularioPaine
               ),
               const SizedBox(height: 12),
               especies.when(
-                data: (itens) => DropdownButtonFormField<String>(
+                data: (itens) => DropdownButtonFormField<int>(
                   initialValue: _especieId,
                   decoration: const InputDecoration(
                     labelText: 'Espécie',
@@ -576,7 +598,9 @@ class _TalhaoFormularioPainelEstado extends ConsumerState<_TalhaoFormularioPaine
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_outlined),
-                  label: Text(_estaEditando ? 'Salvar alterações' : 'Cadastrar'),
+                  label: Text(
+                    _estaEditando ? 'Salvar alterações' : 'Cadastrar',
+                  ),
                 ),
               ),
             ],
@@ -605,8 +629,12 @@ class _TalhaoFormularioPainelEstado extends ConsumerState<_TalhaoFormularioPaine
           anoPlantio: anoPlantio,
           espacamento: _espacamentoControlador.text,
           regimeManejo: _manejoRegimeControlador.text,
-          larguraParcelaM: _interpretarOpcionalArea(_parcelaLarguraControlador.text),
-          comprimentoParcelaM: _interpretarOpcionalArea(_parcelaComprimentoControlador.text),
+          larguraParcelaM: _interpretarOpcionalArea(
+            _parcelaLarguraControlador.text,
+          ),
+          comprimentoParcelaM: _interpretarOpcionalArea(
+            _parcelaComprimentoControlador.text,
+          ),
           observacoes: _observacoesControlador.text,
         );
       } else {
@@ -618,8 +646,12 @@ class _TalhaoFormularioPainelEstado extends ConsumerState<_TalhaoFormularioPaine
           anoPlantio: anoPlantio,
           espacamento: _espacamentoControlador.text,
           regimeManejo: _manejoRegimeControlador.text,
-          larguraParcelaM: _interpretarOpcionalArea(_parcelaLarguraControlador.text),
-          comprimentoParcelaM: _interpretarOpcionalArea(_parcelaComprimentoControlador.text),
+          larguraParcelaM: _interpretarOpcionalArea(
+            _parcelaLarguraControlador.text,
+          ),
+          comprimentoParcelaM: _interpretarOpcionalArea(
+            _parcelaComprimentoControlador.text,
+          ),
           observacoes: _observacoesControlador.text,
         );
       }
@@ -734,7 +766,10 @@ class _VazioTalhoesCartao extends StatelessWidget {
 }
 
 class _CarregarErroCartao extends StatelessWidget {
-  const _CarregarErroCartao({required this.mensagem, required this.aoTentarNovamente});
+  const _CarregarErroCartao({
+    required this.mensagem,
+    required this.aoTentarNovamente,
+  });
 
   final String mensagem;
   final VoidCallback aoTentarNovamente;

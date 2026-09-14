@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../nucleo/banco/banco_dendro.dart';
 import '../../../nucleo/provedores/provedores_banco.dart';
@@ -13,12 +12,16 @@ final provedorRepositorioAtividades = Provider<RepositorioAtividades>((ref) {
 
 final provedorAtividadesRecentes =
     StreamProvider.autoDispose<List<RegistroAtividade>>((ref) {
-      return ref.watch(provedorRepositorioAtividades).observarRecente(limite: 4);
+      return ref
+          .watch(provedorRepositorioAtividades)
+          .observarRecente(limite: 4);
     });
 
 final provedorHistoricoAtividades =
     StreamProvider.autoDispose<List<RegistroAtividade>>((ref) {
-      return ref.watch(provedorRepositorioAtividades).observarRecente(limite: 100);
+      return ref
+          .watch(provedorRepositorioAtividades)
+          .observarRecente(limite: 100);
     });
 
 enum TipoAtividade {
@@ -71,22 +74,23 @@ class RegistroAtividade {
     required this.ocorridoEm,
     this.tipoEntidade,
     this.entidadeId,
+    this.referenciaLegada,
   });
 
-  final String id;
+  final int id;
   final TipoAtividade tipo;
   final String titulo;
   final String subtitulo;
   final DateTime ocorridoEm;
   final TipoEntidadeAtividade? tipoEntidade;
-  final String? entidadeId;
+  final int? entidadeId;
+  final String? referenciaLegada;
 }
 
 class RepositorioAtividades {
   RepositorioAtividades(this._bancoDados);
 
   final BancoDendro _bancoDados;
-  final _uuid = const Uuid();
 
   static final _alteracoes = StreamController<void>.broadcast();
 
@@ -99,7 +103,7 @@ class RepositorioAtividades {
     final linhas = await _bancoDados
         .customSelect(
           '''
-SELECT id, tipo, titulo, subtitulo, tipo_entidade, entidade_id, ocorrido_em
+SELECT id, tipo, titulo, subtitulo, tipo_entidade, entidade_id, referencia_legada, ocorrido_em
 FROM registros_atividade
 ORDER BY ocorrido_em DESC
 LIMIT ?
@@ -116,7 +120,7 @@ LIMIT ?
     required String titulo,
     String subtitulo = '',
     TipoEntidadeAtividade? tipoEntidade,
-    String? entidadeId,
+    int? entidadeId,
     DateTime? ocorridoEm,
   }) async {
     final instante = ocorridoEm ?? DateTime.now();
@@ -124,11 +128,10 @@ LIMIT ?
     await _bancoDados.customStatement(
       '''
 INSERT INTO registros_atividade
-  (id, tipo, titulo, subtitulo, tipo_entidade, entidade_id, ocorrido_em)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+  (tipo, titulo, subtitulo, tipo_entidade, entidade_id, ocorrido_em)
+VALUES (?, ?, ?, ?, ?, ?)
 ''',
       [
-        _uuid.v4(),
         tipo.name,
         titulo.trim(),
         subtitulo.trim(),
@@ -143,7 +146,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?)
   Future<void> registroExportacao({
     required String formato,
     required String propriedadeNome,
-    String? entidadeId,
+    int? entidadeId,
   }) {
     return registrar(
       tipo: TipoAtividade.exportacaoCriada,
@@ -156,12 +159,15 @@ VALUES (?, ?, ?, ?, ?, ?, ?)
 
   RegistroAtividade _registroDeLinha(QueryRow linha) {
     return RegistroAtividade(
-      id: linha.read<String>('id'),
+      id: linha.read<int>('id'),
       tipo: _interpretarTipo(linha.read<String>('tipo')),
       titulo: linha.read<String>('titulo'),
       subtitulo: linha.read<String>('subtitulo'),
-      tipoEntidade: _interpretarEntidadeTipo(linha.readNullable<String>('tipo_entidade')),
-      entidadeId: linha.readNullable<String>('entidade_id'),
+      tipoEntidade: _interpretarEntidadeTipo(
+        linha.readNullable<String>('tipo_entidade'),
+      ),
+      entidadeId: linha.readNullable<int>('entidade_id'),
+      referenciaLegada: linha.readNullable<String>('referencia_legada'),
       ocorridoEm: DateTime.fromMillisecondsSinceEpoch(
         linha.read<int>('ocorrido_em'),
       ),

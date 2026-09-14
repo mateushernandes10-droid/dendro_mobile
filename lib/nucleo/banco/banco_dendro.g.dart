@@ -11,12 +11,16 @@ class $PropriedadesTable extends Propriedades
   $PropriedadesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
   );
   static const VerificationMeta _nomeMeta = const VerificationMeta('nome');
   @override
@@ -105,8 +109,6 @@ class $PropriedadesTable extends Propriedades
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('nome')) {
       context.handle(
@@ -170,7 +172,7 @@ class $PropriedadesTable extends Propriedades
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Propriedade(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
       nome: attachedDatabase.typeMapping.read(
@@ -207,7 +209,7 @@ class $PropriedadesTable extends Propriedades
 }
 
 class Propriedade extends DataClass implements Insertable<Propriedade> {
-  final String id;
+  final int id;
   final String nome;
   final String municipio;
   final String estado;
@@ -226,7 +228,7 @@ class Propriedade extends DataClass implements Insertable<Propriedade> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
+    map['id'] = Variable<int>(id);
     map['nome'] = Variable<String>(nome);
     map['municipio'] = Variable<String>(municipio);
     map['estado'] = Variable<String>(estado);
@@ -254,7 +256,7 @@ class Propriedade extends DataClass implements Insertable<Propriedade> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Propriedade(
-      id: serializer.fromJson<String>(json['id']),
+      id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
       municipio: serializer.fromJson<String>(json['municipio']),
       estado: serializer.fromJson<String>(json['estado']),
@@ -267,7 +269,7 @@ class Propriedade extends DataClass implements Insertable<Propriedade> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
+      'id': serializer.toJson<int>(id),
       'nome': serializer.toJson<String>(nome),
       'municipio': serializer.toJson<String>(municipio),
       'estado': serializer.toJson<String>(estado),
@@ -278,7 +280,7 @@ class Propriedade extends DataClass implements Insertable<Propriedade> {
   }
 
   Propriedade copyWith({
-    String? id,
+    int? id,
     String? nome,
     String? municipio,
     String? estado,
@@ -348,14 +350,13 @@ class Propriedade extends DataClass implements Insertable<Propriedade> {
 }
 
 class PropriedadesCompanion extends UpdateCompanion<Propriedade> {
-  final Value<String> id;
+  final Value<int> id;
   final Value<String> nome;
   final Value<String> municipio;
   final Value<String> estado;
   final Value<double> areaTotalHa;
   final Value<DateTime> criadoEm;
   final Value<DateTime> atualizadoEm;
-  final Value<int> rowid;
   const PropriedadesCompanion({
     this.id = const Value.absent(),
     this.nome = const Value.absent(),
@@ -364,32 +365,28 @@ class PropriedadesCompanion extends UpdateCompanion<Propriedade> {
     this.areaTotalHa = const Value.absent(),
     this.criadoEm = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   PropriedadesCompanion.insert({
-    required String id,
+    this.id = const Value.absent(),
     required String nome,
     required String municipio,
     this.estado = const Value.absent(),
     required double areaTotalHa,
     required DateTime criadoEm,
     required DateTime atualizadoEm,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       nome = Value(nome),
+  }) : nome = Value(nome),
        municipio = Value(municipio),
        areaTotalHa = Value(areaTotalHa),
        criadoEm = Value(criadoEm),
        atualizadoEm = Value(atualizadoEm);
   static Insertable<Propriedade> custom({
-    Expression<String>? id,
+    Expression<int>? id,
     Expression<String>? nome,
     Expression<String>? municipio,
     Expression<String>? estado,
     Expression<double>? areaTotalHa,
     Expression<DateTime>? criadoEm,
     Expression<DateTime>? atualizadoEm,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -399,19 +396,17 @@ class PropriedadesCompanion extends UpdateCompanion<Propriedade> {
       if (areaTotalHa != null) 'area_total_ha': areaTotalHa,
       if (criadoEm != null) 'criado_em': criadoEm,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   PropriedadesCompanion copyWith({
-    Value<String>? id,
+    Value<int>? id,
     Value<String>? nome,
     Value<String>? municipio,
     Value<String>? estado,
     Value<double>? areaTotalHa,
     Value<DateTime>? criadoEm,
     Value<DateTime>? atualizadoEm,
-    Value<int>? rowid,
   }) {
     return PropriedadesCompanion(
       id: id ?? this.id,
@@ -421,7 +416,6 @@ class PropriedadesCompanion extends UpdateCompanion<Propriedade> {
       areaTotalHa: areaTotalHa ?? this.areaTotalHa,
       criadoEm: criadoEm ?? this.criadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -429,7 +423,7 @@ class PropriedadesCompanion extends UpdateCompanion<Propriedade> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (nome.present) {
       map['nome'] = Variable<String>(nome.value);
@@ -449,9 +443,6 @@ class PropriedadesCompanion extends UpdateCompanion<Propriedade> {
     if (atualizadoEm.present) {
       map['atualizado_em'] = Variable<DateTime>(atualizadoEm.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -464,8 +455,7 @@ class PropriedadesCompanion extends UpdateCompanion<Propriedade> {
           ..write('estado: $estado, ')
           ..write('areaTotalHa: $areaTotalHa, ')
           ..write('criadoEm: $criadoEm, ')
-          ..write('atualizadoEm: $atualizadoEm, ')
-          ..write('rowid: $rowid')
+          ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
         .toString();
   }
@@ -478,12 +468,26 @@ class $EspeciesTable extends Especies with TableInfo<$EspeciesTable, Especie> {
   $EspeciesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _codigoMeta = const VerificationMeta('codigo');
+  @override
+  late final GeneratedColumn<String> codigo = GeneratedColumn<String>(
+    'codigo',
+    aliasedName,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   static const VerificationMeta _nomeMeta = const VerificationMeta('nome');
   @override
@@ -555,6 +559,7 @@ class $EspeciesTable extends Especies with TableInfo<$EspeciesTable, Especie> {
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    codigo,
     nome,
     nomeCientifico,
     descricao,
@@ -576,8 +581,12 @@ class $EspeciesTable extends Especies with TableInfo<$EspeciesTable, Especie> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
+    }
+    if (data.containsKey('codigo')) {
+      context.handle(
+        _codigoMeta,
+        codigo.isAcceptableOrUnknown(data['codigo']!, _codigoMeta),
+      );
     }
     if (data.containsKey('nome')) {
       context.handle(
@@ -637,9 +646,13 @@ class $EspeciesTable extends Especies with TableInfo<$EspeciesTable, Especie> {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Especie(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      codigo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}codigo'],
+      ),
       nome: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}nome'],
@@ -674,7 +687,8 @@ class $EspeciesTable extends Especies with TableInfo<$EspeciesTable, Especie> {
 }
 
 class Especie extends DataClass implements Insertable<Especie> {
-  final String id;
+  final int id;
+  final String? codigo;
   final String nome;
   final String? nomeCientifico;
   final String? descricao;
@@ -683,6 +697,7 @@ class Especie extends DataClass implements Insertable<Especie> {
   final DateTime atualizadoEm;
   const Especie({
     required this.id,
+    this.codigo,
     required this.nome,
     this.nomeCientifico,
     this.descricao,
@@ -693,7 +708,10 @@ class Especie extends DataClass implements Insertable<Especie> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || codigo != null) {
+      map['codigo'] = Variable<String>(codigo);
+    }
     map['nome'] = Variable<String>(nome);
     if (!nullToAbsent || nomeCientifico != null) {
       map['nome_cientifico'] = Variable<String>(nomeCientifico);
@@ -710,6 +728,9 @@ class Especie extends DataClass implements Insertable<Especie> {
   EspeciesCompanion toCompanion(bool nullToAbsent) {
     return EspeciesCompanion(
       id: Value(id),
+      codigo: codigo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(codigo),
       nome: Value(nome),
       nomeCientifico: nomeCientifico == null && nullToAbsent
           ? const Value.absent()
@@ -729,7 +750,8 @@ class Especie extends DataClass implements Insertable<Especie> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Especie(
-      id: serializer.fromJson<String>(json['id']),
+      id: serializer.fromJson<int>(json['id']),
+      codigo: serializer.fromJson<String?>(json['codigo']),
       nome: serializer.fromJson<String>(json['nome']),
       nomeCientifico: serializer.fromJson<String?>(json['nomeCientifico']),
       descricao: serializer.fromJson<String?>(json['descricao']),
@@ -742,7 +764,8 @@ class Especie extends DataClass implements Insertable<Especie> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
+      'id': serializer.toJson<int>(id),
+      'codigo': serializer.toJson<String?>(codigo),
       'nome': serializer.toJson<String>(nome),
       'nomeCientifico': serializer.toJson<String?>(nomeCientifico),
       'descricao': serializer.toJson<String?>(descricao),
@@ -753,7 +776,8 @@ class Especie extends DataClass implements Insertable<Especie> {
   }
 
   Especie copyWith({
-    String? id,
+    int? id,
+    Value<String?> codigo = const Value.absent(),
     String? nome,
     Value<String?> nomeCientifico = const Value.absent(),
     Value<String?> descricao = const Value.absent(),
@@ -762,6 +786,7 @@ class Especie extends DataClass implements Insertable<Especie> {
     DateTime? atualizadoEm,
   }) => Especie(
     id: id ?? this.id,
+    codigo: codigo.present ? codigo.value : this.codigo,
     nome: nome ?? this.nome,
     nomeCientifico: nomeCientifico.present
         ? nomeCientifico.value
@@ -774,6 +799,7 @@ class Especie extends DataClass implements Insertable<Especie> {
   Especie copyWithCompanion(EspeciesCompanion data) {
     return Especie(
       id: data.id.present ? data.id.value : this.id,
+      codigo: data.codigo.present ? data.codigo.value : this.codigo,
       nome: data.nome.present ? data.nome.value : this.nome,
       nomeCientifico: data.nomeCientifico.present
           ? data.nomeCientifico.value
@@ -791,6 +817,7 @@ class Especie extends DataClass implements Insertable<Especie> {
   String toString() {
     return (StringBuffer('Especie(')
           ..write('id: $id, ')
+          ..write('codigo: $codigo, ')
           ..write('nome: $nome, ')
           ..write('nomeCientifico: $nomeCientifico, ')
           ..write('descricao: $descricao, ')
@@ -804,6 +831,7 @@ class Especie extends DataClass implements Insertable<Especie> {
   @override
   int get hashCode => Object.hash(
     id,
+    codigo,
     nome,
     nomeCientifico,
     descricao,
@@ -816,6 +844,7 @@ class Especie extends DataClass implements Insertable<Especie> {
       identical(this, other) ||
       (other is Especie &&
           other.id == this.id &&
+          other.codigo == this.codigo &&
           other.nome == this.nome &&
           other.nomeCientifico == this.nomeCientifico &&
           other.descricao == this.descricao &&
@@ -825,78 +854,77 @@ class Especie extends DataClass implements Insertable<Especie> {
 }
 
 class EspeciesCompanion extends UpdateCompanion<Especie> {
-  final Value<String> id;
+  final Value<int> id;
+  final Value<String?> codigo;
   final Value<String> nome;
   final Value<String?> nomeCientifico;
   final Value<String?> descricao;
   final Value<bool> ativo;
   final Value<DateTime> criadoEm;
   final Value<DateTime> atualizadoEm;
-  final Value<int> rowid;
   const EspeciesCompanion({
     this.id = const Value.absent(),
+    this.codigo = const Value.absent(),
     this.nome = const Value.absent(),
     this.nomeCientifico = const Value.absent(),
     this.descricao = const Value.absent(),
     this.ativo = const Value.absent(),
     this.criadoEm = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   EspeciesCompanion.insert({
-    required String id,
+    this.id = const Value.absent(),
+    this.codigo = const Value.absent(),
     required String nome,
     this.nomeCientifico = const Value.absent(),
     this.descricao = const Value.absent(),
     this.ativo = const Value.absent(),
     required DateTime criadoEm,
     required DateTime atualizadoEm,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       nome = Value(nome),
+  }) : nome = Value(nome),
        criadoEm = Value(criadoEm),
        atualizadoEm = Value(atualizadoEm);
   static Insertable<Especie> custom({
-    Expression<String>? id,
+    Expression<int>? id,
+    Expression<String>? codigo,
     Expression<String>? nome,
     Expression<String>? nomeCientifico,
     Expression<String>? descricao,
     Expression<bool>? ativo,
     Expression<DateTime>? criadoEm,
     Expression<DateTime>? atualizadoEm,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (codigo != null) 'codigo': codigo,
       if (nome != null) 'nome': nome,
       if (nomeCientifico != null) 'nome_cientifico': nomeCientifico,
       if (descricao != null) 'descricao': descricao,
       if (ativo != null) 'ativo': ativo,
       if (criadoEm != null) 'criado_em': criadoEm,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   EspeciesCompanion copyWith({
-    Value<String>? id,
+    Value<int>? id,
+    Value<String?>? codigo,
     Value<String>? nome,
     Value<String?>? nomeCientifico,
     Value<String?>? descricao,
     Value<bool>? ativo,
     Value<DateTime>? criadoEm,
     Value<DateTime>? atualizadoEm,
-    Value<int>? rowid,
   }) {
     return EspeciesCompanion(
       id: id ?? this.id,
+      codigo: codigo ?? this.codigo,
       nome: nome ?? this.nome,
       nomeCientifico: nomeCientifico ?? this.nomeCientifico,
       descricao: descricao ?? this.descricao,
       ativo: ativo ?? this.ativo,
       criadoEm: criadoEm ?? this.criadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -904,7 +932,10 @@ class EspeciesCompanion extends UpdateCompanion<Especie> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
+    }
+    if (codigo.present) {
+      map['codigo'] = Variable<String>(codigo.value);
     }
     if (nome.present) {
       map['nome'] = Variable<String>(nome.value);
@@ -924,9 +955,6 @@ class EspeciesCompanion extends UpdateCompanion<Especie> {
     if (atualizadoEm.present) {
       map['atualizado_em'] = Variable<DateTime>(atualizadoEm.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -934,13 +962,13 @@ class EspeciesCompanion extends UpdateCompanion<Especie> {
   String toString() {
     return (StringBuffer('EspeciesCompanion(')
           ..write('id: $id, ')
+          ..write('codigo: $codigo, ')
           ..write('nome: $nome, ')
           ..write('nomeCientifico: $nomeCientifico, ')
           ..write('descricao: $descricao, ')
           ..write('ativo: $ativo, ')
           ..write('criadoEm: $criadoEm, ')
-          ..write('atualizadoEm: $atualizadoEm, ')
-          ..write('rowid: $rowid')
+          ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
         .toString();
   }
@@ -954,12 +982,26 @@ class $ModelosMatematicosTable extends ModelosMatematicos
   $ModelosMatematicosTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _codigoMeta = const VerificationMeta('codigo');
+  @override
+  late final GeneratedColumn<String> codigo = GeneratedColumn<String>(
+    'codigo',
+    aliasedName,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   static const VerificationMeta _nomeMeta = const VerificationMeta('nome');
   @override
@@ -1031,6 +1073,7 @@ class $ModelosMatematicosTable extends ModelosMatematicos
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    codigo,
     nome,
     descricao,
     expressao,
@@ -1052,8 +1095,12 @@ class $ModelosMatematicosTable extends ModelosMatematicos
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
+    }
+    if (data.containsKey('codigo')) {
+      context.handle(
+        _codigoMeta,
+        codigo.isAcceptableOrUnknown(data['codigo']!, _codigoMeta),
+      );
     }
     if (data.containsKey('nome')) {
       context.handle(
@@ -1112,9 +1159,13 @@ class $ModelosMatematicosTable extends ModelosMatematicos
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ModeloMatematico(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      codigo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}codigo'],
+      ),
       nome: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}nome'],
@@ -1150,7 +1201,8 @@ class $ModelosMatematicosTable extends ModelosMatematicos
 
 class ModeloMatematico extends DataClass
     implements Insertable<ModeloMatematico> {
-  final String id;
+  final int id;
+  final String? codigo;
   final String nome;
   final String? descricao;
   final String expressao;
@@ -1159,6 +1211,7 @@ class ModeloMatematico extends DataClass
   final DateTime atualizadoEm;
   const ModeloMatematico({
     required this.id,
+    this.codigo,
     required this.nome,
     this.descricao,
     required this.expressao,
@@ -1169,7 +1222,10 @@ class ModeloMatematico extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || codigo != null) {
+      map['codigo'] = Variable<String>(codigo);
+    }
     map['nome'] = Variable<String>(nome);
     if (!nullToAbsent || descricao != null) {
       map['descricao'] = Variable<String>(descricao);
@@ -1184,6 +1240,9 @@ class ModeloMatematico extends DataClass
   ModelosMatematicosCompanion toCompanion(bool nullToAbsent) {
     return ModelosMatematicosCompanion(
       id: Value(id),
+      codigo: codigo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(codigo),
       nome: Value(nome),
       descricao: descricao == null && nullToAbsent
           ? const Value.absent()
@@ -1201,7 +1260,8 @@ class ModeloMatematico extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ModeloMatematico(
-      id: serializer.fromJson<String>(json['id']),
+      id: serializer.fromJson<int>(json['id']),
+      codigo: serializer.fromJson<String?>(json['codigo']),
       nome: serializer.fromJson<String>(json['nome']),
       descricao: serializer.fromJson<String?>(json['descricao']),
       expressao: serializer.fromJson<String>(json['expressao']),
@@ -1214,7 +1274,8 @@ class ModeloMatematico extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
+      'id': serializer.toJson<int>(id),
+      'codigo': serializer.toJson<String?>(codigo),
       'nome': serializer.toJson<String>(nome),
       'descricao': serializer.toJson<String?>(descricao),
       'expressao': serializer.toJson<String>(expressao),
@@ -1225,7 +1286,8 @@ class ModeloMatematico extends DataClass
   }
 
   ModeloMatematico copyWith({
-    String? id,
+    int? id,
+    Value<String?> codigo = const Value.absent(),
     String? nome,
     Value<String?> descricao = const Value.absent(),
     String? expressao,
@@ -1234,6 +1296,7 @@ class ModeloMatematico extends DataClass
     DateTime? atualizadoEm,
   }) => ModeloMatematico(
     id: id ?? this.id,
+    codigo: codigo.present ? codigo.value : this.codigo,
     nome: nome ?? this.nome,
     descricao: descricao.present ? descricao.value : this.descricao,
     expressao: expressao ?? this.expressao,
@@ -1244,6 +1307,7 @@ class ModeloMatematico extends DataClass
   ModeloMatematico copyWithCompanion(ModelosMatematicosCompanion data) {
     return ModeloMatematico(
       id: data.id.present ? data.id.value : this.id,
+      codigo: data.codigo.present ? data.codigo.value : this.codigo,
       nome: data.nome.present ? data.nome.value : this.nome,
       descricao: data.descricao.present ? data.descricao.value : this.descricao,
       expressao: data.expressao.present ? data.expressao.value : this.expressao,
@@ -1259,6 +1323,7 @@ class ModeloMatematico extends DataClass
   String toString() {
     return (StringBuffer('ModeloMatematico(')
           ..write('id: $id, ')
+          ..write('codigo: $codigo, ')
           ..write('nome: $nome, ')
           ..write('descricao: $descricao, ')
           ..write('expressao: $expressao, ')
@@ -1272,6 +1337,7 @@ class ModeloMatematico extends DataClass
   @override
   int get hashCode => Object.hash(
     id,
+    codigo,
     nome,
     descricao,
     expressao,
@@ -1284,6 +1350,7 @@ class ModeloMatematico extends DataClass
       identical(this, other) ||
       (other is ModeloMatematico &&
           other.id == this.id &&
+          other.codigo == this.codigo &&
           other.nome == this.nome &&
           other.descricao == this.descricao &&
           other.expressao == this.expressao &&
@@ -1293,79 +1360,78 @@ class ModeloMatematico extends DataClass
 }
 
 class ModelosMatematicosCompanion extends UpdateCompanion<ModeloMatematico> {
-  final Value<String> id;
+  final Value<int> id;
+  final Value<String?> codigo;
   final Value<String> nome;
   final Value<String?> descricao;
   final Value<String> expressao;
   final Value<bool> ativo;
   final Value<DateTime> criadoEm;
   final Value<DateTime> atualizadoEm;
-  final Value<int> rowid;
   const ModelosMatematicosCompanion({
     this.id = const Value.absent(),
+    this.codigo = const Value.absent(),
     this.nome = const Value.absent(),
     this.descricao = const Value.absent(),
     this.expressao = const Value.absent(),
     this.ativo = const Value.absent(),
     this.criadoEm = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   ModelosMatematicosCompanion.insert({
-    required String id,
+    this.id = const Value.absent(),
+    this.codigo = const Value.absent(),
     required String nome,
     this.descricao = const Value.absent(),
     required String expressao,
     this.ativo = const Value.absent(),
     required DateTime criadoEm,
     required DateTime atualizadoEm,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       nome = Value(nome),
+  }) : nome = Value(nome),
        expressao = Value(expressao),
        criadoEm = Value(criadoEm),
        atualizadoEm = Value(atualizadoEm);
   static Insertable<ModeloMatematico> custom({
-    Expression<String>? id,
+    Expression<int>? id,
+    Expression<String>? codigo,
     Expression<String>? nome,
     Expression<String>? descricao,
     Expression<String>? expressao,
     Expression<bool>? ativo,
     Expression<DateTime>? criadoEm,
     Expression<DateTime>? atualizadoEm,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (codigo != null) 'codigo': codigo,
       if (nome != null) 'nome': nome,
       if (descricao != null) 'descricao': descricao,
       if (expressao != null) 'expressao': expressao,
       if (ativo != null) 'ativo': ativo,
       if (criadoEm != null) 'criado_em': criadoEm,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   ModelosMatematicosCompanion copyWith({
-    Value<String>? id,
+    Value<int>? id,
+    Value<String?>? codigo,
     Value<String>? nome,
     Value<String?>? descricao,
     Value<String>? expressao,
     Value<bool>? ativo,
     Value<DateTime>? criadoEm,
     Value<DateTime>? atualizadoEm,
-    Value<int>? rowid,
   }) {
     return ModelosMatematicosCompanion(
       id: id ?? this.id,
+      codigo: codigo ?? this.codigo,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
       expressao: expressao ?? this.expressao,
       ativo: ativo ?? this.ativo,
       criadoEm: criadoEm ?? this.criadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -1373,7 +1439,10 @@ class ModelosMatematicosCompanion extends UpdateCompanion<ModeloMatematico> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
+    }
+    if (codigo.present) {
+      map['codigo'] = Variable<String>(codigo.value);
     }
     if (nome.present) {
       map['nome'] = Variable<String>(nome.value);
@@ -1393,9 +1462,6 @@ class ModelosMatematicosCompanion extends UpdateCompanion<ModeloMatematico> {
     if (atualizadoEm.present) {
       map['atualizado_em'] = Variable<DateTime>(atualizadoEm.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -1403,13 +1469,13 @@ class ModelosMatematicosCompanion extends UpdateCompanion<ModeloMatematico> {
   String toString() {
     return (StringBuffer('ModelosMatematicosCompanion(')
           ..write('id: $id, ')
+          ..write('codigo: $codigo, ')
           ..write('nome: $nome, ')
           ..write('descricao: $descricao, ')
           ..write('expressao: $expressao, ')
           ..write('ativo: $ativo, ')
           ..write('criadoEm: $criadoEm, ')
-          ..write('atualizadoEm: $atualizadoEm, ')
-          ..write('rowid: $rowid')
+          ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
         .toString();
   }
@@ -1423,27 +1489,30 @@ class $VariaveisModeloTable extends VariaveisModelo
   $VariaveisModeloTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
   );
   static const VerificationMeta _modeloMatematicoIdMeta =
       const VerificationMeta('modeloMatematicoId');
   @override
-  late final GeneratedColumn<String> modeloMatematicoId =
-      GeneratedColumn<String>(
-        'modelo_matematico_id',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-        defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES modelos_matematicos (id) ON DELETE CASCADE',
-        ),
-      );
+  late final GeneratedColumn<int> modeloMatematicoId = GeneratedColumn<int>(
+    'modelo_matematico_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES modelos_matematicos (id) ON DELETE CASCADE',
+    ),
+  );
   static const VerificationMeta _simboloMeta = const VerificationMeta(
     'simbolo',
   );
@@ -1522,8 +1591,6 @@ class $VariaveisModeloTable extends VariaveisModelo
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('modelo_matematico_id')) {
       context.handle(
@@ -1581,11 +1648,11 @@ class $VariaveisModeloTable extends VariaveisModelo
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return VariavelModelo(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
       modeloMatematicoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}modelo_matematico_id'],
       )!,
       simbolo: attachedDatabase.typeMapping.read(
@@ -1625,8 +1692,8 @@ class $VariaveisModeloTable extends VariaveisModelo
 }
 
 class VariavelModelo extends DataClass implements Insertable<VariavelModelo> {
-  final String id;
-  final String modeloMatematicoId;
+  final int id;
+  final int modeloMatematicoId;
   final String simbolo;
   final String rotulo;
   final String unidade;
@@ -1644,8 +1711,8 @@ class VariavelModelo extends DataClass implements Insertable<VariavelModelo> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['modelo_matematico_id'] = Variable<String>(modeloMatematicoId);
+    map['id'] = Variable<int>(id);
+    map['modelo_matematico_id'] = Variable<int>(modeloMatematicoId);
     map['simbolo'] = Variable<String>(simbolo);
     map['rotulo'] = Variable<String>(rotulo);
     map['unidade'] = Variable<String>(unidade);
@@ -1676,10 +1743,8 @@ class VariavelModelo extends DataClass implements Insertable<VariavelModelo> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return VariavelModelo(
-      id: serializer.fromJson<String>(json['id']),
-      modeloMatematicoId: serializer.fromJson<String>(
-        json['modeloMatematicoId'],
-      ),
+      id: serializer.fromJson<int>(json['id']),
+      modeloMatematicoId: serializer.fromJson<int>(json['modeloMatematicoId']),
       simbolo: serializer.fromJson<String>(json['simbolo']),
       rotulo: serializer.fromJson<String>(json['rotulo']),
       unidade: serializer.fromJson<String>(json['unidade']),
@@ -1693,8 +1758,8 @@ class VariavelModelo extends DataClass implements Insertable<VariavelModelo> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'modeloMatematicoId': serializer.toJson<String>(modeloMatematicoId),
+      'id': serializer.toJson<int>(id),
+      'modeloMatematicoId': serializer.toJson<int>(modeloMatematicoId),
       'simbolo': serializer.toJson<String>(simbolo),
       'rotulo': serializer.toJson<String>(rotulo),
       'unidade': serializer.toJson<String>(unidade),
@@ -1706,8 +1771,8 @@ class VariavelModelo extends DataClass implements Insertable<VariavelModelo> {
   }
 
   VariavelModelo copyWith({
-    String? id,
-    String? modeloMatematicoId,
+    int? id,
+    int? modeloMatematicoId,
     String? simbolo,
     String? rotulo,
     String? unidade,
@@ -1778,14 +1843,13 @@ class VariavelModelo extends DataClass implements Insertable<VariavelModelo> {
 }
 
 class VariaveisModeloCompanion extends UpdateCompanion<VariavelModelo> {
-  final Value<String> id;
-  final Value<String> modeloMatematicoId;
+  final Value<int> id;
+  final Value<int> modeloMatematicoId;
   final Value<String> simbolo;
   final Value<String> rotulo;
   final Value<String> unidade;
   final Value<String> origemValor;
   final Value<ChaveVariavelModelo> chaveVariavel;
-  final Value<int> rowid;
   const VariaveisModeloCompanion({
     this.id = const Value.absent(),
     this.modeloMatematicoId = const Value.absent(),
@@ -1794,33 +1858,29 @@ class VariaveisModeloCompanion extends UpdateCompanion<VariavelModelo> {
     this.unidade = const Value.absent(),
     this.origemValor = const Value.absent(),
     this.chaveVariavel = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   VariaveisModeloCompanion.insert({
-    required String id,
-    required String modeloMatematicoId,
+    this.id = const Value.absent(),
+    required int modeloMatematicoId,
     required String simbolo,
     required String rotulo,
     required String unidade,
     required String origemValor,
     required ChaveVariavelModelo chaveVariavel,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       modeloMatematicoId = Value(modeloMatematicoId),
+  }) : modeloMatematicoId = Value(modeloMatematicoId),
        simbolo = Value(simbolo),
        rotulo = Value(rotulo),
        unidade = Value(unidade),
        origemValor = Value(origemValor),
        chaveVariavel = Value(chaveVariavel);
   static Insertable<VariavelModelo> custom({
-    Expression<String>? id,
-    Expression<String>? modeloMatematicoId,
+    Expression<int>? id,
+    Expression<int>? modeloMatematicoId,
     Expression<String>? simbolo,
     Expression<String>? rotulo,
     Expression<String>? unidade,
     Expression<String>? origemValor,
     Expression<String>? chaveVariavel,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1831,19 +1891,17 @@ class VariaveisModeloCompanion extends UpdateCompanion<VariavelModelo> {
       if (unidade != null) 'unidade': unidade,
       if (origemValor != null) 'origem_valor': origemValor,
       if (chaveVariavel != null) 'chave_variavel': chaveVariavel,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   VariaveisModeloCompanion copyWith({
-    Value<String>? id,
-    Value<String>? modeloMatematicoId,
+    Value<int>? id,
+    Value<int>? modeloMatematicoId,
     Value<String>? simbolo,
     Value<String>? rotulo,
     Value<String>? unidade,
     Value<String>? origemValor,
     Value<ChaveVariavelModelo>? chaveVariavel,
-    Value<int>? rowid,
   }) {
     return VariaveisModeloCompanion(
       id: id ?? this.id,
@@ -1853,7 +1911,6 @@ class VariaveisModeloCompanion extends UpdateCompanion<VariavelModelo> {
       unidade: unidade ?? this.unidade,
       origemValor: origemValor ?? this.origemValor,
       chaveVariavel: chaveVariavel ?? this.chaveVariavel,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -1861,10 +1918,10 @@ class VariaveisModeloCompanion extends UpdateCompanion<VariavelModelo> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (modeloMatematicoId.present) {
-      map['modelo_matematico_id'] = Variable<String>(modeloMatematicoId.value);
+      map['modelo_matematico_id'] = Variable<int>(modeloMatematicoId.value);
     }
     if (simbolo.present) {
       map['simbolo'] = Variable<String>(simbolo.value);
@@ -1885,9 +1942,6 @@ class VariaveisModeloCompanion extends UpdateCompanion<VariavelModelo> {
         ),
       );
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -1900,8 +1954,7 @@ class VariaveisModeloCompanion extends UpdateCompanion<VariavelModelo> {
           ..write('rotulo: $rotulo, ')
           ..write('unidade: $unidade, ')
           ..write('origemValor: $origemValor, ')
-          ..write('chaveVariavel: $chaveVariavel, ')
-          ..write('rowid: $rowid')
+          ..write('chaveVariavel: $chaveVariavel')
           ..write(')'))
         .toString();
   }
@@ -1915,27 +1968,30 @@ class $CoeficientesModeloTable extends CoeficientesModelo
   $CoeficientesModeloTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
   );
   static const VerificationMeta _modeloMatematicoIdMeta =
       const VerificationMeta('modeloMatematicoId');
   @override
-  late final GeneratedColumn<String> modeloMatematicoId =
-      GeneratedColumn<String>(
-        'modelo_matematico_id',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-        defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES modelos_matematicos (id) ON DELETE CASCADE',
-        ),
-      );
+  late final GeneratedColumn<int> modeloMatematicoId = GeneratedColumn<int>(
+    'modelo_matematico_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES modelos_matematicos (id) ON DELETE CASCADE',
+    ),
+  );
   static const VerificationMeta _simboloMeta = const VerificationMeta(
     'simbolo',
   );
@@ -1987,8 +2043,6 @@ class $CoeficientesModeloTable extends CoeficientesModelo
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('modelo_matematico_id')) {
       context.handle(
@@ -2033,11 +2087,11 @@ class $CoeficientesModeloTable extends CoeficientesModelo
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return CoeficienteModelo(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
       modeloMatematicoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}modelo_matematico_id'],
       )!,
       simbolo: attachedDatabase.typeMapping.read(
@@ -2063,8 +2117,8 @@ class $CoeficientesModeloTable extends CoeficientesModelo
 
 class CoeficienteModelo extends DataClass
     implements Insertable<CoeficienteModelo> {
-  final String id;
-  final String modeloMatematicoId;
+  final int id;
+  final int modeloMatematicoId;
   final String simbolo;
   final String rotulo;
   final double? valor;
@@ -2078,8 +2132,8 @@ class CoeficienteModelo extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['modelo_matematico_id'] = Variable<String>(modeloMatematicoId);
+    map['id'] = Variable<int>(id);
+    map['modelo_matematico_id'] = Variable<int>(modeloMatematicoId);
     map['simbolo'] = Variable<String>(simbolo);
     map['rotulo'] = Variable<String>(rotulo);
     if (!nullToAbsent || valor != null) {
@@ -2106,10 +2160,8 @@ class CoeficienteModelo extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CoeficienteModelo(
-      id: serializer.fromJson<String>(json['id']),
-      modeloMatematicoId: serializer.fromJson<String>(
-        json['modeloMatematicoId'],
-      ),
+      id: serializer.fromJson<int>(json['id']),
+      modeloMatematicoId: serializer.fromJson<int>(json['modeloMatematicoId']),
       simbolo: serializer.fromJson<String>(json['simbolo']),
       rotulo: serializer.fromJson<String>(json['rotulo']),
       valor: serializer.fromJson<double?>(json['valor']),
@@ -2119,8 +2171,8 @@ class CoeficienteModelo extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'modeloMatematicoId': serializer.toJson<String>(modeloMatematicoId),
+      'id': serializer.toJson<int>(id),
+      'modeloMatematicoId': serializer.toJson<int>(modeloMatematicoId),
       'simbolo': serializer.toJson<String>(simbolo),
       'rotulo': serializer.toJson<String>(rotulo),
       'valor': serializer.toJson<double?>(valor),
@@ -2128,8 +2180,8 @@ class CoeficienteModelo extends DataClass
   }
 
   CoeficienteModelo copyWith({
-    String? id,
-    String? modeloMatematicoId,
+    int? id,
+    int? modeloMatematicoId,
     String? simbolo,
     String? rotulo,
     Value<double?> valor = const Value.absent(),
@@ -2179,38 +2231,33 @@ class CoeficienteModelo extends DataClass
 }
 
 class CoeficientesModeloCompanion extends UpdateCompanion<CoeficienteModelo> {
-  final Value<String> id;
-  final Value<String> modeloMatematicoId;
+  final Value<int> id;
+  final Value<int> modeloMatematicoId;
   final Value<String> simbolo;
   final Value<String> rotulo;
   final Value<double?> valor;
-  final Value<int> rowid;
   const CoeficientesModeloCompanion({
     this.id = const Value.absent(),
     this.modeloMatematicoId = const Value.absent(),
     this.simbolo = const Value.absent(),
     this.rotulo = const Value.absent(),
     this.valor = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   CoeficientesModeloCompanion.insert({
-    required String id,
-    required String modeloMatematicoId,
+    this.id = const Value.absent(),
+    required int modeloMatematicoId,
     required String simbolo,
     required String rotulo,
     this.valor = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       modeloMatematicoId = Value(modeloMatematicoId),
+  }) : modeloMatematicoId = Value(modeloMatematicoId),
        simbolo = Value(simbolo),
        rotulo = Value(rotulo);
   static Insertable<CoeficienteModelo> custom({
-    Expression<String>? id,
-    Expression<String>? modeloMatematicoId,
+    Expression<int>? id,
+    Expression<int>? modeloMatematicoId,
     Expression<String>? simbolo,
     Expression<String>? rotulo,
     Expression<double>? valor,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2219,17 +2266,15 @@ class CoeficientesModeloCompanion extends UpdateCompanion<CoeficienteModelo> {
       if (simbolo != null) 'simbolo': simbolo,
       if (rotulo != null) 'rotulo': rotulo,
       if (valor != null) 'valor': valor,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   CoeficientesModeloCompanion copyWith({
-    Value<String>? id,
-    Value<String>? modeloMatematicoId,
+    Value<int>? id,
+    Value<int>? modeloMatematicoId,
     Value<String>? simbolo,
     Value<String>? rotulo,
     Value<double?>? valor,
-    Value<int>? rowid,
   }) {
     return CoeficientesModeloCompanion(
       id: id ?? this.id,
@@ -2237,7 +2282,6 @@ class CoeficientesModeloCompanion extends UpdateCompanion<CoeficienteModelo> {
       simbolo: simbolo ?? this.simbolo,
       rotulo: rotulo ?? this.rotulo,
       valor: valor ?? this.valor,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -2245,10 +2289,10 @@ class CoeficientesModeloCompanion extends UpdateCompanion<CoeficienteModelo> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (modeloMatematicoId.present) {
-      map['modelo_matematico_id'] = Variable<String>(modeloMatematicoId.value);
+      map['modelo_matematico_id'] = Variable<int>(modeloMatematicoId.value);
     }
     if (simbolo.present) {
       map['simbolo'] = Variable<String>(simbolo.value);
@@ -2258,9 +2302,6 @@ class CoeficientesModeloCompanion extends UpdateCompanion<CoeficienteModelo> {
     }
     if (valor.present) {
       map['valor'] = Variable<double>(valor.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -2272,8 +2313,7 @@ class CoeficientesModeloCompanion extends UpdateCompanion<CoeficienteModelo> {
           ..write('modeloMatematicoId: $modeloMatematicoId, ')
           ..write('simbolo: $simbolo, ')
           ..write('rotulo: $rotulo, ')
-          ..write('valor: $valor, ')
-          ..write('rowid: $rowid')
+          ..write('valor: $valor')
           ..write(')'))
         .toString();
   }
@@ -2289,11 +2329,11 @@ class $EspeciesModelosTable extends EspeciesModelos
     'especieId',
   );
   @override
-  late final GeneratedColumn<String> especieId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> especieId = GeneratedColumn<int>(
     'especie_id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES especies (id) ON DELETE CASCADE',
@@ -2302,17 +2342,16 @@ class $EspeciesModelosTable extends EspeciesModelos
   static const VerificationMeta _modeloMatematicoIdMeta =
       const VerificationMeta('modeloMatematicoId');
   @override
-  late final GeneratedColumn<String> modeloMatematicoId =
-      GeneratedColumn<String>(
-        'modelo_matematico_id',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-        defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES modelos_matematicos (id) ON DELETE CASCADE',
-        ),
-      );
+  late final GeneratedColumn<int> modeloMatematicoId = GeneratedColumn<int>(
+    'modelo_matematico_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES modelos_matematicos (id) ON DELETE CASCADE',
+    ),
+  );
   static const VerificationMeta _padraoMeta = const VerificationMeta('padrao');
   @override
   late final GeneratedColumn<bool> padrao = GeneratedColumn<bool>(
@@ -2399,11 +2438,11 @@ class $EspeciesModelosTable extends EspeciesModelos
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return EspecieModelo(
       especieId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}especie_id'],
       )!,
       modeloMatematicoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}modelo_matematico_id'],
       )!,
       padrao: attachedDatabase.typeMapping.read(
@@ -2424,8 +2463,8 @@ class $EspeciesModelosTable extends EspeciesModelos
 }
 
 class EspecieModelo extends DataClass implements Insertable<EspecieModelo> {
-  final String especieId;
-  final String modeloMatematicoId;
+  final int especieId;
+  final int modeloMatematicoId;
   final bool padrao;
   final DateTime criadoEm;
   const EspecieModelo({
@@ -2437,8 +2476,8 @@ class EspecieModelo extends DataClass implements Insertable<EspecieModelo> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['especie_id'] = Variable<String>(especieId);
-    map['modelo_matematico_id'] = Variable<String>(modeloMatematicoId);
+    map['especie_id'] = Variable<int>(especieId);
+    map['modelo_matematico_id'] = Variable<int>(modeloMatematicoId);
     map['padrao'] = Variable<bool>(padrao);
     map['criado_em'] = Variable<DateTime>(criadoEm);
     return map;
@@ -2459,10 +2498,8 @@ class EspecieModelo extends DataClass implements Insertable<EspecieModelo> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return EspecieModelo(
-      especieId: serializer.fromJson<String>(json['especieId']),
-      modeloMatematicoId: serializer.fromJson<String>(
-        json['modeloMatematicoId'],
-      ),
+      especieId: serializer.fromJson<int>(json['especieId']),
+      modeloMatematicoId: serializer.fromJson<int>(json['modeloMatematicoId']),
       padrao: serializer.fromJson<bool>(json['padrao']),
       criadoEm: serializer.fromJson<DateTime>(json['criadoEm']),
     );
@@ -2471,16 +2508,16 @@ class EspecieModelo extends DataClass implements Insertable<EspecieModelo> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'especieId': serializer.toJson<String>(especieId),
-      'modeloMatematicoId': serializer.toJson<String>(modeloMatematicoId),
+      'especieId': serializer.toJson<int>(especieId),
+      'modeloMatematicoId': serializer.toJson<int>(modeloMatematicoId),
       'padrao': serializer.toJson<bool>(padrao),
       'criadoEm': serializer.toJson<DateTime>(criadoEm),
     };
   }
 
   EspecieModelo copyWith({
-    String? especieId,
-    String? modeloMatematicoId,
+    int? especieId,
+    int? modeloMatematicoId,
     bool? padrao,
     DateTime? criadoEm,
   }) => EspecieModelo(
@@ -2525,8 +2562,8 @@ class EspecieModelo extends DataClass implements Insertable<EspecieModelo> {
 }
 
 class EspeciesModelosCompanion extends UpdateCompanion<EspecieModelo> {
-  final Value<String> especieId;
-  final Value<String> modeloMatematicoId;
+  final Value<int> especieId;
+  final Value<int> modeloMatematicoId;
   final Value<bool> padrao;
   final Value<DateTime> criadoEm;
   final Value<int> rowid;
@@ -2538,8 +2575,8 @@ class EspeciesModelosCompanion extends UpdateCompanion<EspecieModelo> {
     this.rowid = const Value.absent(),
   });
   EspeciesModelosCompanion.insert({
-    required String especieId,
-    required String modeloMatematicoId,
+    required int especieId,
+    required int modeloMatematicoId,
     this.padrao = const Value.absent(),
     required DateTime criadoEm,
     this.rowid = const Value.absent(),
@@ -2547,8 +2584,8 @@ class EspeciesModelosCompanion extends UpdateCompanion<EspecieModelo> {
        modeloMatematicoId = Value(modeloMatematicoId),
        criadoEm = Value(criadoEm);
   static Insertable<EspecieModelo> custom({
-    Expression<String>? especieId,
-    Expression<String>? modeloMatematicoId,
+    Expression<int>? especieId,
+    Expression<int>? modeloMatematicoId,
     Expression<bool>? padrao,
     Expression<DateTime>? criadoEm,
     Expression<int>? rowid,
@@ -2564,8 +2601,8 @@ class EspeciesModelosCompanion extends UpdateCompanion<EspecieModelo> {
   }
 
   EspeciesModelosCompanion copyWith({
-    Value<String>? especieId,
-    Value<String>? modeloMatematicoId,
+    Value<int>? especieId,
+    Value<int>? modeloMatematicoId,
     Value<bool>? padrao,
     Value<DateTime>? criadoEm,
     Value<int>? rowid,
@@ -2583,10 +2620,10 @@ class EspeciesModelosCompanion extends UpdateCompanion<EspecieModelo> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (especieId.present) {
-      map['especie_id'] = Variable<String>(especieId.value);
+      map['especie_id'] = Variable<int>(especieId.value);
     }
     if (modeloMatematicoId.present) {
-      map['modelo_matematico_id'] = Variable<String>(modeloMatematicoId.value);
+      map['modelo_matematico_id'] = Variable<int>(modeloMatematicoId.value);
     }
     if (padrao.present) {
       map['padrao'] = Variable<bool>(padrao.value);
@@ -2621,22 +2658,26 @@ class $CoeficientesEspecieModeloTable extends CoeficientesEspecieModelo
   $CoeficientesEspecieModeloTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
   );
   static const VerificationMeta _especieIdMeta = const VerificationMeta(
     'especieId',
   );
   @override
-  late final GeneratedColumn<String> especieId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> especieId = GeneratedColumn<int>(
     'especie_id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES especies (id) ON DELETE CASCADE',
@@ -2645,17 +2686,16 @@ class $CoeficientesEspecieModeloTable extends CoeficientesEspecieModelo
   static const VerificationMeta _modeloMatematicoIdMeta =
       const VerificationMeta('modeloMatematicoId');
   @override
-  late final GeneratedColumn<String> modeloMatematicoId =
-      GeneratedColumn<String>(
-        'modelo_matematico_id',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-        defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES modelos_matematicos (id) ON DELETE CASCADE',
-        ),
-      );
+  late final GeneratedColumn<int> modeloMatematicoId = GeneratedColumn<int>(
+    'modelo_matematico_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES modelos_matematicos (id) ON DELETE CASCADE',
+    ),
+  );
   static const VerificationMeta _simboloMeta = const VerificationMeta(
     'simbolo',
   );
@@ -2720,8 +2760,6 @@ class $CoeficientesEspecieModeloTable extends CoeficientesEspecieModelo
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('especie_id')) {
       context.handle(
@@ -2788,15 +2826,15 @@ class $CoeficientesEspecieModeloTable extends CoeficientesEspecieModelo
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return CoeficienteEspecieModelo(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
       especieId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}especie_id'],
       )!,
       modeloMatematicoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}modelo_matematico_id'],
       )!,
       simbolo: attachedDatabase.typeMapping.read(
@@ -2826,9 +2864,9 @@ class $CoeficientesEspecieModeloTable extends CoeficientesEspecieModelo
 
 class CoeficienteEspecieModelo extends DataClass
     implements Insertable<CoeficienteEspecieModelo> {
-  final String id;
-  final String especieId;
-  final String modeloMatematicoId;
+  final int id;
+  final int especieId;
+  final int modeloMatematicoId;
   final String simbolo;
   final String rotulo;
   final double? valor;
@@ -2845,9 +2883,9 @@ class CoeficienteEspecieModelo extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['especie_id'] = Variable<String>(especieId);
-    map['modelo_matematico_id'] = Variable<String>(modeloMatematicoId);
+    map['id'] = Variable<int>(id);
+    map['especie_id'] = Variable<int>(especieId);
+    map['modelo_matematico_id'] = Variable<int>(modeloMatematicoId);
     map['simbolo'] = Variable<String>(simbolo);
     map['rotulo'] = Variable<String>(rotulo);
     if (!nullToAbsent || valor != null) {
@@ -2877,11 +2915,9 @@ class CoeficienteEspecieModelo extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CoeficienteEspecieModelo(
-      id: serializer.fromJson<String>(json['id']),
-      especieId: serializer.fromJson<String>(json['especieId']),
-      modeloMatematicoId: serializer.fromJson<String>(
-        json['modeloMatematicoId'],
-      ),
+      id: serializer.fromJson<int>(json['id']),
+      especieId: serializer.fromJson<int>(json['especieId']),
+      modeloMatematicoId: serializer.fromJson<int>(json['modeloMatematicoId']),
       simbolo: serializer.fromJson<String>(json['simbolo']),
       rotulo: serializer.fromJson<String>(json['rotulo']),
       valor: serializer.fromJson<double?>(json['valor']),
@@ -2892,9 +2928,9 @@ class CoeficienteEspecieModelo extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'especieId': serializer.toJson<String>(especieId),
-      'modeloMatematicoId': serializer.toJson<String>(modeloMatematicoId),
+      'id': serializer.toJson<int>(id),
+      'especieId': serializer.toJson<int>(especieId),
+      'modeloMatematicoId': serializer.toJson<int>(modeloMatematicoId),
       'simbolo': serializer.toJson<String>(simbolo),
       'rotulo': serializer.toJson<String>(rotulo),
       'valor': serializer.toJson<double?>(valor),
@@ -2903,9 +2939,9 @@ class CoeficienteEspecieModelo extends DataClass
   }
 
   CoeficienteEspecieModelo copyWith({
-    String? id,
-    String? especieId,
-    String? modeloMatematicoId,
+    int? id,
+    int? especieId,
+    int? modeloMatematicoId,
     String? simbolo,
     String? rotulo,
     Value<double?> valor = const Value.absent(),
@@ -2976,14 +3012,13 @@ class CoeficienteEspecieModelo extends DataClass
 
 class CoeficientesEspecieModeloCompanion
     extends UpdateCompanion<CoeficienteEspecieModelo> {
-  final Value<String> id;
-  final Value<String> especieId;
-  final Value<String> modeloMatematicoId;
+  final Value<int> id;
+  final Value<int> especieId;
+  final Value<int> modeloMatematicoId;
   final Value<String> simbolo;
   final Value<String> rotulo;
   final Value<double?> valor;
   final Value<DateTime> atualizadoEm;
-  final Value<int> rowid;
   const CoeficientesEspecieModeloCompanion({
     this.id = const Value.absent(),
     this.especieId = const Value.absent(),
@@ -2992,32 +3027,28 @@ class CoeficientesEspecieModeloCompanion
     this.rotulo = const Value.absent(),
     this.valor = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   CoeficientesEspecieModeloCompanion.insert({
-    required String id,
-    required String especieId,
-    required String modeloMatematicoId,
+    this.id = const Value.absent(),
+    required int especieId,
+    required int modeloMatematicoId,
     required String simbolo,
     required String rotulo,
     this.valor = const Value.absent(),
     required DateTime atualizadoEm,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       especieId = Value(especieId),
+  }) : especieId = Value(especieId),
        modeloMatematicoId = Value(modeloMatematicoId),
        simbolo = Value(simbolo),
        rotulo = Value(rotulo),
        atualizadoEm = Value(atualizadoEm);
   static Insertable<CoeficienteEspecieModelo> custom({
-    Expression<String>? id,
-    Expression<String>? especieId,
-    Expression<String>? modeloMatematicoId,
+    Expression<int>? id,
+    Expression<int>? especieId,
+    Expression<int>? modeloMatematicoId,
     Expression<String>? simbolo,
     Expression<String>? rotulo,
     Expression<double>? valor,
     Expression<DateTime>? atualizadoEm,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3028,19 +3059,17 @@ class CoeficientesEspecieModeloCompanion
       if (rotulo != null) 'rotulo': rotulo,
       if (valor != null) 'valor': valor,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   CoeficientesEspecieModeloCompanion copyWith({
-    Value<String>? id,
-    Value<String>? especieId,
-    Value<String>? modeloMatematicoId,
+    Value<int>? id,
+    Value<int>? especieId,
+    Value<int>? modeloMatematicoId,
     Value<String>? simbolo,
     Value<String>? rotulo,
     Value<double?>? valor,
     Value<DateTime>? atualizadoEm,
-    Value<int>? rowid,
   }) {
     return CoeficientesEspecieModeloCompanion(
       id: id ?? this.id,
@@ -3050,7 +3079,6 @@ class CoeficientesEspecieModeloCompanion
       rotulo: rotulo ?? this.rotulo,
       valor: valor ?? this.valor,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -3058,13 +3086,13 @@ class CoeficientesEspecieModeloCompanion
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (especieId.present) {
-      map['especie_id'] = Variable<String>(especieId.value);
+      map['especie_id'] = Variable<int>(especieId.value);
     }
     if (modeloMatematicoId.present) {
-      map['modelo_matematico_id'] = Variable<String>(modeloMatematicoId.value);
+      map['modelo_matematico_id'] = Variable<int>(modeloMatematicoId.value);
     }
     if (simbolo.present) {
       map['simbolo'] = Variable<String>(simbolo.value);
@@ -3078,9 +3106,6 @@ class CoeficientesEspecieModeloCompanion
     if (atualizadoEm.present) {
       map['atualizado_em'] = Variable<DateTime>(atualizadoEm.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -3093,8 +3118,7 @@ class CoeficientesEspecieModeloCompanion
           ..write('simbolo: $simbolo, ')
           ..write('rotulo: $rotulo, ')
           ..write('valor: $valor, ')
-          ..write('atualizadoEm: $atualizadoEm, ')
-          ..write('rowid: $rowid')
+          ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
         .toString();
   }
@@ -3107,22 +3131,26 @@ class $TalhoesTable extends Talhoes with TableInfo<$TalhoesTable, Talhao> {
   $TalhoesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
   );
   static const VerificationMeta _propriedadeIdMeta = const VerificationMeta(
     'propriedadeId',
   );
   @override
-  late final GeneratedColumn<String> propriedadeId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> propriedadeId = GeneratedColumn<int>(
     'propriedade_id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES propriedades (id) ON DELETE CASCADE',
@@ -3143,11 +3171,11 @@ class $TalhoesTable extends Talhoes with TableInfo<$TalhoesTable, Talhao> {
     'especieId',
   );
   @override
-  late final GeneratedColumn<String> especieId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> especieId = GeneratedColumn<int>(
     'especie_id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES especies (id) ON DELETE RESTRICT',
@@ -3280,8 +3308,6 @@ class $TalhoesTable extends Talhoes with TableInfo<$TalhoesTable, Talhao> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('propriedade_id')) {
       context.handle(
@@ -3401,11 +3427,11 @@ class $TalhoesTable extends Talhoes with TableInfo<$TalhoesTable, Talhao> {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Talhao(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
       propriedadeId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}propriedade_id'],
       )!,
       identificacao: attachedDatabase.typeMapping.read(
@@ -3413,7 +3439,7 @@ class $TalhoesTable extends Talhoes with TableInfo<$TalhoesTable, Talhao> {
         data['${effectivePrefix}identificacao'],
       )!,
       especieId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}especie_id'],
       )!,
       areaHa: attachedDatabase.typeMapping.read(
@@ -3462,10 +3488,10 @@ class $TalhoesTable extends Talhoes with TableInfo<$TalhoesTable, Talhao> {
 }
 
 class Talhao extends DataClass implements Insertable<Talhao> {
-  final String id;
-  final String propriedadeId;
+  final int id;
+  final int propriedadeId;
   final String identificacao;
-  final String especieId;
+  final int especieId;
   final double areaHa;
   final int? anoPlantio;
   final String? espacamento;
@@ -3493,10 +3519,10 @@ class Talhao extends DataClass implements Insertable<Talhao> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['propriedade_id'] = Variable<String>(propriedadeId);
+    map['id'] = Variable<int>(id);
+    map['propriedade_id'] = Variable<int>(propriedadeId);
     map['identificacao'] = Variable<String>(identificacao);
-    map['especie_id'] = Variable<String>(especieId);
+    map['especie_id'] = Variable<int>(especieId);
     map['area_ha'] = Variable<double>(areaHa);
     if (!nullToAbsent || anoPlantio != null) {
       map['ano_plantio'] = Variable<int>(anoPlantio);
@@ -3557,10 +3583,10 @@ class Talhao extends DataClass implements Insertable<Talhao> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Talhao(
-      id: serializer.fromJson<String>(json['id']),
-      propriedadeId: serializer.fromJson<String>(json['propriedadeId']),
+      id: serializer.fromJson<int>(json['id']),
+      propriedadeId: serializer.fromJson<int>(json['propriedadeId']),
       identificacao: serializer.fromJson<String>(json['identificacao']),
-      especieId: serializer.fromJson<String>(json['especieId']),
+      especieId: serializer.fromJson<int>(json['especieId']),
       areaHa: serializer.fromJson<double>(json['areaHa']),
       anoPlantio: serializer.fromJson<int?>(json['anoPlantio']),
       espacamento: serializer.fromJson<String?>(json['espacamento']),
@@ -3578,10 +3604,10 @@ class Talhao extends DataClass implements Insertable<Talhao> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'propriedadeId': serializer.toJson<String>(propriedadeId),
+      'id': serializer.toJson<int>(id),
+      'propriedadeId': serializer.toJson<int>(propriedadeId),
       'identificacao': serializer.toJson<String>(identificacao),
-      'especieId': serializer.toJson<String>(especieId),
+      'especieId': serializer.toJson<int>(especieId),
       'areaHa': serializer.toJson<double>(areaHa),
       'anoPlantio': serializer.toJson<int?>(anoPlantio),
       'espacamento': serializer.toJson<String?>(espacamento),
@@ -3595,10 +3621,10 @@ class Talhao extends DataClass implements Insertable<Talhao> {
   }
 
   Talhao copyWith({
-    String? id,
-    String? propriedadeId,
+    int? id,
+    int? propriedadeId,
     String? identificacao,
-    String? especieId,
+    int? especieId,
     double? areaHa,
     Value<int?> anoPlantio = const Value.absent(),
     Value<String?> espacamento = const Value.absent(),
@@ -3719,10 +3745,10 @@ class Talhao extends DataClass implements Insertable<Talhao> {
 }
 
 class TalhoesCompanion extends UpdateCompanion<Talhao> {
-  final Value<String> id;
-  final Value<String> propriedadeId;
+  final Value<int> id;
+  final Value<int> propriedadeId;
   final Value<String> identificacao;
-  final Value<String> especieId;
+  final Value<int> especieId;
   final Value<double> areaHa;
   final Value<int?> anoPlantio;
   final Value<String?> espacamento;
@@ -3732,7 +3758,6 @@ class TalhoesCompanion extends UpdateCompanion<Talhao> {
   final Value<String?> observacoes;
   final Value<DateTime> criadoEm;
   final Value<DateTime> atualizadoEm;
-  final Value<int> rowid;
   const TalhoesCompanion({
     this.id = const Value.absent(),
     this.propriedadeId = const Value.absent(),
@@ -3747,13 +3772,12 @@ class TalhoesCompanion extends UpdateCompanion<Talhao> {
     this.observacoes = const Value.absent(),
     this.criadoEm = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   TalhoesCompanion.insert({
-    required String id,
-    required String propriedadeId,
+    this.id = const Value.absent(),
+    required int propriedadeId,
     required String identificacao,
-    required String especieId,
+    required int especieId,
     required double areaHa,
     this.anoPlantio = const Value.absent(),
     this.espacamento = const Value.absent(),
@@ -3763,19 +3787,17 @@ class TalhoesCompanion extends UpdateCompanion<Talhao> {
     this.observacoes = const Value.absent(),
     required DateTime criadoEm,
     required DateTime atualizadoEm,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       propriedadeId = Value(propriedadeId),
+  }) : propriedadeId = Value(propriedadeId),
        identificacao = Value(identificacao),
        especieId = Value(especieId),
        areaHa = Value(areaHa),
        criadoEm = Value(criadoEm),
        atualizadoEm = Value(atualizadoEm);
   static Insertable<Talhao> custom({
-    Expression<String>? id,
-    Expression<String>? propriedadeId,
+    Expression<int>? id,
+    Expression<int>? propriedadeId,
     Expression<String>? identificacao,
-    Expression<String>? especieId,
+    Expression<int>? especieId,
     Expression<double>? areaHa,
     Expression<int>? anoPlantio,
     Expression<String>? espacamento,
@@ -3785,7 +3807,6 @@ class TalhoesCompanion extends UpdateCompanion<Talhao> {
     Expression<String>? observacoes,
     Expression<DateTime>? criadoEm,
     Expression<DateTime>? atualizadoEm,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3802,15 +3823,14 @@ class TalhoesCompanion extends UpdateCompanion<Talhao> {
       if (observacoes != null) 'observacoes': observacoes,
       if (criadoEm != null) 'criado_em': criadoEm,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   TalhoesCompanion copyWith({
-    Value<String>? id,
-    Value<String>? propriedadeId,
+    Value<int>? id,
+    Value<int>? propriedadeId,
     Value<String>? identificacao,
-    Value<String>? especieId,
+    Value<int>? especieId,
     Value<double>? areaHa,
     Value<int?>? anoPlantio,
     Value<String?>? espacamento,
@@ -3820,7 +3840,6 @@ class TalhoesCompanion extends UpdateCompanion<Talhao> {
     Value<String?>? observacoes,
     Value<DateTime>? criadoEm,
     Value<DateTime>? atualizadoEm,
-    Value<int>? rowid,
   }) {
     return TalhoesCompanion(
       id: id ?? this.id,
@@ -3836,7 +3855,6 @@ class TalhoesCompanion extends UpdateCompanion<Talhao> {
       observacoes: observacoes ?? this.observacoes,
       criadoEm: criadoEm ?? this.criadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -3844,16 +3862,16 @@ class TalhoesCompanion extends UpdateCompanion<Talhao> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (propriedadeId.present) {
-      map['propriedade_id'] = Variable<String>(propriedadeId.value);
+      map['propriedade_id'] = Variable<int>(propriedadeId.value);
     }
     if (identificacao.present) {
       map['identificacao'] = Variable<String>(identificacao.value);
     }
     if (especieId.present) {
-      map['especie_id'] = Variable<String>(especieId.value);
+      map['especie_id'] = Variable<int>(especieId.value);
     }
     if (areaHa.present) {
       map['area_ha'] = Variable<double>(areaHa.value);
@@ -3884,9 +3902,6 @@ class TalhoesCompanion extends UpdateCompanion<Talhao> {
     if (atualizadoEm.present) {
       map['atualizado_em'] = Variable<DateTime>(atualizadoEm.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -3905,8 +3920,7 @@ class TalhoesCompanion extends UpdateCompanion<Talhao> {
           ..write('comprimentoParcelaM: $comprimentoParcelaM, ')
           ..write('observacoes: $observacoes, ')
           ..write('criadoEm: $criadoEm, ')
-          ..write('atualizadoEm: $atualizadoEm, ')
-          ..write('rowid: $rowid')
+          ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
         .toString();
   }
@@ -3920,22 +3934,26 @@ class $LevantamentosTable extends Levantamentos
   $LevantamentosTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
   );
   static const VerificationMeta _propriedadeIdMeta = const VerificationMeta(
     'propriedadeId',
   );
   @override
-  late final GeneratedColumn<String> propriedadeId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> propriedadeId = GeneratedColumn<int>(
     'propriedade_id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES propriedades (id) ON DELETE CASCADE',
@@ -4006,8 +4024,6 @@ class $LevantamentosTable extends Levantamentos
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('propriedade_id')) {
       context.handle(
@@ -4058,11 +4074,11 @@ class $LevantamentosTable extends Levantamentos
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Levantamento(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
       propriedadeId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}propriedade_id'],
       )!,
       situacao: $LevantamentosTable.$convertersituacao.fromSql(
@@ -4098,8 +4114,8 @@ class $LevantamentosTable extends Levantamentos
 }
 
 class Levantamento extends DataClass implements Insertable<Levantamento> {
-  final String id;
-  final String propriedadeId;
+  final int id;
+  final int propriedadeId;
   final SituacaoLevantamento situacao;
   final DateTime iniciadoEm;
   final DateTime atualizadoEm;
@@ -4115,8 +4131,8 @@ class Levantamento extends DataClass implements Insertable<Levantamento> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['propriedade_id'] = Variable<String>(propriedadeId);
+    map['id'] = Variable<int>(id);
+    map['propriedade_id'] = Variable<int>(propriedadeId);
     {
       map['situacao'] = Variable<String>(
         $LevantamentosTable.$convertersituacao.toSql(situacao),
@@ -4149,8 +4165,8 @@ class Levantamento extends DataClass implements Insertable<Levantamento> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Levantamento(
-      id: serializer.fromJson<String>(json['id']),
-      propriedadeId: serializer.fromJson<String>(json['propriedadeId']),
+      id: serializer.fromJson<int>(json['id']),
+      propriedadeId: serializer.fromJson<int>(json['propriedadeId']),
       situacao: $LevantamentosTable.$convertersituacao.fromJson(
         serializer.fromJson<String>(json['situacao']),
       ),
@@ -4163,8 +4179,8 @@ class Levantamento extends DataClass implements Insertable<Levantamento> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'propriedadeId': serializer.toJson<String>(propriedadeId),
+      'id': serializer.toJson<int>(id),
+      'propriedadeId': serializer.toJson<int>(propriedadeId),
       'situacao': serializer.toJson<String>(
         $LevantamentosTable.$convertersituacao.toJson(situacao),
       ),
@@ -4175,8 +4191,8 @@ class Levantamento extends DataClass implements Insertable<Levantamento> {
   }
 
   Levantamento copyWith({
-    String? id,
-    String? propriedadeId,
+    int? id,
+    int? propriedadeId,
     SituacaoLevantamento? situacao,
     DateTime? iniciadoEm,
     DateTime? atualizadoEm,
@@ -4243,13 +4259,12 @@ class Levantamento extends DataClass implements Insertable<Levantamento> {
 }
 
 class LevantamentosCompanion extends UpdateCompanion<Levantamento> {
-  final Value<String> id;
-  final Value<String> propriedadeId;
+  final Value<int> id;
+  final Value<int> propriedadeId;
   final Value<SituacaoLevantamento> situacao;
   final Value<DateTime> iniciadoEm;
   final Value<DateTime> atualizadoEm;
   final Value<DateTime?> concluidoEm;
-  final Value<int> rowid;
   const LevantamentosCompanion({
     this.id = const Value.absent(),
     this.propriedadeId = const Value.absent(),
@@ -4257,29 +4272,25 @@ class LevantamentosCompanion extends UpdateCompanion<Levantamento> {
     this.iniciadoEm = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
     this.concluidoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   LevantamentosCompanion.insert({
-    required String id,
-    required String propriedadeId,
+    this.id = const Value.absent(),
+    required int propriedadeId,
     required SituacaoLevantamento situacao,
     required DateTime iniciadoEm,
     required DateTime atualizadoEm,
     this.concluidoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       propriedadeId = Value(propriedadeId),
+  }) : propriedadeId = Value(propriedadeId),
        situacao = Value(situacao),
        iniciadoEm = Value(iniciadoEm),
        atualizadoEm = Value(atualizadoEm);
   static Insertable<Levantamento> custom({
-    Expression<String>? id,
-    Expression<String>? propriedadeId,
+    Expression<int>? id,
+    Expression<int>? propriedadeId,
     Expression<String>? situacao,
     Expression<DateTime>? iniciadoEm,
     Expression<DateTime>? atualizadoEm,
     Expression<DateTime>? concluidoEm,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4288,18 +4299,16 @@ class LevantamentosCompanion extends UpdateCompanion<Levantamento> {
       if (iniciadoEm != null) 'iniciado_em': iniciadoEm,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
       if (concluidoEm != null) 'concluido_em': concluidoEm,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   LevantamentosCompanion copyWith({
-    Value<String>? id,
-    Value<String>? propriedadeId,
+    Value<int>? id,
+    Value<int>? propriedadeId,
     Value<SituacaoLevantamento>? situacao,
     Value<DateTime>? iniciadoEm,
     Value<DateTime>? atualizadoEm,
     Value<DateTime?>? concluidoEm,
-    Value<int>? rowid,
   }) {
     return LevantamentosCompanion(
       id: id ?? this.id,
@@ -4308,7 +4317,6 @@ class LevantamentosCompanion extends UpdateCompanion<Levantamento> {
       iniciadoEm: iniciadoEm ?? this.iniciadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
       concluidoEm: concluidoEm ?? this.concluidoEm,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -4316,10 +4324,10 @@ class LevantamentosCompanion extends UpdateCompanion<Levantamento> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (propriedadeId.present) {
-      map['propriedade_id'] = Variable<String>(propriedadeId.value);
+      map['propriedade_id'] = Variable<int>(propriedadeId.value);
     }
     if (situacao.present) {
       map['situacao'] = Variable<String>(
@@ -4335,9 +4343,6 @@ class LevantamentosCompanion extends UpdateCompanion<Levantamento> {
     if (concluidoEm.present) {
       map['concluido_em'] = Variable<DateTime>(concluidoEm.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -4349,8 +4354,7 @@ class LevantamentosCompanion extends UpdateCompanion<Levantamento> {
           ..write('situacao: $situacao, ')
           ..write('iniciadoEm: $iniciadoEm, ')
           ..write('atualizadoEm: $atualizadoEm, ')
-          ..write('concluidoEm: $concluidoEm, ')
-          ..write('rowid: $rowid')
+          ..write('concluidoEm: $concluidoEm')
           ..write(')'))
         .toString();
   }
@@ -4364,22 +4368,26 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
   $TalhaoLevantamentosTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
   );
   static const VerificationMeta _levantamentoIdMeta = const VerificationMeta(
     'levantamentoId',
   );
   @override
-  late final GeneratedColumn<String> levantamentoId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> levantamentoId = GeneratedColumn<int>(
     'levantamento_id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES levantamentos (id) ON DELETE CASCADE',
@@ -4389,11 +4397,11 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
     'talhaoId',
   );
   @override
-  late final GeneratedColumn<String> talhaoId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> talhaoId = GeneratedColumn<int>(
     'talhao_id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES talhoes (id) ON DELETE CASCADE',
@@ -4403,11 +4411,11 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
     'especieId',
   );
   @override
-  late final GeneratedColumn<String> especieId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> especieId = GeneratedColumn<int>(
     'especie_id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES especies (id) ON DELETE RESTRICT',
@@ -4416,17 +4424,16 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
   static const VerificationMeta _modeloMatematicoIdMeta =
       const VerificationMeta('modeloMatematicoId');
   @override
-  late final GeneratedColumn<String> modeloMatematicoId =
-      GeneratedColumn<String>(
-        'modelo_matematico_id',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-        defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES modelos_matematicos (id) ON DELETE RESTRICT',
-        ),
-      );
+  late final GeneratedColumn<int> modeloMatematicoId = GeneratedColumn<int>(
+    'modelo_matematico_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES modelos_matematicos (id) ON DELETE RESTRICT',
+    ),
+  );
   static const VerificationMeta _areaPadraoParcelaHaMeta =
       const VerificationMeta('areaPadraoParcelaHa');
   @override
@@ -4485,8 +4492,6 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('levantamento_id')) {
       context.handle(
@@ -4564,23 +4569,23 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return TalhaoLevantamento(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
       levantamentoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}levantamento_id'],
       )!,
       talhaoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}talhao_id'],
       )!,
       especieId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}especie_id'],
       )!,
       modeloMatematicoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}modelo_matematico_id'],
       )!,
       areaPadraoParcelaHa: attachedDatabase.typeMapping.read(
@@ -4606,11 +4611,11 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
 
 class TalhaoLevantamento extends DataClass
     implements Insertable<TalhaoLevantamento> {
-  final String id;
-  final String levantamentoId;
-  final String talhaoId;
-  final String especieId;
-  final String modeloMatematicoId;
+  final int id;
+  final int levantamentoId;
+  final int talhaoId;
+  final int especieId;
+  final int modeloMatematicoId;
   final double? areaPadraoParcelaHa;
   final DateTime criadoEm;
   final DateTime atualizadoEm;
@@ -4627,11 +4632,11 @@ class TalhaoLevantamento extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['levantamento_id'] = Variable<String>(levantamentoId);
-    map['talhao_id'] = Variable<String>(talhaoId);
-    map['especie_id'] = Variable<String>(especieId);
-    map['modelo_matematico_id'] = Variable<String>(modeloMatematicoId);
+    map['id'] = Variable<int>(id);
+    map['levantamento_id'] = Variable<int>(levantamentoId);
+    map['talhao_id'] = Variable<int>(talhaoId);
+    map['especie_id'] = Variable<int>(especieId);
+    map['modelo_matematico_id'] = Variable<int>(modeloMatematicoId);
     if (!nullToAbsent || areaPadraoParcelaHa != null) {
       map['area_padrao_parcela_ha'] = Variable<double>(areaPadraoParcelaHa);
     }
@@ -4661,13 +4666,11 @@ class TalhaoLevantamento extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return TalhaoLevantamento(
-      id: serializer.fromJson<String>(json['id']),
-      levantamentoId: serializer.fromJson<String>(json['levantamentoId']),
-      talhaoId: serializer.fromJson<String>(json['talhaoId']),
-      especieId: serializer.fromJson<String>(json['especieId']),
-      modeloMatematicoId: serializer.fromJson<String>(
-        json['modeloMatematicoId'],
-      ),
+      id: serializer.fromJson<int>(json['id']),
+      levantamentoId: serializer.fromJson<int>(json['levantamentoId']),
+      talhaoId: serializer.fromJson<int>(json['talhaoId']),
+      especieId: serializer.fromJson<int>(json['especieId']),
+      modeloMatematicoId: serializer.fromJson<int>(json['modeloMatematicoId']),
       areaPadraoParcelaHa: serializer.fromJson<double?>(
         json['areaPadraoParcelaHa'],
       ),
@@ -4679,11 +4682,11 @@ class TalhaoLevantamento extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'levantamentoId': serializer.toJson<String>(levantamentoId),
-      'talhaoId': serializer.toJson<String>(talhaoId),
-      'especieId': serializer.toJson<String>(especieId),
-      'modeloMatematicoId': serializer.toJson<String>(modeloMatematicoId),
+      'id': serializer.toJson<int>(id),
+      'levantamentoId': serializer.toJson<int>(levantamentoId),
+      'talhaoId': serializer.toJson<int>(talhaoId),
+      'especieId': serializer.toJson<int>(especieId),
+      'modeloMatematicoId': serializer.toJson<int>(modeloMatematicoId),
       'areaPadraoParcelaHa': serializer.toJson<double?>(areaPadraoParcelaHa),
       'criadoEm': serializer.toJson<DateTime>(criadoEm),
       'atualizadoEm': serializer.toJson<DateTime>(atualizadoEm),
@@ -4691,11 +4694,11 @@ class TalhaoLevantamento extends DataClass
   }
 
   TalhaoLevantamento copyWith({
-    String? id,
-    String? levantamentoId,
-    String? talhaoId,
-    String? especieId,
-    String? modeloMatematicoId,
+    int? id,
+    int? levantamentoId,
+    int? talhaoId,
+    int? especieId,
+    int? modeloMatematicoId,
     Value<double?> areaPadraoParcelaHa = const Value.absent(),
     DateTime? criadoEm,
     DateTime? atualizadoEm,
@@ -4773,15 +4776,14 @@ class TalhaoLevantamento extends DataClass
 }
 
 class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
-  final Value<String> id;
-  final Value<String> levantamentoId;
-  final Value<String> talhaoId;
-  final Value<String> especieId;
-  final Value<String> modeloMatematicoId;
+  final Value<int> id;
+  final Value<int> levantamentoId;
+  final Value<int> talhaoId;
+  final Value<int> especieId;
+  final Value<int> modeloMatematicoId;
   final Value<double?> areaPadraoParcelaHa;
   final Value<DateTime> criadoEm;
   final Value<DateTime> atualizadoEm;
-  final Value<int> rowid;
   const TalhaoLevantamentosCompanion({
     this.id = const Value.absent(),
     this.levantamentoId = const Value.absent(),
@@ -4791,35 +4793,31 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
     this.areaPadraoParcelaHa = const Value.absent(),
     this.criadoEm = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   TalhaoLevantamentosCompanion.insert({
-    required String id,
-    required String levantamentoId,
-    required String talhaoId,
-    required String especieId,
-    required String modeloMatematicoId,
+    this.id = const Value.absent(),
+    required int levantamentoId,
+    required int talhaoId,
+    required int especieId,
+    required int modeloMatematicoId,
     this.areaPadraoParcelaHa = const Value.absent(),
     required DateTime criadoEm,
     required DateTime atualizadoEm,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       levantamentoId = Value(levantamentoId),
+  }) : levantamentoId = Value(levantamentoId),
        talhaoId = Value(talhaoId),
        especieId = Value(especieId),
        modeloMatematicoId = Value(modeloMatematicoId),
        criadoEm = Value(criadoEm),
        atualizadoEm = Value(atualizadoEm);
   static Insertable<TalhaoLevantamento> custom({
-    Expression<String>? id,
-    Expression<String>? levantamentoId,
-    Expression<String>? talhaoId,
-    Expression<String>? especieId,
-    Expression<String>? modeloMatematicoId,
+    Expression<int>? id,
+    Expression<int>? levantamentoId,
+    Expression<int>? talhaoId,
+    Expression<int>? especieId,
+    Expression<int>? modeloMatematicoId,
     Expression<double>? areaPadraoParcelaHa,
     Expression<DateTime>? criadoEm,
     Expression<DateTime>? atualizadoEm,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4832,20 +4830,18 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
         'area_padrao_parcela_ha': areaPadraoParcelaHa,
       if (criadoEm != null) 'criado_em': criadoEm,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   TalhaoLevantamentosCompanion copyWith({
-    Value<String>? id,
-    Value<String>? levantamentoId,
-    Value<String>? talhaoId,
-    Value<String>? especieId,
-    Value<String>? modeloMatematicoId,
+    Value<int>? id,
+    Value<int>? levantamentoId,
+    Value<int>? talhaoId,
+    Value<int>? especieId,
+    Value<int>? modeloMatematicoId,
     Value<double?>? areaPadraoParcelaHa,
     Value<DateTime>? criadoEm,
     Value<DateTime>? atualizadoEm,
-    Value<int>? rowid,
   }) {
     return TalhaoLevantamentosCompanion(
       id: id ?? this.id,
@@ -4856,7 +4852,6 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
       areaPadraoParcelaHa: areaPadraoParcelaHa ?? this.areaPadraoParcelaHa,
       criadoEm: criadoEm ?? this.criadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -4864,19 +4859,19 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (levantamentoId.present) {
-      map['levantamento_id'] = Variable<String>(levantamentoId.value);
+      map['levantamento_id'] = Variable<int>(levantamentoId.value);
     }
     if (talhaoId.present) {
-      map['talhao_id'] = Variable<String>(talhaoId.value);
+      map['talhao_id'] = Variable<int>(talhaoId.value);
     }
     if (especieId.present) {
-      map['especie_id'] = Variable<String>(especieId.value);
+      map['especie_id'] = Variable<int>(especieId.value);
     }
     if (modeloMatematicoId.present) {
-      map['modelo_matematico_id'] = Variable<String>(modeloMatematicoId.value);
+      map['modelo_matematico_id'] = Variable<int>(modeloMatematicoId.value);
     }
     if (areaPadraoParcelaHa.present) {
       map['area_padrao_parcela_ha'] = Variable<double>(
@@ -4888,9 +4883,6 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
     }
     if (atualizadoEm.present) {
       map['atualizado_em'] = Variable<DateTime>(atualizadoEm.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -4905,8 +4897,7 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
           ..write('modeloMatematicoId: $modeloMatematicoId, ')
           ..write('areaPadraoParcelaHa: $areaPadraoParcelaHa, ')
           ..write('criadoEm: $criadoEm, ')
-          ..write('atualizadoEm: $atualizadoEm, ')
-          ..write('rowid: $rowid')
+          ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
         .toString();
   }
@@ -4919,27 +4910,30 @@ class $ParcelasTable extends Parcelas with TableInfo<$ParcelasTable, Parcela> {
   $ParcelasTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
   );
   static const VerificationMeta _talhaoLevantamentoIdMeta =
       const VerificationMeta('talhaoLevantamentoId');
   @override
-  late final GeneratedColumn<String> talhaoLevantamentoId =
-      GeneratedColumn<String>(
-        'talhao_levantamento_id',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-        defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES talhao_levantamentos (id) ON DELETE CASCADE',
-        ),
-      );
+  late final GeneratedColumn<int> talhaoLevantamentoId = GeneratedColumn<int>(
+    'talhao_levantamento_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES talhao_levantamentos (id) ON DELETE CASCADE',
+    ),
+  );
   static const VerificationMeta _identificacaoMeta = const VerificationMeta(
     'identificacao',
   );
@@ -5028,8 +5022,6 @@ class $ParcelasTable extends Parcelas with TableInfo<$ParcelasTable, Parcela> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('talhao_levantamento_id')) {
       context.handle(
@@ -5088,11 +5080,11 @@ class $ParcelasTable extends Parcelas with TableInfo<$ParcelasTable, Parcela> {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Parcela(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
       talhaoLevantamentoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}talhao_levantamento_id'],
       )!,
       identificacao: attachedDatabase.typeMapping.read(
@@ -5147,8 +5139,8 @@ class $ParcelasTable extends Parcelas with TableInfo<$ParcelasTable, Parcela> {
 }
 
 class Parcela extends DataClass implements Insertable<Parcela> {
-  final String id;
-  final String talhaoLevantamentoId;
+  final int id;
+  final int talhaoLevantamentoId;
   final String identificacao;
   final SituacaoParcela situacao;
   final double? areaHa;
@@ -5168,8 +5160,8 @@ class Parcela extends DataClass implements Insertable<Parcela> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['talhao_levantamento_id'] = Variable<String>(talhaoLevantamentoId);
+    map['id'] = Variable<int>(id);
+    map['talhao_levantamento_id'] = Variable<int>(talhaoLevantamentoId);
     map['identificacao'] = Variable<String>(identificacao);
     {
       map['situacao'] = Variable<String>(
@@ -5212,8 +5204,8 @@ class Parcela extends DataClass implements Insertable<Parcela> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Parcela(
-      id: serializer.fromJson<String>(json['id']),
-      talhaoLevantamentoId: serializer.fromJson<String>(
+      id: serializer.fromJson<int>(json['id']),
+      talhaoLevantamentoId: serializer.fromJson<int>(
         json['talhaoLevantamentoId'],
       ),
       identificacao: serializer.fromJson<String>(json['identificacao']),
@@ -5232,8 +5224,8 @@ class Parcela extends DataClass implements Insertable<Parcela> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'talhaoLevantamentoId': serializer.toJson<String>(talhaoLevantamentoId),
+      'id': serializer.toJson<int>(id),
+      'talhaoLevantamentoId': serializer.toJson<int>(talhaoLevantamentoId),
       'identificacao': serializer.toJson<String>(identificacao),
       'situacao': serializer.toJson<String>(
         $ParcelasTable.$convertersituacao.toJson(situacao),
@@ -5248,8 +5240,8 @@ class Parcela extends DataClass implements Insertable<Parcela> {
   }
 
   Parcela copyWith({
-    String? id,
-    String? talhaoLevantamentoId,
+    int? id,
+    int? talhaoLevantamentoId,
     String? identificacao,
     SituacaoParcela? situacao,
     Value<double?> areaHa = const Value.absent(),
@@ -5330,15 +5322,14 @@ class Parcela extends DataClass implements Insertable<Parcela> {
 }
 
 class ParcelasCompanion extends UpdateCompanion<Parcela> {
-  final Value<String> id;
-  final Value<String> talhaoLevantamentoId;
+  final Value<int> id;
+  final Value<int> talhaoLevantamentoId;
   final Value<String> identificacao;
   final Value<SituacaoParcela> situacao;
   final Value<double?> areaHa;
   final Value<PosicaoReferenciaParcela?> posicaoReferencia;
   final Value<DateTime> criadoEm;
   final Value<DateTime> atualizadoEm;
-  final Value<int> rowid;
   const ParcelasCompanion({
     this.id = const Value.absent(),
     this.talhaoLevantamentoId = const Value.absent(),
@@ -5348,34 +5339,30 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
     this.posicaoReferencia = const Value.absent(),
     this.criadoEm = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   ParcelasCompanion.insert({
-    required String id,
-    required String talhaoLevantamentoId,
+    this.id = const Value.absent(),
+    required int talhaoLevantamentoId,
     required String identificacao,
     required SituacaoParcela situacao,
     this.areaHa = const Value.absent(),
     this.posicaoReferencia = const Value.absent(),
     required DateTime criadoEm,
     required DateTime atualizadoEm,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       talhaoLevantamentoId = Value(talhaoLevantamentoId),
+  }) : talhaoLevantamentoId = Value(talhaoLevantamentoId),
        identificacao = Value(identificacao),
        situacao = Value(situacao),
        criadoEm = Value(criadoEm),
        atualizadoEm = Value(atualizadoEm);
   static Insertable<Parcela> custom({
-    Expression<String>? id,
-    Expression<String>? talhaoLevantamentoId,
+    Expression<int>? id,
+    Expression<int>? talhaoLevantamentoId,
     Expression<String>? identificacao,
     Expression<String>? situacao,
     Expression<double>? areaHa,
     Expression<String>? posicaoReferencia,
     Expression<DateTime>? criadoEm,
     Expression<DateTime>? atualizadoEm,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -5387,20 +5374,18 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
       if (posicaoReferencia != null) 'posicao_referencia': posicaoReferencia,
       if (criadoEm != null) 'criado_em': criadoEm,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   ParcelasCompanion copyWith({
-    Value<String>? id,
-    Value<String>? talhaoLevantamentoId,
+    Value<int>? id,
+    Value<int>? talhaoLevantamentoId,
     Value<String>? identificacao,
     Value<SituacaoParcela>? situacao,
     Value<double?>? areaHa,
     Value<PosicaoReferenciaParcela?>? posicaoReferencia,
     Value<DateTime>? criadoEm,
     Value<DateTime>? atualizadoEm,
-    Value<int>? rowid,
   }) {
     return ParcelasCompanion(
       id: id ?? this.id,
@@ -5411,7 +5396,6 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
       posicaoReferencia: posicaoReferencia ?? this.posicaoReferencia,
       criadoEm: criadoEm ?? this.criadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -5419,12 +5403,10 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (talhaoLevantamentoId.present) {
-      map['talhao_levantamento_id'] = Variable<String>(
-        talhaoLevantamentoId.value,
-      );
+      map['talhao_levantamento_id'] = Variable<int>(talhaoLevantamentoId.value);
     }
     if (identificacao.present) {
       map['identificacao'] = Variable<String>(identificacao.value);
@@ -5450,9 +5432,6 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
     if (atualizadoEm.present) {
       map['atualizado_em'] = Variable<DateTime>(atualizadoEm.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -5466,8 +5445,7 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
           ..write('areaHa: $areaHa, ')
           ..write('posicaoReferencia: $posicaoReferencia, ')
           ..write('criadoEm: $criadoEm, ')
-          ..write('atualizadoEm: $atualizadoEm, ')
-          ..write('rowid: $rowid')
+          ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
         .toString();
   }
@@ -5481,22 +5459,26 @@ class $PontosGeograficosParcelaTable extends PontosGeograficosParcela
   $PontosGeograficosParcelaTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
   );
   static const VerificationMeta _parcelaIdMeta = const VerificationMeta(
     'parcelaId',
   );
   @override
-  late final GeneratedColumn<String> parcelaId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> parcelaId = GeneratedColumn<int>(
     'parcela_id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES parcelas (id) ON DELETE CASCADE',
@@ -5594,8 +5576,6 @@ class $PontosGeograficosParcelaTable extends PontosGeograficosParcela
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('parcela_id')) {
       context.handle(
@@ -5659,11 +5639,11 @@ class $PontosGeograficosParcelaTable extends PontosGeograficosParcela
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return PontoGeograficoParcela(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
       parcelaId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}parcela_id'],
       )!,
       ordemPonto: attachedDatabase.typeMapping.read(
@@ -5715,8 +5695,8 @@ class $PontosGeograficosParcelaTable extends PontosGeograficosParcela
 
 class PontoGeograficoParcela extends DataClass
     implements Insertable<PontoGeograficoParcela> {
-  final String id;
-  final String parcelaId;
+  final int id;
+  final int parcelaId;
   final int ordemPonto;
   final PosicaoReferenciaParcela? posicaoReferencia;
   final double latitude;
@@ -5736,8 +5716,8 @@ class PontoGeograficoParcela extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['parcela_id'] = Variable<String>(parcelaId);
+    map['id'] = Variable<int>(id);
+    map['parcela_id'] = Variable<int>(parcelaId);
     map['ordem_ponto'] = Variable<int>(ordemPonto);
     if (!nullToAbsent || posicaoReferencia != null) {
       map['posicao_referencia'] = Variable<String>(
@@ -5778,8 +5758,8 @@ class PontoGeograficoParcela extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return PontoGeograficoParcela(
-      id: serializer.fromJson<String>(json['id']),
-      parcelaId: serializer.fromJson<String>(json['parcelaId']),
+      id: serializer.fromJson<int>(json['id']),
+      parcelaId: serializer.fromJson<int>(json['parcelaId']),
       ordemPonto: serializer.fromJson<int>(json['ordemPonto']),
       posicaoReferencia: $PontosGeograficosParcelaTable
           .$converterposicaoReferencian
@@ -5794,8 +5774,8 @@ class PontoGeograficoParcela extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'parcelaId': serializer.toJson<String>(parcelaId),
+      'id': serializer.toJson<int>(id),
+      'parcelaId': serializer.toJson<int>(parcelaId),
       'ordemPonto': serializer.toJson<int>(ordemPonto),
       'posicaoReferencia': serializer.toJson<String?>(
         $PontosGeograficosParcelaTable.$converterposicaoReferencian.toJson(
@@ -5810,8 +5790,8 @@ class PontoGeograficoParcela extends DataClass
   }
 
   PontoGeograficoParcela copyWith({
-    String? id,
-    String? parcelaId,
+    int? id,
+    int? parcelaId,
     int? ordemPonto,
     Value<PosicaoReferenciaParcela?> posicaoReferencia = const Value.absent(),
     double? latitude,
@@ -5897,15 +5877,14 @@ class PontoGeograficoParcela extends DataClass
 
 class PontosGeograficosParcelaCompanion
     extends UpdateCompanion<PontoGeograficoParcela> {
-  final Value<String> id;
-  final Value<String> parcelaId;
+  final Value<int> id;
+  final Value<int> parcelaId;
   final Value<int> ordemPonto;
   final Value<PosicaoReferenciaParcela?> posicaoReferencia;
   final Value<double> latitude;
   final Value<double> longitude;
   final Value<double?> precisaoMetros;
   final Value<DateTime> capturadoEm;
-  final Value<int> rowid;
   const PontosGeograficosParcelaCompanion({
     this.id = const Value.absent(),
     this.parcelaId = const Value.absent(),
@@ -5915,34 +5894,30 @@ class PontosGeograficosParcelaCompanion
     this.longitude = const Value.absent(),
     this.precisaoMetros = const Value.absent(),
     this.capturadoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   PontosGeograficosParcelaCompanion.insert({
-    required String id,
-    required String parcelaId,
+    this.id = const Value.absent(),
+    required int parcelaId,
     required int ordemPonto,
     this.posicaoReferencia = const Value.absent(),
     required double latitude,
     required double longitude,
     this.precisaoMetros = const Value.absent(),
     required DateTime capturadoEm,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       parcelaId = Value(parcelaId),
+  }) : parcelaId = Value(parcelaId),
        ordemPonto = Value(ordemPonto),
        latitude = Value(latitude),
        longitude = Value(longitude),
        capturadoEm = Value(capturadoEm);
   static Insertable<PontoGeograficoParcela> custom({
-    Expression<String>? id,
-    Expression<String>? parcelaId,
+    Expression<int>? id,
+    Expression<int>? parcelaId,
     Expression<int>? ordemPonto,
     Expression<String>? posicaoReferencia,
     Expression<double>? latitude,
     Expression<double>? longitude,
     Expression<double>? precisaoMetros,
     Expression<DateTime>? capturadoEm,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -5953,20 +5928,18 @@ class PontosGeograficosParcelaCompanion
       if (longitude != null) 'longitude': longitude,
       if (precisaoMetros != null) 'precisao_metros': precisaoMetros,
       if (capturadoEm != null) 'capturado_em': capturadoEm,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   PontosGeograficosParcelaCompanion copyWith({
-    Value<String>? id,
-    Value<String>? parcelaId,
+    Value<int>? id,
+    Value<int>? parcelaId,
     Value<int>? ordemPonto,
     Value<PosicaoReferenciaParcela?>? posicaoReferencia,
     Value<double>? latitude,
     Value<double>? longitude,
     Value<double?>? precisaoMetros,
     Value<DateTime>? capturadoEm,
-    Value<int>? rowid,
   }) {
     return PontosGeograficosParcelaCompanion(
       id: id ?? this.id,
@@ -5977,7 +5950,6 @@ class PontosGeograficosParcelaCompanion
       longitude: longitude ?? this.longitude,
       precisaoMetros: precisaoMetros ?? this.precisaoMetros,
       capturadoEm: capturadoEm ?? this.capturadoEm,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -5985,10 +5957,10 @@ class PontosGeograficosParcelaCompanion
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (parcelaId.present) {
-      map['parcela_id'] = Variable<String>(parcelaId.value);
+      map['parcela_id'] = Variable<int>(parcelaId.value);
     }
     if (ordemPonto.present) {
       map['ordem_ponto'] = Variable<int>(ordemPonto.value);
@@ -6012,9 +5984,6 @@ class PontosGeograficosParcelaCompanion
     if (capturadoEm.present) {
       map['capturado_em'] = Variable<DateTime>(capturadoEm.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -6028,8 +5997,7 @@ class PontosGeograficosParcelaCompanion
           ..write('latitude: $latitude, ')
           ..write('longitude: $longitude, ')
           ..write('precisaoMetros: $precisaoMetros, ')
-          ..write('capturadoEm: $capturadoEm, ')
-          ..write('rowid: $rowid')
+          ..write('capturadoEm: $capturadoEm')
           ..write(')'))
         .toString();
   }
@@ -6042,22 +6010,26 @@ class $ArvoresTable extends Arvores with TableInfo<$ArvoresTable, Arvore> {
   $ArvoresTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
   );
   static const VerificationMeta _parcelaIdMeta = const VerificationMeta(
     'parcelaId',
   );
   @override
-  late final GeneratedColumn<String> parcelaId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> parcelaId = GeneratedColumn<int>(
     'parcela_id',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES parcelas (id) ON DELETE CASCADE',
@@ -6214,8 +6186,6 @@ class $ArvoresTable extends Arvores with TableInfo<$ArvoresTable, Arvore> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('parcela_id')) {
       context.handle(
@@ -6317,11 +6287,11 @@ class $ArvoresTable extends Arvores with TableInfo<$ArvoresTable, Arvore> {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Arvore(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
       parcelaId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}parcela_id'],
       )!,
       numero: attachedDatabase.typeMapping.read(
@@ -6392,8 +6362,8 @@ class $ArvoresTable extends Arvores with TableInfo<$ArvoresTable, Arvore> {
 }
 
 class Arvore extends DataClass implements Insertable<Arvore> {
-  final String id;
-  final String parcelaId;
+  final int id;
+  final int parcelaId;
   final int numero;
   final double dapCm;
   final double alturaM;
@@ -6423,8 +6393,8 @@ class Arvore extends DataClass implements Insertable<Arvore> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['parcela_id'] = Variable<String>(parcelaId);
+    map['id'] = Variable<int>(id);
+    map['parcela_id'] = Variable<int>(parcelaId);
     map['numero'] = Variable<int>(numero);
     map['dap_cm'] = Variable<double>(dapCm);
     map['altura_m'] = Variable<double>(alturaM);
@@ -6489,8 +6459,8 @@ class Arvore extends DataClass implements Insertable<Arvore> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Arvore(
-      id: serializer.fromJson<String>(json['id']),
-      parcelaId: serializer.fromJson<String>(json['parcelaId']),
+      id: serializer.fromJson<int>(json['id']),
+      parcelaId: serializer.fromJson<int>(json['parcelaId']),
       numero: serializer.fromJson<int>(json['numero']),
       dapCm: serializer.fromJson<double>(json['dapCm']),
       alturaM: serializer.fromJson<double>(json['alturaM']),
@@ -6516,8 +6486,8 @@ class Arvore extends DataClass implements Insertable<Arvore> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'parcelaId': serializer.toJson<String>(parcelaId),
+      'id': serializer.toJson<int>(id),
+      'parcelaId': serializer.toJson<int>(parcelaId),
       'numero': serializer.toJson<int>(numero),
       'dapCm': serializer.toJson<double>(dapCm),
       'alturaM': serializer.toJson<double>(alturaM),
@@ -6539,8 +6509,8 @@ class Arvore extends DataClass implements Insertable<Arvore> {
   }
 
   Arvore copyWith({
-    String? id,
-    String? parcelaId,
+    int? id,
+    int? parcelaId,
     int? numero,
     double? dapCm,
     double? alturaM,
@@ -6658,8 +6628,8 @@ class Arvore extends DataClass implements Insertable<Arvore> {
 }
 
 class ArvoresCompanion extends UpdateCompanion<Arvore> {
-  final Value<String> id;
-  final Value<String> parcelaId;
+  final Value<int> id;
+  final Value<int> parcelaId;
   final Value<int> numero;
   final Value<double> dapCm;
   final Value<double> alturaM;
@@ -6671,7 +6641,6 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
   final Value<PosicaoReferenciaParcela?> posicaoReferenciaParcela;
   final Value<DateTime> criadoEm;
   final Value<DateTime> atualizadoEm;
-  final Value<int> rowid;
   const ArvoresCompanion({
     this.id = const Value.absent(),
     this.parcelaId = const Value.absent(),
@@ -6686,11 +6655,10 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
     this.posicaoReferenciaParcela = const Value.absent(),
     this.criadoEm = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   ArvoresCompanion.insert({
-    required String id,
-    required String parcelaId,
+    this.id = const Value.absent(),
+    required int parcelaId,
     required int numero,
     required double dapCm,
     required double alturaM,
@@ -6702,17 +6670,15 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
     this.posicaoReferenciaParcela = const Value.absent(),
     required DateTime criadoEm,
     required DateTime atualizadoEm,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       parcelaId = Value(parcelaId),
+  }) : parcelaId = Value(parcelaId),
        numero = Value(numero),
        dapCm = Value(dapCm),
        alturaM = Value(alturaM),
        criadoEm = Value(criadoEm),
        atualizadoEm = Value(atualizadoEm);
   static Insertable<Arvore> custom({
-    Expression<String>? id,
-    Expression<String>? parcelaId,
+    Expression<int>? id,
+    Expression<int>? parcelaId,
     Expression<int>? numero,
     Expression<double>? dapCm,
     Expression<double>? alturaM,
@@ -6724,7 +6690,6 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
     Expression<String>? posicaoReferenciaParcela,
     Expression<DateTime>? criadoEm,
     Expression<DateTime>? atualizadoEm,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -6743,13 +6708,12 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
         'posicao_referencia_parcela': posicaoReferenciaParcela,
       if (criadoEm != null) 'criado_em': criadoEm,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   ArvoresCompanion copyWith({
-    Value<String>? id,
-    Value<String>? parcelaId,
+    Value<int>? id,
+    Value<int>? parcelaId,
     Value<int>? numero,
     Value<double>? dapCm,
     Value<double>? alturaM,
@@ -6761,7 +6725,6 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
     Value<PosicaoReferenciaParcela?>? posicaoReferenciaParcela,
     Value<DateTime>? criadoEm,
     Value<DateTime>? atualizadoEm,
-    Value<int>? rowid,
   }) {
     return ArvoresCompanion(
       id: id ?? this.id,
@@ -6779,7 +6742,6 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
           posicaoReferenciaParcela ?? this.posicaoReferenciaParcela,
       criadoEm: criadoEm ?? this.criadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -6787,10 +6749,10 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (parcelaId.present) {
-      map['parcela_id'] = Variable<String>(parcelaId.value);
+      map['parcela_id'] = Variable<int>(parcelaId.value);
     }
     if (numero.present) {
       map['numero'] = Variable<int>(numero.value);
@@ -6833,9 +6795,6 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
     if (atualizadoEm.present) {
       map['atualizado_em'] = Variable<DateTime>(atualizadoEm.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -6854,8 +6813,7 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
           ..write('localizacaoCapturadaEm: $localizacaoCapturadaEm, ')
           ..write('posicaoReferenciaParcela: $posicaoReferenciaParcela, ')
           ..write('criadoEm: $criadoEm, ')
-          ..write('atualizadoEm: $atualizadoEm, ')
-          ..write('rowid: $rowid')
+          ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
         .toString();
   }
@@ -7009,25 +6967,23 @@ abstract class _$BancoDendro extends GeneratedDatabase {
 
 typedef $$PropriedadesTableCreateCompanionBuilder =
     PropriedadesCompanion Function({
-      required String id,
+      Value<int> id,
       required String nome,
       required String municipio,
       Value<String> estado,
       required double areaTotalHa,
       required DateTime criadoEm,
       required DateTime atualizadoEm,
-      Value<int> rowid,
     });
 typedef $$PropriedadesTableUpdateCompanionBuilder =
     PropriedadesCompanion Function({
-      Value<String> id,
+      Value<int> id,
       Value<String> nome,
       Value<String> municipio,
       Value<String> estado,
       Value<double> areaTotalHa,
       Value<DateTime> criadoEm,
       Value<DateTime> atualizadoEm,
-      Value<int> rowid,
     });
 
 final class $$PropriedadesTableReferences
@@ -7045,7 +7001,7 @@ final class $$PropriedadesTableReferences
     final manager = $$TalhoesTableTableManager(
       $_db,
       $_db.talhoes,
-    ).filter((f) => f.propriedadeId.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.propriedadeId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_talhoesRefsTable($_db));
     return ProcessedTableManager(
@@ -7063,7 +7019,7 @@ final class $$PropriedadesTableReferences
     final manager = $$LevantamentosTableTableManager(
       $_db,
       $_db.levantamentos,
-    ).filter((f) => f.propriedadeId.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.propriedadeId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_levantamentosRefsTable($_db));
     return ProcessedTableManager(
@@ -7081,7 +7037,7 @@ class $$PropriedadesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -7176,7 +7132,7 @@ class $$PropriedadesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -7221,7 +7177,7 @@ class $$PropriedadesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get nome =>
@@ -7325,14 +7281,13 @@ class $$PropriedadesTableTableManager
               $$PropriedadesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
+                Value<int> id = const Value.absent(),
                 Value<String> nome = const Value.absent(),
                 Value<String> municipio = const Value.absent(),
                 Value<String> estado = const Value.absent(),
                 Value<double> areaTotalHa = const Value.absent(),
                 Value<DateTime> criadoEm = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => PropriedadesCompanion(
                 id: id,
                 nome: nome,
@@ -7341,18 +7296,16 @@ class $$PropriedadesTableTableManager
                 areaTotalHa: areaTotalHa,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
+                Value<int> id = const Value.absent(),
                 required String nome,
                 required String municipio,
                 Value<String> estado = const Value.absent(),
                 required double areaTotalHa,
                 required DateTime criadoEm,
                 required DateTime atualizadoEm,
-                Value<int> rowid = const Value.absent(),
               }) => PropriedadesCompanion.insert(
                 id: id,
                 nome: nome,
@@ -7361,7 +7314,6 @@ class $$PropriedadesTableTableManager
                 areaTotalHa: areaTotalHa,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -7448,25 +7400,25 @@ typedef $$PropriedadesTableProcessedTableManager =
     >;
 typedef $$EspeciesTableCreateCompanionBuilder =
     EspeciesCompanion Function({
-      required String id,
+      Value<int> id,
+      Value<String?> codigo,
       required String nome,
       Value<String?> nomeCientifico,
       Value<String?> descricao,
       Value<bool> ativo,
       required DateTime criadoEm,
       required DateTime atualizadoEm,
-      Value<int> rowid,
     });
 typedef $$EspeciesTableUpdateCompanionBuilder =
     EspeciesCompanion Function({
-      Value<String> id,
+      Value<int> id,
+      Value<String?> codigo,
       Value<String> nome,
       Value<String?> nomeCientifico,
       Value<String?> descricao,
       Value<bool> ativo,
       Value<DateTime> criadoEm,
       Value<DateTime> atualizadoEm,
-      Value<int> rowid,
     });
 
 final class $$EspeciesTableReferences
@@ -7483,7 +7435,7 @@ final class $$EspeciesTableReferences
     final manager = $$EspeciesModelosTableTableManager(
       $_db,
       $_db.especiesModelos,
-    ).filter((f) => f.especieId.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.especieId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(
       _especiesModelosRefsTable($_db),
@@ -7508,7 +7460,7 @@ final class $$EspeciesTableReferences
     final manager = $$CoeficientesEspecieModeloTableTableManager(
       $_db,
       $_db.coeficientesEspecieModelo,
-    ).filter((f) => f.especieId.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.especieId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(
       _coeficientesEspecieModeloRefsTable($_db),
@@ -7529,7 +7481,7 @@ final class $$EspeciesTableReferences
     final manager = $$TalhoesTableTableManager(
       $_db,
       $_db.talhoes,
-    ).filter((f) => f.especieId.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.especieId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_talhoesRefsTable($_db));
     return ProcessedTableManager(
@@ -7551,7 +7503,7 @@ final class $$EspeciesTableReferences
     final manager = $$TalhaoLevantamentosTableTableManager(
       $_db,
       $_db.talhaoLevantamentos,
-    ).filter((f) => f.especieId.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.especieId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(
       _talhaoLevantamentosRefsTable($_db),
@@ -7571,8 +7523,13 @@ class $$EspeciesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get codigo => $composableBuilder(
+    column: $table.codigo,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7718,8 +7675,13 @@ class $$EspeciesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get codigo => $composableBuilder(
+    column: $table.codigo,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -7763,8 +7725,11 @@ class $$EspeciesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get codigo =>
+      $composableBuilder(column: $table.codigo, builder: (column) => column);
 
   GeneratedColumn<String> get nome =>
       $composableBuilder(column: $table.nome, builder: (column) => column);
@@ -7925,43 +7890,43 @@ class $$EspeciesTableTableManager
               $$EspeciesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<String?> codigo = const Value.absent(),
                 Value<String> nome = const Value.absent(),
                 Value<String?> nomeCientifico = const Value.absent(),
                 Value<String?> descricao = const Value.absent(),
                 Value<bool> ativo = const Value.absent(),
                 Value<DateTime> criadoEm = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => EspeciesCompanion(
                 id: id,
+                codigo: codigo,
                 nome: nome,
                 nomeCientifico: nomeCientifico,
                 descricao: descricao,
                 ativo: ativo,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
+                Value<int> id = const Value.absent(),
+                Value<String?> codigo = const Value.absent(),
                 required String nome,
                 Value<String?> nomeCientifico = const Value.absent(),
                 Value<String?> descricao = const Value.absent(),
                 Value<bool> ativo = const Value.absent(),
                 required DateTime criadoEm,
                 required DateTime atualizadoEm,
-                Value<int> rowid = const Value.absent(),
               }) => EspeciesCompanion.insert(
                 id: id,
+                codigo: codigo,
                 nome: nome,
                 nomeCientifico: nomeCientifico,
                 descricao: descricao,
                 ativo: ativo,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -8103,25 +8068,25 @@ typedef $$EspeciesTableProcessedTableManager =
     >;
 typedef $$ModelosMatematicosTableCreateCompanionBuilder =
     ModelosMatematicosCompanion Function({
-      required String id,
+      Value<int> id,
+      Value<String?> codigo,
       required String nome,
       Value<String?> descricao,
       required String expressao,
       Value<bool> ativo,
       required DateTime criadoEm,
       required DateTime atualizadoEm,
-      Value<int> rowid,
     });
 typedef $$ModelosMatematicosTableUpdateCompanionBuilder =
     ModelosMatematicosCompanion Function({
-      Value<String> id,
+      Value<int> id,
+      Value<String?> codigo,
       Value<String> nome,
       Value<String?> descricao,
       Value<String> expressao,
       Value<bool> ativo,
       Value<DateTime> criadoEm,
       Value<DateTime> atualizadoEm,
-      Value<int> rowid,
     });
 
 final class $$ModelosMatematicosTableReferences
@@ -8147,7 +8112,7 @@ final class $$ModelosMatematicosTableReferences
   $$VariaveisModeloTableProcessedTableManager get variaveisModeloRefs {
     final manager =
         $$VariaveisModeloTableTableManager($_db, $_db.variaveisModelo).filter(
-          (f) => f.modeloMatematicoId.id.sqlEquals($_itemColumn<String>('id')!),
+          (f) => f.modeloMatematicoId.id.sqlEquals($_itemColumn<int>('id')!),
         );
 
     final cache = $_typedResult.readTableOrNull(
@@ -8173,7 +8138,7 @@ final class $$ModelosMatematicosTableReferences
           $_db,
           $_db.coeficientesModelo,
         ).filter(
-          (f) => f.modeloMatematicoId.id.sqlEquals($_itemColumn<String>('id')!),
+          (f) => f.modeloMatematicoId.id.sqlEquals($_itemColumn<int>('id')!),
         );
 
     final cache = $_typedResult.readTableOrNull(
@@ -8194,7 +8159,7 @@ final class $$ModelosMatematicosTableReferences
   $$EspeciesModelosTableProcessedTableManager get especiesModelosRefs {
     final manager =
         $$EspeciesModelosTableTableManager($_db, $_db.especiesModelos).filter(
-          (f) => f.modeloMatematicoId.id.sqlEquals($_itemColumn<String>('id')!),
+          (f) => f.modeloMatematicoId.id.sqlEquals($_itemColumn<int>('id')!),
         );
 
     final cache = $_typedResult.readTableOrNull(
@@ -8224,7 +8189,7 @@ final class $$ModelosMatematicosTableReferences
           $_db,
           $_db.coeficientesEspecieModelo,
         ).filter(
-          (f) => f.modeloMatematicoId.id.sqlEquals($_itemColumn<String>('id')!),
+          (f) => f.modeloMatematicoId.id.sqlEquals($_itemColumn<int>('id')!),
         );
 
     final cache = $_typedResult.readTableOrNull(
@@ -8253,7 +8218,7 @@ final class $$ModelosMatematicosTableReferences
           $_db,
           $_db.talhaoLevantamentos,
         ).filter(
-          (f) => f.modeloMatematicoId.id.sqlEquals($_itemColumn<String>('id')!),
+          (f) => f.modeloMatematicoId.id.sqlEquals($_itemColumn<int>('id')!),
         );
 
     final cache = $_typedResult.readTableOrNull(
@@ -8274,8 +8239,13 @@ class $$ModelosMatematicosTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get codigo => $composableBuilder(
+    column: $table.codigo,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8446,8 +8416,13 @@ class $$ModelosMatematicosTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get codigo => $composableBuilder(
+    column: $table.codigo,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -8491,8 +8466,11 @@ class $$ModelosMatematicosTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get codigo =>
+      $composableBuilder(column: $table.codigo, builder: (column) => column);
 
   GeneratedColumn<String> get nome =>
       $composableBuilder(column: $table.nome, builder: (column) => column);
@@ -8683,43 +8661,43 @@ class $$ModelosMatematicosTableTableManager
               ),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<String?> codigo = const Value.absent(),
                 Value<String> nome = const Value.absent(),
                 Value<String?> descricao = const Value.absent(),
                 Value<String> expressao = const Value.absent(),
                 Value<bool> ativo = const Value.absent(),
                 Value<DateTime> criadoEm = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => ModelosMatematicosCompanion(
                 id: id,
+                codigo: codigo,
                 nome: nome,
                 descricao: descricao,
                 expressao: expressao,
                 ativo: ativo,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
+                Value<int> id = const Value.absent(),
+                Value<String?> codigo = const Value.absent(),
                 required String nome,
                 Value<String?> descricao = const Value.absent(),
                 required String expressao,
                 Value<bool> ativo = const Value.absent(),
                 required DateTime criadoEm,
                 required DateTime atualizadoEm,
-                Value<int> rowid = const Value.absent(),
               }) => ModelosMatematicosCompanion.insert(
                 id: id,
+                codigo: codigo,
                 nome: nome,
                 descricao: descricao,
                 expressao: expressao,
                 ativo: ativo,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -8887,25 +8865,23 @@ typedef $$ModelosMatematicosTableProcessedTableManager =
     >;
 typedef $$VariaveisModeloTableCreateCompanionBuilder =
     VariaveisModeloCompanion Function({
-      required String id,
-      required String modeloMatematicoId,
+      Value<int> id,
+      required int modeloMatematicoId,
       required String simbolo,
       required String rotulo,
       required String unidade,
       required String origemValor,
       required ChaveVariavelModelo chaveVariavel,
-      Value<int> rowid,
     });
 typedef $$VariaveisModeloTableUpdateCompanionBuilder =
     VariaveisModeloCompanion Function({
-      Value<String> id,
-      Value<String> modeloMatematicoId,
+      Value<int> id,
+      Value<int> modeloMatematicoId,
       Value<String> simbolo,
       Value<String> rotulo,
       Value<String> unidade,
       Value<String> origemValor,
       Value<ChaveVariavelModelo> chaveVariavel,
-      Value<int> rowid,
     });
 
 final class $$VariaveisModeloTableReferences
@@ -8923,7 +8899,7 @@ final class $$VariaveisModeloTableReferences
       );
 
   $$ModelosMatematicosTableProcessedTableManager get modeloMatematicoId {
-    final $_column = $_itemColumn<String>('modelo_matematico_id')!;
+    final $_column = $_itemColumn<int>('modelo_matematico_id')!;
 
     final manager = $$ModelosMatematicosTableTableManager(
       $_db,
@@ -8946,7 +8922,7 @@ class $$VariaveisModeloTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -9014,7 +8990,7 @@ class $$VariaveisModeloTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -9077,7 +9053,7 @@ class $$VariaveisModeloTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get simbolo =>
@@ -9155,14 +9131,13 @@ class $$VariaveisModeloTableTableManager
               $$VariaveisModeloTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> modeloMatematicoId = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<int> modeloMatematicoId = const Value.absent(),
                 Value<String> simbolo = const Value.absent(),
                 Value<String> rotulo = const Value.absent(),
                 Value<String> unidade = const Value.absent(),
                 Value<String> origemValor = const Value.absent(),
                 Value<ChaveVariavelModelo> chaveVariavel = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => VariaveisModeloCompanion(
                 id: id,
                 modeloMatematicoId: modeloMatematicoId,
@@ -9171,18 +9146,16 @@ class $$VariaveisModeloTableTableManager
                 unidade: unidade,
                 origemValor: origemValor,
                 chaveVariavel: chaveVariavel,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String modeloMatematicoId,
+                Value<int> id = const Value.absent(),
+                required int modeloMatematicoId,
                 required String simbolo,
                 required String rotulo,
                 required String unidade,
                 required String origemValor,
                 required ChaveVariavelModelo chaveVariavel,
-                Value<int> rowid = const Value.absent(),
               }) => VariaveisModeloCompanion.insert(
                 id: id,
                 modeloMatematicoId: modeloMatematicoId,
@@ -9191,7 +9164,6 @@ class $$VariaveisModeloTableTableManager
                 unidade: unidade,
                 origemValor: origemValor,
                 chaveVariavel: chaveVariavel,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -9264,21 +9236,19 @@ typedef $$VariaveisModeloTableProcessedTableManager =
     >;
 typedef $$CoeficientesModeloTableCreateCompanionBuilder =
     CoeficientesModeloCompanion Function({
-      required String id,
-      required String modeloMatematicoId,
+      Value<int> id,
+      required int modeloMatematicoId,
       required String simbolo,
       required String rotulo,
       Value<double?> valor,
-      Value<int> rowid,
     });
 typedef $$CoeficientesModeloTableUpdateCompanionBuilder =
     CoeficientesModeloCompanion Function({
-      Value<String> id,
-      Value<String> modeloMatematicoId,
+      Value<int> id,
+      Value<int> modeloMatematicoId,
       Value<String> simbolo,
       Value<String> rotulo,
       Value<double?> valor,
-      Value<int> rowid,
     });
 
 final class $$CoeficientesModeloTableReferences
@@ -9300,7 +9270,7 @@ final class $$CoeficientesModeloTableReferences
       );
 
   $$ModelosMatematicosTableProcessedTableManager get modeloMatematicoId {
-    final $_column = $_itemColumn<String>('modelo_matematico_id')!;
+    final $_column = $_itemColumn<int>('modelo_matematico_id')!;
 
     final manager = $$ModelosMatematicosTableTableManager(
       $_db,
@@ -9323,7 +9293,7 @@ class $$CoeficientesModeloTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -9376,7 +9346,7 @@ class $$CoeficientesModeloTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -9429,7 +9399,7 @@ class $$CoeficientesModeloTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get simbolo =>
@@ -9499,35 +9469,31 @@ class $$CoeficientesModeloTableTableManager
               ),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> modeloMatematicoId = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<int> modeloMatematicoId = const Value.absent(),
                 Value<String> simbolo = const Value.absent(),
                 Value<String> rotulo = const Value.absent(),
                 Value<double?> valor = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => CoeficientesModeloCompanion(
                 id: id,
                 modeloMatematicoId: modeloMatematicoId,
                 simbolo: simbolo,
                 rotulo: rotulo,
                 valor: valor,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String modeloMatematicoId,
+                Value<int> id = const Value.absent(),
+                required int modeloMatematicoId,
                 required String simbolo,
                 required String rotulo,
                 Value<double?> valor = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => CoeficientesModeloCompanion.insert(
                 id: id,
                 modeloMatematicoId: modeloMatematicoId,
                 simbolo: simbolo,
                 rotulo: rotulo,
                 valor: valor,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -9602,16 +9568,16 @@ typedef $$CoeficientesModeloTableProcessedTableManager =
     >;
 typedef $$EspeciesModelosTableCreateCompanionBuilder =
     EspeciesModelosCompanion Function({
-      required String especieId,
-      required String modeloMatematicoId,
+      required int especieId,
+      required int modeloMatematicoId,
       Value<bool> padrao,
       required DateTime criadoEm,
       Value<int> rowid,
     });
 typedef $$EspeciesModelosTableUpdateCompanionBuilder =
     EspeciesModelosCompanion Function({
-      Value<String> especieId,
-      Value<String> modeloMatematicoId,
+      Value<int> especieId,
+      Value<int> modeloMatematicoId,
       Value<bool> padrao,
       Value<DateTime> criadoEm,
       Value<int> rowid,
@@ -9630,7 +9596,7 @@ final class $$EspeciesModelosTableReferences
       db.especies.createAlias('especies_modelos__especie_id__especies__id');
 
   $$EspeciesTableProcessedTableManager get especieId {
-    final $_column = $_itemColumn<String>('especie_id')!;
+    final $_column = $_itemColumn<int>('especie_id')!;
 
     final manager = $$EspeciesTableTableManager(
       $_db,
@@ -9649,7 +9615,7 @@ final class $$EspeciesModelosTableReferences
       );
 
   $$ModelosMatematicosTableProcessedTableManager get modeloMatematicoId {
-    final $_column = $_itemColumn<String>('modelo_matematico_id')!;
+    final $_column = $_itemColumn<int>('modelo_matematico_id')!;
 
     final manager = $$ModelosMatematicosTableTableManager(
       $_db,
@@ -9888,8 +9854,8 @@ class $$EspeciesModelosTableTableManager
               $$EspeciesModelosTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> especieId = const Value.absent(),
-                Value<String> modeloMatematicoId = const Value.absent(),
+                Value<int> especieId = const Value.absent(),
+                Value<int> modeloMatematicoId = const Value.absent(),
                 Value<bool> padrao = const Value.absent(),
                 Value<DateTime> criadoEm = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -9902,8 +9868,8 @@ class $$EspeciesModelosTableTableManager
               ),
           createCompanionCallback:
               ({
-                required String especieId,
-                required String modeloMatematicoId,
+                required int especieId,
+                required int modeloMatematicoId,
                 Value<bool> padrao = const Value.absent(),
                 required DateTime criadoEm,
                 Value<int> rowid = const Value.absent(),
@@ -10001,25 +9967,23 @@ typedef $$EspeciesModelosTableProcessedTableManager =
     >;
 typedef $$CoeficientesEspecieModeloTableCreateCompanionBuilder =
     CoeficientesEspecieModeloCompanion Function({
-      required String id,
-      required String especieId,
-      required String modeloMatematicoId,
+      Value<int> id,
+      required int especieId,
+      required int modeloMatematicoId,
       required String simbolo,
       required String rotulo,
       Value<double?> valor,
       required DateTime atualizadoEm,
-      Value<int> rowid,
     });
 typedef $$CoeficientesEspecieModeloTableUpdateCompanionBuilder =
     CoeficientesEspecieModeloCompanion Function({
-      Value<String> id,
-      Value<String> especieId,
-      Value<String> modeloMatematicoId,
+      Value<int> id,
+      Value<int> especieId,
+      Value<int> modeloMatematicoId,
       Value<String> simbolo,
       Value<String> rotulo,
       Value<double?> valor,
       Value<DateTime> atualizadoEm,
-      Value<int> rowid,
     });
 
 final class $$CoeficientesEspecieModeloTableReferences
@@ -10039,7 +10003,7 @@ final class $$CoeficientesEspecieModeloTableReferences
       .createAlias('coeficientes_especie_modelo__especie_id__especies__id');
 
   $$EspeciesTableProcessedTableManager get especieId {
-    final $_column = $_itemColumn<String>('especie_id')!;
+    final $_column = $_itemColumn<int>('especie_id')!;
 
     final manager = $$EspeciesTableTableManager(
       $_db,
@@ -10059,7 +10023,7 @@ final class $$CoeficientesEspecieModeloTableReferences
   );
 
   $$ModelosMatematicosTableProcessedTableManager get modeloMatematicoId {
-    final $_column = $_itemColumn<String>('modelo_matematico_id')!;
+    final $_column = $_itemColumn<int>('modelo_matematico_id')!;
 
     final manager = $$ModelosMatematicosTableTableManager(
       $_db,
@@ -10082,7 +10046,7 @@ class $$CoeficientesEspecieModeloTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -10163,7 +10127,7 @@ class $$CoeficientesEspecieModeloTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -10244,7 +10208,7 @@ class $$CoeficientesEspecieModeloTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get simbolo =>
@@ -10351,14 +10315,13 @@ class $$CoeficientesEspecieModeloTableTableManager
               ),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> especieId = const Value.absent(),
-                Value<String> modeloMatematicoId = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<int> especieId = const Value.absent(),
+                Value<int> modeloMatematicoId = const Value.absent(),
                 Value<String> simbolo = const Value.absent(),
                 Value<String> rotulo = const Value.absent(),
                 Value<double?> valor = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => CoeficientesEspecieModeloCompanion(
                 id: id,
                 especieId: especieId,
@@ -10367,18 +10330,16 @@ class $$CoeficientesEspecieModeloTableTableManager
                 rotulo: rotulo,
                 valor: valor,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String especieId,
-                required String modeloMatematicoId,
+                Value<int> id = const Value.absent(),
+                required int especieId,
+                required int modeloMatematicoId,
                 required String simbolo,
                 required String rotulo,
                 Value<double?> valor = const Value.absent(),
                 required DateTime atualizadoEm,
-                Value<int> rowid = const Value.absent(),
               }) => CoeficientesEspecieModeloCompanion.insert(
                 id: id,
                 especieId: especieId,
@@ -10387,7 +10348,6 @@ class $$CoeficientesEspecieModeloTableTableManager
                 rotulo: rotulo,
                 valor: valor,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -10478,10 +10438,10 @@ typedef $$CoeficientesEspecieModeloTableProcessedTableManager =
     >;
 typedef $$TalhoesTableCreateCompanionBuilder =
     TalhoesCompanion Function({
-      required String id,
-      required String propriedadeId,
+      Value<int> id,
+      required int propriedadeId,
       required String identificacao,
-      required String especieId,
+      required int especieId,
       required double areaHa,
       Value<int?> anoPlantio,
       Value<String?> espacamento,
@@ -10491,14 +10451,13 @@ typedef $$TalhoesTableCreateCompanionBuilder =
       Value<String?> observacoes,
       required DateTime criadoEm,
       required DateTime atualizadoEm,
-      Value<int> rowid,
     });
 typedef $$TalhoesTableUpdateCompanionBuilder =
     TalhoesCompanion Function({
-      Value<String> id,
-      Value<String> propriedadeId,
+      Value<int> id,
+      Value<int> propriedadeId,
       Value<String> identificacao,
-      Value<String> especieId,
+      Value<int> especieId,
       Value<double> areaHa,
       Value<int?> anoPlantio,
       Value<String?> espacamento,
@@ -10508,7 +10467,6 @@ typedef $$TalhoesTableUpdateCompanionBuilder =
       Value<String?> observacoes,
       Value<DateTime> criadoEm,
       Value<DateTime> atualizadoEm,
-      Value<int> rowid,
     });
 
 final class $$TalhoesTableReferences
@@ -10519,7 +10477,7 @@ final class $$TalhoesTableReferences
       db.propriedades.createAlias('talhoes__propriedade_id__propriedades__id');
 
   $$PropriedadesTableProcessedTableManager get propriedadeId {
-    final $_column = $_itemColumn<String>('propriedade_id')!;
+    final $_column = $_itemColumn<int>('propriedade_id')!;
 
     final manager = $$PropriedadesTableTableManager(
       $_db,
@@ -10536,7 +10494,7 @@ final class $$TalhoesTableReferences
       db.especies.createAlias('talhoes__especie_id__especies__id');
 
   $$EspeciesTableProcessedTableManager get especieId {
-    final $_column = $_itemColumn<String>('especie_id')!;
+    final $_column = $_itemColumn<int>('especie_id')!;
 
     final manager = $$EspeciesTableTableManager(
       $_db,
@@ -10563,7 +10521,7 @@ final class $$TalhoesTableReferences
     final manager = $$TalhaoLevantamentosTableTableManager(
       $_db,
       $_db.talhaoLevantamentos,
-    ).filter((f) => f.talhaoId.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.talhaoId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(
       _talhaoLevantamentosRefsTable($_db),
@@ -10583,7 +10541,7 @@ class $$TalhoesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -10719,7 +10677,7 @@ class $$TalhoesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -10830,7 +10788,7 @@ class $$TalhoesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get identificacao => $composableBuilder(
@@ -10984,10 +10942,10 @@ class $$TalhoesTableTableManager
               $$TalhoesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> propriedadeId = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<int> propriedadeId = const Value.absent(),
                 Value<String> identificacao = const Value.absent(),
-                Value<String> especieId = const Value.absent(),
+                Value<int> especieId = const Value.absent(),
                 Value<double> areaHa = const Value.absent(),
                 Value<int?> anoPlantio = const Value.absent(),
                 Value<String?> espacamento = const Value.absent(),
@@ -10997,7 +10955,6 @@ class $$TalhoesTableTableManager
                 Value<String?> observacoes = const Value.absent(),
                 Value<DateTime> criadoEm = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => TalhoesCompanion(
                 id: id,
                 propriedadeId: propriedadeId,
@@ -11012,14 +10969,13 @@ class $$TalhoesTableTableManager
                 observacoes: observacoes,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String propriedadeId,
+                Value<int> id = const Value.absent(),
+                required int propriedadeId,
                 required String identificacao,
-                required String especieId,
+                required int especieId,
                 required double areaHa,
                 Value<int?> anoPlantio = const Value.absent(),
                 Value<String?> espacamento = const Value.absent(),
@@ -11029,7 +10985,6 @@ class $$TalhoesTableTableManager
                 Value<String?> observacoes = const Value.absent(),
                 required DateTime criadoEm,
                 required DateTime atualizadoEm,
-                Value<int> rowid = const Value.absent(),
               }) => TalhoesCompanion.insert(
                 id: id,
                 propriedadeId: propriedadeId,
@@ -11044,7 +10999,6 @@ class $$TalhoesTableTableManager
                 observacoes: observacoes,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -11161,23 +11115,21 @@ typedef $$TalhoesTableProcessedTableManager =
     >;
 typedef $$LevantamentosTableCreateCompanionBuilder =
     LevantamentosCompanion Function({
-      required String id,
-      required String propriedadeId,
+      Value<int> id,
+      required int propriedadeId,
       required SituacaoLevantamento situacao,
       required DateTime iniciadoEm,
       required DateTime atualizadoEm,
       Value<DateTime?> concluidoEm,
-      Value<int> rowid,
     });
 typedef $$LevantamentosTableUpdateCompanionBuilder =
     LevantamentosCompanion Function({
-      Value<String> id,
-      Value<String> propriedadeId,
+      Value<int> id,
+      Value<int> propriedadeId,
       Value<SituacaoLevantamento> situacao,
       Value<DateTime> iniciadoEm,
       Value<DateTime> atualizadoEm,
       Value<DateTime?> concluidoEm,
-      Value<int> rowid,
     });
 
 final class $$LevantamentosTableReferences
@@ -11193,7 +11145,7 @@ final class $$LevantamentosTableReferences
       .createAlias('levantamentos__propriedade_id__propriedades__id');
 
   $$PropriedadesTableProcessedTableManager get propriedadeId {
-    final $_column = $_itemColumn<String>('propriedade_id')!;
+    final $_column = $_itemColumn<int>('propriedade_id')!;
 
     final manager = $$PropriedadesTableTableManager(
       $_db,
@@ -11220,7 +11172,7 @@ final class $$LevantamentosTableReferences
     final manager = $$TalhaoLevantamentosTableTableManager(
       $_db,
       $_db.talhaoLevantamentos,
-    ).filter((f) => f.levantamentoId.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.levantamentoId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(
       _talhaoLevantamentosRefsTable($_db),
@@ -11240,7 +11192,7 @@ class $$LevantamentosTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -11328,7 +11280,7 @@ class $$LevantamentosTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -11386,7 +11338,7 @@ class $$LevantamentosTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumnWithTypeConverter<SituacaoLevantamento, String> get situacao =>
@@ -11488,13 +11440,12 @@ class $$LevantamentosTableTableManager
               $$LevantamentosTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> propriedadeId = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<int> propriedadeId = const Value.absent(),
                 Value<SituacaoLevantamento> situacao = const Value.absent(),
                 Value<DateTime> iniciadoEm = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
                 Value<DateTime?> concluidoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => LevantamentosCompanion(
                 id: id,
                 propriedadeId: propriedadeId,
@@ -11502,17 +11453,15 @@ class $$LevantamentosTableTableManager
                 iniciadoEm: iniciadoEm,
                 atualizadoEm: atualizadoEm,
                 concluidoEm: concluidoEm,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String propriedadeId,
+                Value<int> id = const Value.absent(),
+                required int propriedadeId,
                 required SituacaoLevantamento situacao,
                 required DateTime iniciadoEm,
                 required DateTime atualizadoEm,
                 Value<DateTime?> concluidoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => LevantamentosCompanion.insert(
                 id: id,
                 propriedadeId: propriedadeId,
@@ -11520,7 +11469,6 @@ class $$LevantamentosTableTableManager
                 iniciadoEm: iniciadoEm,
                 atualizadoEm: atualizadoEm,
                 concluidoEm: concluidoEm,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -11618,27 +11566,25 @@ typedef $$LevantamentosTableProcessedTableManager =
     >;
 typedef $$TalhaoLevantamentosTableCreateCompanionBuilder =
     TalhaoLevantamentosCompanion Function({
-      required String id,
-      required String levantamentoId,
-      required String talhaoId,
-      required String especieId,
-      required String modeloMatematicoId,
+      Value<int> id,
+      required int levantamentoId,
+      required int talhaoId,
+      required int especieId,
+      required int modeloMatematicoId,
       Value<double?> areaPadraoParcelaHa,
       required DateTime criadoEm,
       required DateTime atualizadoEm,
-      Value<int> rowid,
     });
 typedef $$TalhaoLevantamentosTableUpdateCompanionBuilder =
     TalhaoLevantamentosCompanion Function({
-      Value<String> id,
-      Value<String> levantamentoId,
-      Value<String> talhaoId,
-      Value<String> especieId,
-      Value<String> modeloMatematicoId,
+      Value<int> id,
+      Value<int> levantamentoId,
+      Value<int> talhaoId,
+      Value<int> especieId,
+      Value<int> modeloMatematicoId,
       Value<double?> areaPadraoParcelaHa,
       Value<DateTime> criadoEm,
       Value<DateTime> atualizadoEm,
-      Value<int> rowid,
     });
 
 final class $$TalhaoLevantamentosTableReferences
@@ -11659,7 +11605,7 @@ final class $$TalhaoLevantamentosTableReferences
       .createAlias('talhao_levantamentos__levantamento_id__levantamentos__id');
 
   $$LevantamentosTableProcessedTableManager get levantamentoId {
-    final $_column = $_itemColumn<String>('levantamento_id')!;
+    final $_column = $_itemColumn<int>('levantamento_id')!;
 
     final manager = $$LevantamentosTableTableManager(
       $_db,
@@ -11676,7 +11622,7 @@ final class $$TalhaoLevantamentosTableReferences
       db.talhoes.createAlias('talhao_levantamentos__talhao_id__talhoes__id');
 
   $$TalhoesTableProcessedTableManager get talhaoId {
-    final $_column = $_itemColumn<String>('talhao_id')!;
+    final $_column = $_itemColumn<int>('talhao_id')!;
 
     final manager = $$TalhoesTableTableManager(
       $_db,
@@ -11693,7 +11639,7 @@ final class $$TalhaoLevantamentosTableReferences
       db.especies.createAlias('talhao_levantamentos__especie_id__especies__id');
 
   $$EspeciesTableProcessedTableManager get especieId {
-    final $_column = $_itemColumn<String>('especie_id')!;
+    final $_column = $_itemColumn<int>('especie_id')!;
 
     final manager = $$EspeciesTableTableManager(
       $_db,
@@ -11712,7 +11658,7 @@ final class $$TalhaoLevantamentosTableReferences
       );
 
   $$ModelosMatematicosTableProcessedTableManager get modeloMatematicoId {
-    final $_column = $_itemColumn<String>('modelo_matematico_id')!;
+    final $_column = $_itemColumn<int>('modelo_matematico_id')!;
 
     final manager = $$ModelosMatematicosTableTableManager(
       $_db,
@@ -11734,7 +11680,7 @@ final class $$TalhaoLevantamentosTableReferences
 
   $$ParcelasTableProcessedTableManager get parcelasRefs {
     final manager = $$ParcelasTableTableManager($_db, $_db.parcelas).filter(
-      (f) => f.talhaoLevantamentoId.id.sqlEquals($_itemColumn<String>('id')!),
+      (f) => f.talhaoLevantamentoId.id.sqlEquals($_itemColumn<int>('id')!),
     );
 
     final cache = $_typedResult.readTableOrNull(_parcelasRefsTable($_db));
@@ -11753,7 +11699,7 @@ class $$TalhaoLevantamentosTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -11900,7 +11846,7 @@ class $$TalhaoLevantamentosTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -12022,7 +11968,7 @@ class $$TalhaoLevantamentosTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<double> get areaPadraoParcelaHa => $composableBuilder(
@@ -12199,15 +12145,14 @@ class $$TalhaoLevantamentosTableTableManager
               ),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> levantamentoId = const Value.absent(),
-                Value<String> talhaoId = const Value.absent(),
-                Value<String> especieId = const Value.absent(),
-                Value<String> modeloMatematicoId = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<int> levantamentoId = const Value.absent(),
+                Value<int> talhaoId = const Value.absent(),
+                Value<int> especieId = const Value.absent(),
+                Value<int> modeloMatematicoId = const Value.absent(),
                 Value<double?> areaPadraoParcelaHa = const Value.absent(),
                 Value<DateTime> criadoEm = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => TalhaoLevantamentosCompanion(
                 id: id,
                 levantamentoId: levantamentoId,
@@ -12217,19 +12162,17 @@ class $$TalhaoLevantamentosTableTableManager
                 areaPadraoParcelaHa: areaPadraoParcelaHa,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String levantamentoId,
-                required String talhaoId,
-                required String especieId,
-                required String modeloMatematicoId,
+                Value<int> id = const Value.absent(),
+                required int levantamentoId,
+                required int talhaoId,
+                required int especieId,
+                required int modeloMatematicoId,
                 Value<double?> areaPadraoParcelaHa = const Value.absent(),
                 required DateTime criadoEm,
                 required DateTime atualizadoEm,
-                Value<int> rowid = const Value.absent(),
               }) => TalhaoLevantamentosCompanion.insert(
                 id: id,
                 levantamentoId: levantamentoId,
@@ -12239,7 +12182,6 @@ class $$TalhaoLevantamentosTableTableManager
                 areaPadraoParcelaHa: areaPadraoParcelaHa,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -12394,27 +12336,25 @@ typedef $$TalhaoLevantamentosTableProcessedTableManager =
     >;
 typedef $$ParcelasTableCreateCompanionBuilder =
     ParcelasCompanion Function({
-      required String id,
-      required String talhaoLevantamentoId,
+      Value<int> id,
+      required int talhaoLevantamentoId,
       required String identificacao,
       required SituacaoParcela situacao,
       Value<double?> areaHa,
       Value<PosicaoReferenciaParcela?> posicaoReferencia,
       required DateTime criadoEm,
       required DateTime atualizadoEm,
-      Value<int> rowid,
     });
 typedef $$ParcelasTableUpdateCompanionBuilder =
     ParcelasCompanion Function({
-      Value<String> id,
-      Value<String> talhaoLevantamentoId,
+      Value<int> id,
+      Value<int> talhaoLevantamentoId,
       Value<String> identificacao,
       Value<SituacaoParcela> situacao,
       Value<double?> areaHa,
       Value<PosicaoReferenciaParcela?> posicaoReferencia,
       Value<DateTime> criadoEm,
       Value<DateTime> atualizadoEm,
-      Value<int> rowid,
     });
 
 final class $$ParcelasTableReferences
@@ -12428,7 +12368,7 @@ final class $$ParcelasTableReferences
   );
 
   $$TalhaoLevantamentosTableProcessedTableManager get talhaoLevantamentoId {
-    final $_column = $_itemColumn<String>('talhao_levantamento_id')!;
+    final $_column = $_itemColumn<int>('talhao_levantamento_id')!;
 
     final manager = $$TalhaoLevantamentosTableTableManager(
       $_db,
@@ -12458,7 +12398,7 @@ final class $$ParcelasTableReferences
     final manager = $$PontosGeograficosParcelaTableTableManager(
       $_db,
       $_db.pontosGeograficosParcela,
-    ).filter((f) => f.parcelaId.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.parcelaId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(
       _pontosGeograficosParcelaRefsTable($_db),
@@ -12479,7 +12419,7 @@ final class $$ParcelasTableReferences
     final manager = $$ArvoresTableTableManager(
       $_db,
       $_db.arvores,
-    ).filter((f) => f.parcelaId.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.parcelaId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_arvoresRefsTable($_db));
     return ProcessedTableManager(
@@ -12497,7 +12437,7 @@ class $$ParcelasTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -12623,7 +12563,7 @@ class $$ParcelasTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -12692,7 +12632,7 @@ class $$ParcelasTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get identificacao => $composableBuilder(
@@ -12829,8 +12769,8 @@ class $$ParcelasTableTableManager
               $$ParcelasTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> talhaoLevantamentoId = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<int> talhaoLevantamentoId = const Value.absent(),
                 Value<String> identificacao = const Value.absent(),
                 Value<SituacaoParcela> situacao = const Value.absent(),
                 Value<double?> areaHa = const Value.absent(),
@@ -12838,7 +12778,6 @@ class $$ParcelasTableTableManager
                     const Value.absent(),
                 Value<DateTime> criadoEm = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => ParcelasCompanion(
                 id: id,
                 talhaoLevantamentoId: talhaoLevantamentoId,
@@ -12848,12 +12787,11 @@ class $$ParcelasTableTableManager
                 posicaoReferencia: posicaoReferencia,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String talhaoLevantamentoId,
+                Value<int> id = const Value.absent(),
+                required int talhaoLevantamentoId,
                 required String identificacao,
                 required SituacaoParcela situacao,
                 Value<double?> areaHa = const Value.absent(),
@@ -12861,7 +12799,6 @@ class $$ParcelasTableTableManager
                     const Value.absent(),
                 required DateTime criadoEm,
                 required DateTime atualizadoEm,
-                Value<int> rowid = const Value.absent(),
               }) => ParcelasCompanion.insert(
                 id: id,
                 talhaoLevantamentoId: talhaoLevantamentoId,
@@ -12871,7 +12808,6 @@ class $$ParcelasTableTableManager
                 posicaoReferencia: posicaoReferencia,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -12998,27 +12934,25 @@ typedef $$ParcelasTableProcessedTableManager =
     >;
 typedef $$PontosGeograficosParcelaTableCreateCompanionBuilder =
     PontosGeograficosParcelaCompanion Function({
-      required String id,
-      required String parcelaId,
+      Value<int> id,
+      required int parcelaId,
       required int ordemPonto,
       Value<PosicaoReferenciaParcela?> posicaoReferencia,
       required double latitude,
       required double longitude,
       Value<double?> precisaoMetros,
       required DateTime capturadoEm,
-      Value<int> rowid,
     });
 typedef $$PontosGeograficosParcelaTableUpdateCompanionBuilder =
     PontosGeograficosParcelaCompanion Function({
-      Value<String> id,
-      Value<String> parcelaId,
+      Value<int> id,
+      Value<int> parcelaId,
       Value<int> ordemPonto,
       Value<PosicaoReferenciaParcela?> posicaoReferencia,
       Value<double> latitude,
       Value<double> longitude,
       Value<double?> precisaoMetros,
       Value<DateTime> capturadoEm,
-      Value<int> rowid,
     });
 
 final class $$PontosGeograficosParcelaTableReferences
@@ -13038,7 +12972,7 @@ final class $$PontosGeograficosParcelaTableReferences
       .createAlias('pontos_geograficos_parcela__parcela_id__parcelas__id');
 
   $$ParcelasTableProcessedTableManager get parcelaId {
-    final $_column = $_itemColumn<String>('parcela_id')!;
+    final $_column = $_itemColumn<int>('parcela_id')!;
 
     final manager = $$ParcelasTableTableManager(
       $_db,
@@ -13061,7 +12995,7 @@ class $$PontosGeograficosParcelaTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -13134,7 +13068,7 @@ class $$PontosGeograficosParcelaTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -13202,7 +13136,7 @@ class $$PontosGeograficosParcelaTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<int> get ordemPonto => $composableBuilder(
@@ -13295,8 +13229,8 @@ class $$PontosGeograficosParcelaTableTableManager
               ),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> parcelaId = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<int> parcelaId = const Value.absent(),
                 Value<int> ordemPonto = const Value.absent(),
                 Value<PosicaoReferenciaParcela?> posicaoReferencia =
                     const Value.absent(),
@@ -13304,7 +13238,6 @@ class $$PontosGeograficosParcelaTableTableManager
                 Value<double> longitude = const Value.absent(),
                 Value<double?> precisaoMetros = const Value.absent(),
                 Value<DateTime> capturadoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => PontosGeograficosParcelaCompanion(
                 id: id,
                 parcelaId: parcelaId,
@@ -13314,12 +13247,11 @@ class $$PontosGeograficosParcelaTableTableManager
                 longitude: longitude,
                 precisaoMetros: precisaoMetros,
                 capturadoEm: capturadoEm,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String parcelaId,
+                Value<int> id = const Value.absent(),
+                required int parcelaId,
                 required int ordemPonto,
                 Value<PosicaoReferenciaParcela?> posicaoReferencia =
                     const Value.absent(),
@@ -13327,7 +13259,6 @@ class $$PontosGeograficosParcelaTableTableManager
                 required double longitude,
                 Value<double?> precisaoMetros = const Value.absent(),
                 required DateTime capturadoEm,
-                Value<int> rowid = const Value.absent(),
               }) => PontosGeograficosParcelaCompanion.insert(
                 id: id,
                 parcelaId: parcelaId,
@@ -13337,7 +13268,6 @@ class $$PontosGeograficosParcelaTableTableManager
                 longitude: longitude,
                 precisaoMetros: precisaoMetros,
                 capturadoEm: capturadoEm,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -13413,8 +13343,8 @@ typedef $$PontosGeograficosParcelaTableProcessedTableManager =
     >;
 typedef $$ArvoresTableCreateCompanionBuilder =
     ArvoresCompanion Function({
-      required String id,
-      required String parcelaId,
+      Value<int> id,
+      required int parcelaId,
       required int numero,
       required double dapCm,
       required double alturaM,
@@ -13426,12 +13356,11 @@ typedef $$ArvoresTableCreateCompanionBuilder =
       Value<PosicaoReferenciaParcela?> posicaoReferenciaParcela,
       required DateTime criadoEm,
       required DateTime atualizadoEm,
-      Value<int> rowid,
     });
 typedef $$ArvoresTableUpdateCompanionBuilder =
     ArvoresCompanion Function({
-      Value<String> id,
-      Value<String> parcelaId,
+      Value<int> id,
+      Value<int> parcelaId,
       Value<int> numero,
       Value<double> dapCm,
       Value<double> alturaM,
@@ -13443,7 +13372,6 @@ typedef $$ArvoresTableUpdateCompanionBuilder =
       Value<PosicaoReferenciaParcela?> posicaoReferenciaParcela,
       Value<DateTime> criadoEm,
       Value<DateTime> atualizadoEm,
-      Value<int> rowid,
     });
 
 final class $$ArvoresTableReferences
@@ -13454,7 +13382,7 @@ final class $$ArvoresTableReferences
       db.parcelas.createAlias('arvores__parcela_id__parcelas__id');
 
   $$ParcelasTableProcessedTableManager get parcelaId {
-    final $_column = $_itemColumn<String>('parcela_id')!;
+    final $_column = $_itemColumn<int>('parcela_id')!;
 
     final manager = $$ParcelasTableTableManager(
       $_db,
@@ -13477,7 +13405,7 @@ class $$ArvoresTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -13575,7 +13503,7 @@ class $$ArvoresTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -13668,7 +13596,7 @@ class $$ArvoresTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<int> get numero =>
@@ -13767,8 +13695,8 @@ class $$ArvoresTableTableManager
               $$ArvoresTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> parcelaId = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<int> parcelaId = const Value.absent(),
                 Value<int> numero = const Value.absent(),
                 Value<double> dapCm = const Value.absent(),
                 Value<double> alturaM = const Value.absent(),
@@ -13781,7 +13709,6 @@ class $$ArvoresTableTableManager
                     const Value.absent(),
                 Value<DateTime> criadoEm = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
               }) => ArvoresCompanion(
                 id: id,
                 parcelaId: parcelaId,
@@ -13796,12 +13723,11 @@ class $$ArvoresTableTableManager
                 posicaoReferenciaParcela: posicaoReferenciaParcela,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String parcelaId,
+                Value<int> id = const Value.absent(),
+                required int parcelaId,
                 required int numero,
                 required double dapCm,
                 required double alturaM,
@@ -13814,7 +13740,6 @@ class $$ArvoresTableTableManager
                     const Value.absent(),
                 required DateTime criadoEm,
                 required DateTime atualizadoEm,
-                Value<int> rowid = const Value.absent(),
               }) => ArvoresCompanion.insert(
                 id: id,
                 parcelaId: parcelaId,
@@ -13829,7 +13754,6 @@ class $$ArvoresTableTableManager
                 posicaoReferenciaParcela: posicaoReferenciaParcela,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(

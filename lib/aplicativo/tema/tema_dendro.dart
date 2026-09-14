@@ -89,7 +89,10 @@ abstract final class TemaDendro {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: CoresDendro.principal, width: 1.4),
+          borderSide: const BorderSide(
+            color: CoresDendro.principal,
+            width: 1.4,
+          ),
         ),
       ),
     );

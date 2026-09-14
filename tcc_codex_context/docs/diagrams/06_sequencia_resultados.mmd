@@ -1,13 +1,13 @@
 sequenceDiagram
     actor U as Usuário
     participant T as Tela de resultados
-    participant P as Provider Riverpod
+    participant P as Provedor Riverpod
     participant R as RepositorioResultados
     participant D as BancoDendro
     participant C as CalculadoraVolumeFlorestal
     U->>T: Selecionar filtros
     T->>P: Observar painel filtrado
-    P->>R: observarPainel(filters)
+    P->>R: observarPainel(filtros)
     R->>D: Consultar parcelas, vínculos, fórmulas e árvores
     D-->>R: Registros locais
     R->>D: Ler coeficientes da coleta ou catálogo

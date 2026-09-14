@@ -15,9 +15,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late BancoDendro bancoDados;
+  late int pinusId, spurrId, schumacherId, fatorId;
 
-  setUp(() {
+  setUp(() async {
     bancoDados = BancoDendro(NativeDatabase.memory());
+    final modelos = await bancoDados
+        .select(bancoDados.modelosMatematicos)
+        .get();
+    spurrId = modelos.singleWhere((m) => m.codigo == 'formula_spurr').id;
+    schumacherId = modelos
+        .singleWhere((m) => m.codigo == 'formula_schumacher_hall')
+        .id;
+    fatorId = modelos.singleWhere((m) => m.codigo == 'formula_form_factor').id;
+    pinusId = (await bancoDados.select(bancoDados.especies).get())
+        .singleWhere((e) => e.codigo == 'species_pinus')
+        .id;
   });
 
   tearDown(() async {
@@ -26,7 +38,9 @@ void main() {
 
   test('cria catalogos iniciais de especies e formulas', () async {
     final especies = await bancoDados.select(bancoDados.especies).get();
-    final modelosMatematicos = await bancoDados.select(bancoDados.modelosMatematicos).get();
+    final modelosMatematicos = await bancoDados
+        .select(bancoDados.modelosMatematicos)
+        .get();
     final variaveis = await bancoDados.select(bancoDados.variaveisModelo).get();
     final coeficientes = await bancoDados
         .select(bancoDados.coeficientesModelo)
@@ -47,37 +61,56 @@ void main() {
       isNull,
     );
     expect(
-      coeficientes.singleWhere((item) => item.id == 'formula_spurr_a').valor,
+      coeficientes
+          .singleWhere(
+            (item) => item.modeloMatematicoId == spurrId && item.simbolo == 'a',
+          )
+          .valor,
       closeTo(CalculadoraVolumeFlorestal.padraoSpurrA, 0.0000000001),
     );
     expect(
-      coeficientes.singleWhere((item) => item.id == 'formula_spurr_b').valor,
+      coeficientes
+          .singleWhere(
+            (item) => item.modeloMatematicoId == spurrId && item.simbolo == 'b',
+          )
+          .valor,
       closeTo(CalculadoraVolumeFlorestal.padraoSpurrB, 0.0000000001),
     );
     expect(
       coeficientes
-          .singleWhere((item) => item.id == 'formula_schumacher_hall_a')
+          .singleWhere(
+            (item) =>
+                item.modeloMatematicoId == schumacherId && item.simbolo == 'a',
+          )
           .valor,
       closeTo(CalculadoraVolumeFlorestal.padraoSchumacherHallA, 0.0000000001),
     );
     expect(
       coeficientes
-          .singleWhere((item) => item.id == 'formula_schumacher_hall_b')
+          .singleWhere(
+            (item) =>
+                item.modeloMatematicoId == schumacherId && item.simbolo == 'b',
+          )
           .valor,
       closeTo(CalculadoraVolumeFlorestal.padraoSchumacherHallB, 0.0000000001),
     );
     expect(
       coeficientes
-          .singleWhere((item) => item.id == 'formula_schumacher_hall_c')
+          .singleWhere(
+            (item) =>
+                item.modeloMatematicoId == schumacherId && item.simbolo == 'c',
+          )
           .valor,
       closeTo(CalculadoraVolumeFlorestal.padraoSchumacherHallC, 0.0000000001),
     );
   });
 
   test('coleta usa ff informado sem alterar o ff da especie', () async {
-    const modeloMatematicoId = CalculadoraVolumeFlorestal.modeloFatorFormaId;
-    await RepositorioAjustes(bancoDados).atualizarEspecieModeloMatematicoCoeficienteValores(
-      especieId: 'species_pinus',
+    final modeloMatematicoId = fatorId;
+    await RepositorioAjustes(
+      bancoDados,
+    ).atualizarEspecieModeloMatematicoCoeficienteValores(
+      especieId: pinusId,
       modeloMatematicoId: modeloMatematicoId,
       valoresPorSimbolo: {'ff': 0.5},
     );
@@ -87,13 +120,13 @@ void main() {
     final talhaoId = await RepositorioTalhoes(bancoDados).criar(
       propriedadeId: propriedadeId,
       identificacao: 'FF-01',
-      especieId: 'species_pinus',
+      especieId: pinusId,
       areaHa: 10,
     );
     final parcelas = RepositorioParcelas(bancoDados);
     final levantamentoTalhao = await parcelas.iniciarNovoLevantamentoParaTalhao(
       talhaoId,
-      modeloMatematicoSelecao: const LevantamentoModeloMatematicoSelecao(
+      modeloMatematicoSelecao: LevantamentoModeloMatematicoSelecao(
         modeloMatematicoId: modeloMatematicoId,
         modeloMatematicoNome: 'Fator de Forma',
         coeficienteValoresPorSimbolo: {'ff': 0.25},
@@ -105,7 +138,11 @@ void main() {
     );
     await RepositorioArvores(bancoDados).criarArvore(
       parcelaId: parcelaId,
-      rascunho: const RascunhoArvore(dapCm: 20, alturaM: 10, possuiTroncoTortuoso: false),
+      rascunho: const RascunhoArvore(
+        dapCm: 20,
+        alturaM: 10,
+        possuiTroncoTortuoso: false,
+      ),
     );
     final resumo = await RepositorioLevantamentos(
       bancoDados,
@@ -115,7 +152,7 @@ void main() {
         await (bancoDados.select(bancoDados.coeficientesEspecieModelo)..where(
               (t) =>
                   t.modeloMatematicoId.equals(modeloMatematicoId) &
-                  t.especieId.equals('species_pinus'),
+                  t.especieId.equals(pinusId),
             ))
             .getSingle();
     expect(especieValores.valor, 0.5);
@@ -160,7 +197,9 @@ void main() {
 
     final vinculos = await bancoDados.select(bancoDados.especiesModelos).get();
     final customVinculo = vinculos.singleWhere(
-      (vinculo) => vinculo.especieId == especieId && vinculo.modeloMatematicoId == modeloMatematicoId,
+      (vinculo) =>
+          vinculo.especieId == especieId &&
+          vinculo.modeloMatematicoId == modeloMatematicoId,
     );
     expect(customVinculo.padrao, isTrue);
 
@@ -180,13 +219,18 @@ void main() {
       },
     );
 
-    final modelosMatematicos = await repositorio.observarModelosMatematicos().first;
+    final modelosMatematicos = await repositorio
+        .observarModelosMatematicos()
+        .first;
     final customModeloMatematico = modelosMatematicos.singleWhere(
       (resumo) => resumo.modeloMatematico.id == modeloMatematicoId,
     );
 
     expect(customModeloMatematico.modeloMatematico.nome, 'Modelo Regional');
-    expect(customModeloMatematico.variaveis.map((item) => item.simbolo), ['D', 'H']);
+    expect(customModeloMatematico.variaveis.map((item) => item.simbolo), [
+      'D',
+      'H',
+    ]);
     expect(customModeloMatematico.coeficientes, hasLength(3));
     expect(
       customModeloMatematico.coeficientes
@@ -253,7 +297,9 @@ void main() {
         comprimentoParcelaM: 25,
       );
 
-      final talhoes = await repositorioTalhoes.observarPorPropriedade(propriedadeId).first;
+      final talhoes = await repositorioTalhoes
+          .observarPorPropriedade(propriedadeId)
+          .first;
 
       expect(talhoes, hasLength(1));
       expect(talhoes.single.talhao.identificacao, 'Talhão 42-B');
@@ -289,7 +335,9 @@ void main() {
       comprimentoParcelaM: 20,
     );
 
-    final inicialEstado = await repositorioParcelas.observarParcelasTalhao(talhaoId).first;
+    final inicialEstado = await repositorioParcelas
+        .observarParcelasTalhao(talhaoId)
+        .first;
     expect(inicialEstado.parcelas, isEmpty);
     expect(inicialEstado.talhao.identificacao, 'T-01');
     expect(await bancoDados.select(bancoDados.levantamentos).get(), isEmpty);
@@ -301,7 +349,10 @@ void main() {
         .firstWhere((estado) => estado.parcelas.isNotEmpty);
 
     expect(atualizadoEstado.parcelas.single.parcela.identificacao, 'P01');
-    expect(atualizadoEstado.parcelas.single.parcela.situacao, SituacaoParcela.pendente);
+    expect(
+      atualizadoEstado.parcelas.single.parcela.situacao,
+      SituacaoParcela.pendente,
+    );
     expect(atualizadoEstado.parcelas.single.parcela.areaHa, 0.04);
     expect(
       atualizadoEstado.parcelas.single.levantamento.situacao,
@@ -310,7 +361,9 @@ void main() {
 
     await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(talhaoId);
 
-    final levantamentos = await bancoDados.select(bancoDados.levantamentos).get();
+    final levantamentos = await bancoDados
+        .select(bancoDados.levantamentos)
+        .get();
     final talhaoLevantamentos = await bancoDados
         .select(bancoDados.talhaoLevantamentos)
         .get();
@@ -330,11 +383,15 @@ void main() {
 
     final propriedadeTalhoes = await repositorioTalhoes
         .observarPorPropriedade(propriedadeId)
-        .firstWhere((itens) => itens.any((item) => item.possuiAtivoLevantamento));
+        .firstWhere(
+          (itens) => itens.any((item) => item.possuiAtivoLevantamento),
+        );
 
     expect(propriedadeTalhoes.single.possuiAtivoLevantamento, isTrue);
 
-    final ativoLevantamento = await repositorioLevantamentos.observarMaisRecenteAtivo().first;
+    final ativoLevantamento = await repositorioLevantamentos
+        .observarMaisRecenteAtivo()
+        .first;
 
     expect(ativoLevantamento, isNotNull);
     expect(ativoLevantamento!.propriedade.nome, 'Fazenda Teste');
@@ -347,7 +404,10 @@ void main() {
       throwsA(isA<AtivoLevantamentoParaTalhaoExcecao>()),
     );
 
-    await repositorioParcelas.criarPlanejadoParcela(talhaoId: talhaoId, areaHa: 0.04);
+    await repositorioParcelas.criarPlanejadoParcela(
+      talhaoId: talhaoId,
+      areaHa: 0.04,
+    );
 
     final estadoComNovoPlanejadoParcela = await repositorioParcelas
         .observarParcelasTalhao(talhaoId)
@@ -365,35 +425,45 @@ void main() {
       especieId: pinus.id,
       areaHa: 8,
     );
-    await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(segundoTalhaoId);
+    await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(
+      segundoTalhaoId,
+    );
 
     final segundoTalhaoEstado = await repositorioParcelas
         .observarParcelasTalhao(segundoTalhaoId)
         .firstWhere((estado) => estado.ativoTalhaoLevantamento != null);
 
-    final ativoLevantamentos = await repositorioLevantamentos.observarAtivo().first;
+    final ativoLevantamentos = await repositorioLevantamentos
+        .observarAtivo()
+        .first;
 
     expect(segundoTalhaoEstado.parcelas, isEmpty);
     expect(ativoLevantamentos, hasLength(1));
     expect(ativoLevantamentos.single.propriedade.id, propriedadeId);
     expect(ativoLevantamentos.single.talhoes, hasLength(2));
     expect(
-      ativoLevantamentos.single.talhoes.map((resumo) => resumo.talhao.identificacao),
+      ativoLevantamentos.single.talhoes.map(
+        (resumo) => resumo.talhao.identificacao,
+      ),
       containsAll(['T-01', 'T-02']),
     );
 
-    final todosLevantamentos = await repositorioLevantamentos.observarTodos().first;
+    final todosLevantamentos = await repositorioLevantamentos
+        .observarTodos()
+        .first;
 
     expect(todosLevantamentos, hasLength(2));
     expect(
       todosLevantamentos.where(
-        (resumo) => resumo.levantamento.situacao == SituacaoLevantamento.emAndamento,
+        (resumo) =>
+            resumo.levantamento.situacao == SituacaoLevantamento.emAndamento,
       ),
       hasLength(1),
     );
     expect(
       todosLevantamentos.where(
-        (resumo) => resumo.levantamento.situacao == SituacaoLevantamento.planejamento,
+        (resumo) =>
+            resumo.levantamento.situacao == SituacaoLevantamento.planejamento,
       ),
       hasLength(1),
     );
@@ -420,17 +490,21 @@ void main() {
         especieId: pinus.id,
         areaHa: 15,
       );
-      final schumacher = (await bancoDados.select(bancoDados.modelosMatematicos).get())
-          .singleWhere((modeloMatematico) => modeloMatematico.id == 'formula_schumacher_hall');
+      final schumacher =
+          (await bancoDados.select(bancoDados.modelosMatematicos).get())
+              .singleWhere(
+                (modeloMatematico) => modeloMatematico.id == schumacherId,
+              );
 
-      final talhaoLevantamento = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(
-        talhaoId,
-        modeloMatematicoSelecao: const LevantamentoModeloMatematicoSelecao(
-          modeloMatematicoId: 'formula_schumacher_hall',
-          modeloMatematicoNome: 'Schumacher-Hall',
-          coeficienteValoresPorSimbolo: {'a': -9.87, 'b': 1.95, 'c': 0.87},
-        ),
-      );
+      final talhaoLevantamento = await repositorioParcelas
+          .iniciarNovoLevantamentoParaTalhao(
+            talhaoId,
+            modeloMatematicoSelecao: LevantamentoModeloMatematicoSelecao(
+              modeloMatematicoId: schumacherId,
+              modeloMatematicoNome: 'Schumacher-Hall',
+              coeficienteValoresPorSimbolo: {'a': -9.87, 'b': 1.95, 'c': 0.87},
+            ),
+          );
 
       expect(talhaoLevantamento.modeloMatematicoId, schumacher.id);
 
@@ -442,7 +516,7 @@ FROM coeficientes_talhao_levantamento
 WHERE talhao_levantamento_id = ?
 ORDER BY simbolo
 ''',
-            variables: [drift.Variable<String>(talhaoLevantamento.id)],
+            variables: [drift.Variable<int>(talhaoLevantamento.id)],
           )
           .get();
 
@@ -480,14 +554,15 @@ ORDER BY simbolo
 
       final especies = await repositorioTalhoes.observarAtivoEspecie().first;
       final pinus = especies.firstWhere((item) => item.nome == 'Pinus');
-      await repositorioAjustes.atualizarEspecieModeloMatematicoCoeficienteValores(
-        especieId: pinus.id,
-        modeloMatematicoId: 'formula_spurr',
-        valoresPorSimbolo: const {
-          'a': 0.0175858265880592,
-          'b': 0.0000329326161133665,
-        },
-      );
+      await repositorioAjustes
+          .atualizarEspecieModeloMatematicoCoeficienteValores(
+            especieId: pinus.id,
+            modeloMatematicoId: spurrId,
+            valoresPorSimbolo: const {
+              'a': 0.0175858265880592,
+              'b': 0.0000329326161133665,
+            },
+          );
 
       final propriedadeId = await repositorioPropriedades.criar(
         nome: 'Fazenda Coeficiente',
@@ -501,7 +576,8 @@ ORDER BY simbolo
         areaHa: 10,
       );
 
-      final talhaoLevantamento = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(talhaoId);
+      final talhaoLevantamento = await repositorioParcelas
+          .iniciarNovoLevantamentoParaTalhao(talhaoId);
       final coeficientes = await bancoDados
           .customSelect(
             '''
@@ -510,11 +586,11 @@ FROM coeficientes_talhao_levantamento
 WHERE talhao_levantamento_id = ?
 ORDER BY simbolo
 ''',
-            variables: [drift.Variable<String>(talhaoLevantamento.id)],
+            variables: [drift.Variable<int>(talhaoLevantamento.id)],
           )
           .get();
 
-      expect(talhaoLevantamento.modeloMatematicoId, 'formula_spurr');
+      expect(talhaoLevantamento.modeloMatematicoId, spurrId);
       expect(coeficientes, hasLength(2));
       expect(
         coeficientes
@@ -557,13 +633,13 @@ ORDER BY simbolo
       areaHa: 10,
     );
 
-    final talhaoLevantamento = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(
-      talhaoId,
-    );
-    final parcelaId = await repositorioParcelas.criarParcelaParaTalhaoLevantamento(
-      talhaoLevantamentoId: talhaoLevantamento.id,
-      areaHa: 0.04,
-    );
+    final talhaoLevantamento = await repositorioParcelas
+        .iniciarNovoLevantamentoParaTalhao(talhaoId);
+    final parcelaId = await repositorioParcelas
+        .criarParcelaParaTalhaoLevantamento(
+          talhaoLevantamentoId: talhaoLevantamento.id,
+          areaHa: 0.04,
+        );
 
     final primeiroArvoreId = await repositorioArvores.criarArvore(
       parcelaId: parcelaId,
@@ -586,7 +662,10 @@ ORDER BY simbolo
     expect(estado.arvores.single.dapCm, 31.5);
     expect(estado.parcela.situacao, SituacaoParcela.emAndamento);
     expect(estado.geograficoPontos, hasLength(1));
-    expect(estado.geograficoPontos.single.posicaoReferencia, PosicaoReferenciaParcela.p1);
+    expect(
+      estado.geograficoPontos.single.posicaoReferencia,
+      PosicaoReferenciaParcela.p1,
+    );
 
     final substituicaoArvoreId = await repositorioArvores.criarArvore(
       parcelaId: parcelaId,
@@ -603,17 +682,25 @@ ORDER BY simbolo
     );
 
     estado = await repositorioArvores.observarColeta(parcelaId).first;
-    final primeiroArvore = estado.arvores.firstWhere((arvore) => arvore.id == primeiroArvoreId);
+    final primeiroArvore = estado.arvores.firstWhere(
+      (arvore) => arvore.id == primeiroArvoreId,
+    );
     final substituicaoArvore = estado.arvores.firstWhere(
       (arvore) => arvore.id == substituicaoArvoreId,
     );
 
     expect(estado.arvores, hasLength(2));
     expect(primeiroArvore.posicaoReferenciaParcela, isNull);
-    expect(substituicaoArvore.posicaoReferenciaParcela, PosicaoReferenciaParcela.p1);
+    expect(
+      substituicaoArvore.posicaoReferenciaParcela,
+      PosicaoReferenciaParcela.p1,
+    );
     expect(estado.geograficoPontos, hasLength(1));
     expect(estado.geograficoPontos.single.latitude, closeTo(-28.6123, 0.00001));
-    expect(estado.geograficoPontos.single.longitude, closeTo(-50.8123, 0.00001));
+    expect(
+      estado.geograficoPontos.single.longitude,
+      closeTo(-50.8123, 0.00001),
+    );
 
     await repositorioArvores.marcaParcelaColetada(parcelaId);
     estado = await repositorioArvores.observarColeta(parcelaId).first;
@@ -624,8 +711,13 @@ ORDER BY simbolo
       talhaoLevantamento.levantamentoId,
     );
 
-    final concluidoLevantamentos = await bancoDados.select(bancoDados.levantamentos).get();
-    expect(concluidoLevantamentos.single.situacao, SituacaoLevantamento.concluido);
+    final concluidoLevantamentos = await bancoDados
+        .select(bancoDados.levantamentos)
+        .get();
+    expect(
+      concluidoLevantamentos.single.situacao,
+      SituacaoLevantamento.concluido,
+    );
     expect(concluidoLevantamentos.single.concluidoEm, isNotNull);
     expect(await repositorioLevantamentos.observarAtivo().first, isEmpty);
 
@@ -636,7 +728,8 @@ ORDER BY simbolo
     expect(levantamentosAposReiniciar, hasLength(2));
     expect(
       levantamentosAposReiniciar.where(
-        (levantamento) => levantamento.situacao == SituacaoLevantamento.emAndamento,
+        (levantamento) =>
+            levantamento.situacao == SituacaoLevantamento.emAndamento,
       ),
       hasLength(1),
     );
@@ -656,7 +749,8 @@ ORDER BY simbolo
       );
       final especies = await repositorioTalhoes.observarAtivoEspecie().first;
       final pinus = especies.firstWhere((item) => item.nome == 'Pinus');
-      final modeloMatematico = (await bancoDados.select(bancoDados.modelosMatematicos).get()).first;
+      final modeloMatematico =
+          (await bancoDados.select(bancoDados.modelosMatematicos).get()).first;
 
       final primeiroTalhaoId = await repositorioTalhoes.criar(
         propriedadeId: propriedadeId,
@@ -676,7 +770,7 @@ ORDER BY simbolo
           .into(bancoDados.levantamentos)
           .insert(
             LevantamentosCompanion.insert(
-              id: 'legacy-run-1',
+              id: const drift.Value(101),
               propriedadeId: propriedadeId,
               situacao: SituacaoLevantamento.emAndamento,
               iniciadoEm: iniciadoEm,
@@ -687,7 +781,7 @@ ORDER BY simbolo
           .into(bancoDados.levantamentos)
           .insert(
             LevantamentosCompanion.insert(
-              id: 'legacy-run-2',
+              id: const drift.Value(102),
               propriedadeId: propriedadeId,
               situacao: SituacaoLevantamento.emAndamento,
               iniciadoEm: iniciadoEm.add(const Duration(minutes: 5)),
@@ -699,8 +793,8 @@ ORDER BY simbolo
           .into(bancoDados.talhaoLevantamentos)
           .insert(
             TalhaoLevantamentosCompanion.insert(
-              id: 'legacy-talhao-1',
-              levantamentoId: 'legacy-run-1',
+              id: const drift.Value(101),
+              levantamentoId: 101,
               talhaoId: primeiroTalhaoId,
               especieId: pinus.id,
               modeloMatematicoId: modeloMatematico.id,
@@ -712,8 +806,8 @@ ORDER BY simbolo
           .into(bancoDados.talhaoLevantamentos)
           .insert(
             TalhaoLevantamentosCompanion.insert(
-              id: 'legacy-talhao-2',
-              levantamentoId: 'legacy-run-2',
+              id: const drift.Value(102),
+              levantamentoId: 102,
               talhaoId: segundoTalhaoId,
               especieId: pinus.id,
               modeloMatematicoId: modeloMatematico.id,
@@ -722,19 +816,25 @@ ORDER BY simbolo
             ),
           );
 
-      final ativoLevantamentos = await repositorioLevantamentos.observarAtivo().first;
+      final ativoLevantamentos = await repositorioLevantamentos
+          .observarAtivo()
+          .first;
 
       expect(ativoLevantamentos, hasLength(1));
       expect(ativoLevantamentos.single.propriedade.nome, 'Fazenda Agrupada');
       expect(ativoLevantamentos.single.talhoes, hasLength(2));
       expect(
-        ativoLevantamentos.single.talhoes.map((resumo) => resumo.talhao.identificacao),
+        ativoLevantamentos.single.talhoes.map(
+          (resumo) => resumo.talhao.identificacao,
+        ),
         containsAll(['A-01', 'A-02']),
       );
 
-      final armazenadoLevantamentos = await bancoDados.select(bancoDados.levantamentos).get();
+      final armazenadoLevantamentos = await bancoDados
+          .select(bancoDados.levantamentos)
+          .get();
       expect(armazenadoLevantamentos, hasLength(1));
-      expect(armazenadoLevantamentos.single.id, 'legacy-run-2');
+      expect(armazenadoLevantamentos.single.id, 102);
     },
   );
 
@@ -760,13 +860,13 @@ ORDER BY simbolo
       areaHa: 10,
     );
 
-    final talhaoLevantamento = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(
-      talhaoId,
-    );
-    final parcelaId = await repositorioParcelas.criarParcelaParaTalhaoLevantamento(
-      talhaoLevantamentoId: talhaoLevantamento.id,
-      areaHa: 0.04,
-    );
+    final talhaoLevantamento = await repositorioParcelas
+        .iniciarNovoLevantamentoParaTalhao(talhaoId);
+    final parcelaId = await repositorioParcelas
+        .criarParcelaParaTalhaoLevantamento(
+          talhaoLevantamentoId: talhaoLevantamento.id,
+          areaHa: 0.04,
+        );
     await repositorioArvores.criarArvore(
       parcelaId: parcelaId,
       rascunho: RascunhoArvore(
@@ -781,23 +881,40 @@ ORDER BY simbolo
       ),
     );
 
-    expect(await bancoDados.select(bancoDados.levantamentos).get(), hasLength(1));
+    expect(
+      await bancoDados.select(bancoDados.levantamentos).get(),
+      hasLength(1),
+    );
     expect(
       await bancoDados.select(bancoDados.talhaoLevantamentos).get(),
       hasLength(1),
     );
     expect(await bancoDados.select(bancoDados.parcelas).get(), hasLength(1));
     expect(await bancoDados.select(bancoDados.arvores).get(), hasLength(1));
-    expect(await bancoDados.select(bancoDados.pontosGeograficosParcela).get(), hasLength(1));
+    expect(
+      await bancoDados.select(bancoDados.pontosGeograficosParcela).get(),
+      hasLength(1),
+    );
 
-    await repositorioLevantamentos.excluirLevantamento(talhaoLevantamento.levantamentoId);
+    await repositorioLevantamentos.excluirLevantamento(
+      talhaoLevantamento.levantamentoId,
+    );
 
     expect(await bancoDados.select(bancoDados.levantamentos).get(), isEmpty);
-    expect(await bancoDados.select(bancoDados.talhaoLevantamentos).get(), isEmpty);
+    expect(
+      await bancoDados.select(bancoDados.talhaoLevantamentos).get(),
+      isEmpty,
+    );
     expect(await bancoDados.select(bancoDados.parcelas).get(), isEmpty);
     expect(await bancoDados.select(bancoDados.arvores).get(), isEmpty);
-    expect(await bancoDados.select(bancoDados.pontosGeograficosParcela).get(), isEmpty);
-    expect(await bancoDados.select(bancoDados.propriedades).get(), hasLength(1));
+    expect(
+      await bancoDados.select(bancoDados.pontosGeograficosParcela).get(),
+      isEmpty,
+    );
+    expect(
+      await bancoDados.select(bancoDados.propriedades).get(),
+      hasLength(1),
+    );
     expect(await bancoDados.select(bancoDados.talhoes).get(), hasLength(1));
     expect(await repositorioLevantamentos.observarTodos().first, isEmpty);
   });
@@ -831,13 +948,13 @@ ORDER BY simbolo
       areaHa: 12,
     );
 
-    final primeiroTalhao = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(
-      primeiroTalhaoId,
-    );
-    final primeiroParcelaId = await repositorioParcelas.criarParcelaParaTalhaoLevantamento(
-      talhaoLevantamentoId: primeiroTalhao.id,
-      areaHa: 0.04,
-    );
+    final primeiroTalhao = await repositorioParcelas
+        .iniciarNovoLevantamentoParaTalhao(primeiroTalhaoId);
+    final primeiroParcelaId = await repositorioParcelas
+        .criarParcelaParaTalhaoLevantamento(
+          talhaoLevantamentoId: primeiroTalhao.id,
+          areaHa: 0.04,
+        );
     await repositorioArvores.criarArvore(
       parcelaId: primeiroParcelaId,
       rascunho: RascunhoArvore(
@@ -851,9 +968,8 @@ ORDER BY simbolo
       ),
     );
 
-    final segundoTalhao = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(
-      segundoTalhaoId,
-    );
+    final segundoTalhao = await repositorioParcelas
+        .iniciarNovoLevantamentoParaTalhao(segundoTalhaoId);
     expect(primeiroTalhao.levantamentoId, segundoTalhao.levantamentoId);
 
     await repositorioLevantamentos.atualizarTalhaoInLevantamento(
@@ -879,7 +995,9 @@ ORDER BY simbolo
     expect(ajustadoTalhao.talhao.anoPlantio, 2020);
     expect(ajustadoTalhao.especie.nome, 'Eucalyptus');
 
-    await repositorioLevantamentos.removerTalhaoDeLevantamento(primeiroTalhao.id);
+    await repositorioLevantamentos.removerTalhaoDeLevantamento(
+      primeiroTalhao.id,
+    );
 
     resumo = await repositorioLevantamentos
         .observarPorId(primeiroTalhao.levantamentoId)
@@ -887,14 +1005,20 @@ ORDER BY simbolo
     expect(resumo, isNotNull);
     expect(resumo!.talhoes, hasLength(1));
     expect(resumo.talhoes.single.talhaoLevantamento.id, segundoTalhao.id);
-    expect(await bancoDados.select(bancoDados.levantamentos).get(), hasLength(1));
+    expect(
+      await bancoDados.select(bancoDados.levantamentos).get(),
+      hasLength(1),
+    );
     expect(
       await bancoDados.select(bancoDados.talhaoLevantamentos).get(),
       hasLength(1),
     );
     expect(await bancoDados.select(bancoDados.parcelas).get(), isEmpty);
     expect(await bancoDados.select(bancoDados.arvores).get(), isEmpty);
-    expect(await bancoDados.select(bancoDados.pontosGeograficosParcela).get(), isEmpty);
+    expect(
+      await bancoDados.select(bancoDados.pontosGeograficosParcela).get(),
+      isEmpty,
+    );
     expect(await bancoDados.select(bancoDados.talhoes).get(), hasLength(2));
   });
 
@@ -927,26 +1051,33 @@ ORDER BY simbolo
       areaHa: 12,
     );
 
-    final pinusTalhao = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(
-      pinusTalhaoId,
-    );
-    final pinusParcelaId = await repositorioParcelas.criarParcelaParaTalhaoLevantamento(
-      talhaoLevantamentoId: pinusTalhao.id,
-      areaHa: 0.04,
+    final pinusTalhao = await repositorioParcelas
+        .iniciarNovoLevantamentoParaTalhao(pinusTalhaoId);
+    final pinusParcelaId = await repositorioParcelas
+        .criarParcelaParaTalhaoLevantamento(
+          talhaoLevantamentoId: pinusTalhao.id,
+          areaHa: 0.04,
+        );
+    await repositorioArvores.criarArvore(
+      parcelaId: pinusParcelaId,
+      rascunho: const RascunhoArvore(
+        dapCm: 20,
+        alturaM: 10,
+        possuiTroncoTortuoso: false,
+      ),
     );
     await repositorioArvores.criarArvore(
       parcelaId: pinusParcelaId,
-      rascunho: const RascunhoArvore(dapCm: 20, alturaM: 10, possuiTroncoTortuoso: false),
-    );
-    await repositorioArvores.criarArvore(
-      parcelaId: pinusParcelaId,
-      rascunho: const RascunhoArvore(dapCm: 25, alturaM: 14, possuiTroncoTortuoso: false),
+      rascunho: const RascunhoArvore(
+        dapCm: 25,
+        alturaM: 14,
+        possuiTroncoTortuoso: false,
+      ),
     );
     await repositorioArvores.marcaParcelaColetada(pinusParcelaId);
 
-    final eucalyptusTalhao = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(
-      eucalyptusTalhaoId,
-    );
+    final eucalyptusTalhao = await repositorioParcelas
+        .iniciarNovoLevantamentoParaTalhao(eucalyptusTalhaoId);
     final eucalyptusParcelaId = await repositorioParcelas
         .criarParcelaParaTalhaoLevantamento(
           talhaoLevantamentoId: eucalyptusTalhao.id,
@@ -954,7 +1085,11 @@ ORDER BY simbolo
         );
     await repositorioArvores.criarArvore(
       parcelaId: eucalyptusParcelaId,
-      rascunho: const RascunhoArvore(dapCm: 30, alturaM: 18, possuiTroncoTortuoso: false),
+      rascunho: const RascunhoArvore(
+        dapCm: 30,
+        alturaM: 18,
+        possuiTroncoTortuoso: false,
+      ),
     );
 
     final opcoes = await repositorioResultados.observarFiltroOpcoes().first;
@@ -972,7 +1107,11 @@ ORDER BY simbolo
 
     final semFiltro = await repositorioResultados
         .observarPainel(
-          const FiltrosResultados(propriedadeId: null, talhaoIds: {}, especieId: null),
+          const FiltrosResultados(
+            propriedadeId: null,
+            talhaoIds: {},
+            especieId: null,
+          ),
         )
         .first;
 
@@ -1047,20 +1186,28 @@ ORDER BY simbolo
     final talhaoId = await repositorioTalhoes.criar(
       propriedadeId: propriedadeId,
       identificacao: 'L-01',
-      especieId: 'species_pinus',
+      especieId: pinusId,
       areaHa: 10,
     );
-    final talhaoLevantamento = await repositorioParcelas.iniciarNovoLevantamentoParaTalhao(talhaoId);
-    final parcelaId = await repositorioParcelas.criarParcelaParaTalhaoLevantamento(
-      talhaoLevantamentoId: talhaoLevantamento.id,
-      areaHa: 0.04,
-    );
+    final talhaoLevantamento = await repositorioParcelas
+        .iniciarNovoLevantamentoParaTalhao(talhaoId);
+    final parcelaId = await repositorioParcelas
+        .criarParcelaParaTalhaoLevantamento(
+          talhaoLevantamentoId: talhaoLevantamento.id,
+          areaHa: 0.04,
+        );
     await repositorioArvores.criarArvore(
       parcelaId: parcelaId,
-      rascunho: const RascunhoArvore(dapCm: 20, alturaM: 12, possuiTroncoTortuoso: false),
+      rascunho: const RascunhoArvore(
+        dapCm: 20,
+        alturaM: 12,
+        possuiTroncoTortuoso: false,
+      ),
     );
     await repositorioArvores.marcaParcelaColetada(parcelaId);
-    await repositorioLevantamentos.concluirLevantamento(talhaoLevantamento.levantamentoId);
+    await repositorioLevantamentos.concluirLevantamento(
+      talhaoLevantamento.levantamentoId,
+    );
 
     final registros = await repositorioRegistroAtividade.recente(limite: 20);
     final tipos = registros.map((atividade) => atividade.tipo).toSet();

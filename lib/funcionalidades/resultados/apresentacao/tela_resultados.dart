@@ -6,7 +6,7 @@ import '../../../compartilhado/componentes/componentes_dendro.dart';
 import '../../exportacao_dados/apresentacao/tela_exportacao_dados.dart';
 import '../dados/repositorio_resultados.dart';
 
-const _todosFiltroValor = '__all__';
+const _todosFiltroValor = -1;
 
 class TelaResultados extends ConsumerStatefulWidget {
   const TelaResultados({
@@ -16,9 +16,9 @@ class TelaResultados extends ConsumerStatefulWidget {
     super.key,
   });
 
-  final String? inicialPropriedadeId;
-  final Set<String> inicialTalhaoIds;
-  final String? inicialEspecieId;
+  final int? inicialPropriedadeId;
+  final Set<int> inicialTalhaoIds;
+  final int? inicialEspecieId;
 
   @override
   ConsumerState<TelaResultados> createState() => _ResultadosTelaEstado();
@@ -27,9 +27,9 @@ class TelaResultados extends ConsumerStatefulWidget {
 class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
   bool _aplicadoInicialFiltros = false;
   bool _restaurarAnteriorFiltros = false;
-  String? _anteriorPropriedadeId;
-  Set<String> _anteriorTalhaoIds = const {};
-  String? _anteriorEspecieId;
+  int? _anteriorPropriedadeId;
+  Set<int> _anteriorTalhaoIds = const {};
+  int? _anteriorEspecieId;
 
   bool get _possuiInicialFiltros =>
       widget.inicialPropriedadeId != null ||
@@ -47,7 +47,8 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
     if (_restaurarAnteriorFiltros) {
       ref.read(provedorResultadosPropriedadeFiltro.notifier).state =
           _anteriorPropriedadeId;
-      ref.read(provedorResultadosTalhaoFiltro.notifier).state = _anteriorTalhaoIds;
+      ref.read(provedorResultadosTalhaoFiltro.notifier).state =
+          _anteriorTalhaoIds;
       ref.read(provedorResultadosEspecieFiltro.notifier).state =
           _anteriorEspecieId;
     }
@@ -97,7 +98,8 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
           loading: () => const CartaoDendro(filho: LinearProgressIndicator()),
           error: (erro, pilhaTrace) => _CarregarErroCartao(
             mensagem: 'Não foi possível carregar os filtros.',
-            aoTentarNovamente: () => ref.invalidate(provedorResultadosFiltroOpcoes),
+            aoTentarNovamente: () =>
+                ref.invalidate(provedorResultadosFiltroOpcoes),
           ),
         ),
         const SizedBox(height: 14),
@@ -165,7 +167,7 @@ class _FiltroCartao extends ConsumerWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
+          DropdownButtonFormField<int>(
             key: ValueKey('property_$propriedadeId'),
             initialValue: propriedadeId ?? _todosFiltroValor,
             isExpanded: true,
@@ -200,17 +202,20 @@ class _FiltroCartao extends ConsumerWidget {
               for (final propriedade in opcoes.propriedades)
                 DropdownMenuItem(
                   value: propriedade.id,
-                  child: Text(propriedade.nome, overflow: TextOverflow.ellipsis),
+                  child: Text(
+                    propriedade.nome,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
             ],
             onChanged: (valor) {
               ref.read(provedorResultadosPropriedadeFiltro.notifier).state =
                   valor == _todosFiltroValor ? null : valor;
-              ref.read(provedorResultadosTalhaoFiltro.notifier).state = <String>{};
+              ref.read(provedorResultadosTalhaoFiltro.notifier).state = <int>{};
             },
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
+          DropdownButtonFormField<int>(
             key: ValueKey('species_$especieId'),
             initialValue: especieId ?? _todosFiltroValor,
             isExpanded: true,
@@ -251,7 +256,7 @@ class _FiltroCartao extends ConsumerWidget {
             onChanged: (valor) {
               ref.read(provedorResultadosEspecieFiltro.notifier).state =
                   valor == _todosFiltroValor ? null : valor;
-              ref.read(provedorResultadosTalhaoFiltro.notifier).state = <String>{};
+              ref.read(provedorResultadosTalhaoFiltro.notifier).state = <int>{};
             },
           ),
           const SizedBox(height: 12),
@@ -267,19 +272,25 @@ class _FiltroCartao extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (_possuiAtivoFiltros(propriedadeId, especieId, selecionadoTalhoes))
+              if (_possuiAtivoFiltros(
+                propriedadeId,
+                especieId,
+                selecionadoTalhoes,
+              ))
                 TextButton(
                   style: TextButton.styleFrom(
                     foregroundColor: CoresDendro.principal,
                     textStyle: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   onPressed: () {
-                    ref.read(provedorResultadosPropriedadeFiltro.notifier).state =
+                    ref
+                            .read(provedorResultadosPropriedadeFiltro.notifier)
+                            .state =
                         null;
                     ref.read(provedorResultadosEspecieFiltro.notifier).state =
                         null;
                     ref.read(provedorResultadosTalhaoFiltro.notifier).state =
-                        <String>{};
+                        <int>{};
                   },
                   child: const Text('Limpar'),
                 ),
@@ -405,7 +416,8 @@ class _VistaPainelResultados extends StatelessWidget {
             Expanded(
               child: IndicadorBloco(
                 rotulo: 'Parcelas coletadas',
-                valor: '${painel.coletadaParcelaQuantidade}/${painel.parcelaQuantidade}',
+                valor:
+                    '${painel.coletadaParcelaQuantidade}/${painel.parcelaQuantidade}',
                 icone: Icons.grid_view,
               ),
             ),
@@ -447,7 +459,8 @@ class _VistaPainelResultados extends StatelessWidget {
         if (painel.talhoes.isEmpty)
           const _VazioResultadosCartao()
         else
-          for (final talhao in painel.talhoes) _TalhaoResultadoLinha(resumo: talhao),
+          for (final talhao in painel.talhoes)
+            _TalhaoResultadoLinha(resumo: talhao),
       ],
     );
   }
@@ -464,7 +477,10 @@ class _VolumeResumoCartao extends StatelessWidget {
     return CartaoDendro(
       fundoCor: CoresDendro.principal,
       bordaCor: CoresDendro.principal,
-      espacamentoInterno: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+      espacamentoInterno: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 20,
+      ),
       filho: Column(
         children: [
           Text(
@@ -559,7 +575,8 @@ class _DiametroDistribuicaoCartao extends StatelessWidget {
                               child: Align(
                                 alignment: Alignment.bottomCenter,
                                 child: FractionallySizedBox(
-                                  heightFactor: item.quantidade / maximoQuantidade,
+                                  heightFactor:
+                                      item.quantidade / maximoQuantidade,
                                   child: DecoratedBox(
                                     decoration: BoxDecoration(
                                       color: CoresDendro.principal,
@@ -620,7 +637,10 @@ class _TalhaoResultadoLinha extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: CartaoDendro(
-        espacamentoInterno: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        espacamentoInterno: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         filho: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -732,7 +752,10 @@ class _SemResultadosFiltroCartao extends StatelessWidget {
 }
 
 class _CarregarErroCartao extends StatelessWidget {
-  const _CarregarErroCartao({required this.mensagem, required this.aoTentarNovamente});
+  const _CarregarErroCartao({
+    required this.mensagem,
+    required this.aoTentarNovamente,
+  });
 
   final String mensagem;
   final VoidCallback aoTentarNovamente;
@@ -761,14 +784,14 @@ class _CarregarErroCartao extends StatelessWidget {
   }
 }
 
-bool _possuiBaseFiltro(String? propriedadeId, String? especieId) {
+bool _possuiBaseFiltro(int? propriedadeId, int? especieId) {
   return propriedadeId != null || especieId != null;
 }
 
 bool _possuiAtivoFiltros(
-  String? propriedadeId,
-  String? especieId,
-  Set<String> talhaoIds,
+  int? propriedadeId,
+  int? especieId,
+  Set<int> talhaoIds,
 ) {
   return propriedadeId != null || especieId != null || talhaoIds.isNotEmpty;
 }

@@ -9,17 +9,19 @@ final provedorRepositorioResultados = Provider<RepositorioResultados>((ref) {
   return RepositorioResultados(ref.watch(provedorBancoDendro));
 });
 
-final provedorResultadosPropriedadeFiltro = StateProvider.autoDispose<String?>((ref) {
+final provedorResultadosPropriedadeFiltro = StateProvider.autoDispose<int?>((
+  ref,
+) {
   return null;
 });
 
-final provedorResultadosTalhaoFiltro = StateProvider.autoDispose<Set<String>>((
+final provedorResultadosTalhaoFiltro = StateProvider.autoDispose<Set<int>>((
   ref,
 ) {
-  return <String>{};
+  return <int>{};
 });
 
-final provedorResultadosEspecieFiltro = StateProvider.autoDispose<String?>((ref) {
+final provedorResultadosEspecieFiltro = StateProvider.autoDispose<int?>((ref) {
   return null;
 });
 
@@ -47,9 +49,9 @@ class FiltrosResultados {
     required this.especieId,
   });
 
-  final String? propriedadeId;
-  final Set<String> talhaoIds;
-  final String? especieId;
+  final int? propriedadeId;
+  final Set<int> talhaoIds;
+  final int? especieId;
 
   bool get possuiBaseFiltro => propriedadeId != null || especieId != null;
 }
@@ -66,15 +68,16 @@ class OpcoesFiltrosResultados {
   final List<Especie> especies;
 
   List<OpcaoTalhaoResultados> visivelTalhoes({
-    String? propriedadeId,
-    String? especieId,
+    int? propriedadeId,
+    int? especieId,
   }) {
     if (propriedadeId == null && especieId == null) {
       return const [];
     }
 
     return talhoes.where((opcao) {
-      if (propriedadeId != null && opcao.talhao.propriedadeId != propriedadeId) {
+      if (propriedadeId != null &&
+          opcao.talhao.propriedadeId != propriedadeId) {
         return false;
       }
       if (especieId != null && opcao.especie.id != especieId) {
@@ -206,7 +209,9 @@ class RepositorioResultados {
         _bancoDados.select(_bancoDados.propriedades).join([
           leftOuterJoin(
             _bancoDados.talhoes,
-            _bancoDados.talhoes.propriedadeId.equalsExp(_bancoDados.propriedades.id),
+            _bancoDados.talhoes.propriedadeId.equalsExp(
+              _bancoDados.propriedades.id,
+            ),
           ),
           leftOuterJoin(
             _bancoDados.especies,
@@ -218,9 +223,9 @@ class RepositorioResultados {
         ]);
 
     return consulta.watch().map((linhas) {
-      final propriedadesPorId = <String, Propriedade>{};
-      final talhoesPorId = <String, OpcaoTalhaoResultados>{};
-      final especiePorId = <String, Especie>{};
+      final propriedadesPorId = <int, Propriedade>{};
+      final talhoesPorId = <int, OpcaoTalhaoResultados>{};
+      final especiePorId = <int, Especie>{};
 
       for (final linha in linhas) {
         final propriedade = linha.readTable(_bancoDados.propriedades);
@@ -281,7 +286,9 @@ class RepositorioResultados {
           ),
           innerJoin(
             _bancoDados.propriedades,
-            _bancoDados.propriedades.id.equalsExp(_bancoDados.talhoes.propriedadeId),
+            _bancoDados.propriedades.id.equalsExp(
+              _bancoDados.talhoes.propriedadeId,
+            ),
           ),
           innerJoin(
             _bancoDados.especies,
@@ -326,11 +333,11 @@ class RepositorioResultados {
   }
 
   Future<PainelResultados> _dashboardDeLinhas(List<TypedResult> linhas) async {
-    final vistosParcelas = <String>{};
-    final vistosArvores = <String>{};
+    final vistosParcelas = <int>{};
+    final vistosArvores = <int>{};
     final diametroFaixas = <int, int>{};
-    final talhoesPorId = <String, _TalhaoResultadosAcumulador>{};
-    final coeficienteCache = <String, Map<String, double?>>{};
+    final talhoesPorId = <int, _TalhaoResultadosAcumulador>{};
+    final coeficienteCache = <int, Map<String, double?>>{};
 
     var parcelaQuantidade = 0;
     var coletadaParcelaQuantidade = 0;
@@ -343,7 +350,9 @@ class RepositorioResultados {
 
     for (final linha in linhas) {
       final parcela = linha.readTable(_bancoDados.parcelas);
-      final talhaoLevantamento = linha.readTable(_bancoDados.talhaoLevantamentos);
+      final talhaoLevantamento = linha.readTable(
+        _bancoDados.talhaoLevantamentos,
+      );
       final talhao = linha.readTable(_bancoDados.talhoes);
       final especie = linha.readTable(_bancoDados.especies);
       final modeloMatematico = linha.readTable(_bancoDados.modelosMatematicos);
@@ -392,7 +401,7 @@ class RepositorioResultados {
         dapCm: arvore.dapCm,
         alturaM: arvore.alturaM,
         coeficientes: coeficienteCache[talhaoLevantamento.id]!,
-        modeloMatematicoId: modeloMatematico.id,
+        modeloMatematicoCodigo: modeloMatematico.codigo,
         modeloMatematicoExpressao: modeloMatematico.expressao,
       );
       amostraVolumeM3 += volumeArvoreM3;
@@ -413,10 +422,10 @@ class RepositorioResultados {
         ),
     ];
 
-    final talhoes = talhoesPorId.values.map((item) => item.paraResumo()).toList()
-      ..sort(
-        (a, b) => a.talhao.identificacao.compareTo(b.talhao.identificacao),
-      );
+    final talhoes =
+        talhoesPorId.values.map((item) => item.paraResumo()).toList()..sort(
+          (a, b) => a.talhao.identificacao.compareTo(b.talhao.identificacao),
+        );
     final estimadoVolumeM3 = talhoes.fold<double>(
       0,
       (total, talhao) => total + (talhao.estimadoVolumeM3 ?? 0),
@@ -429,11 +438,11 @@ class RepositorioResultados {
       arvoreQuantidade: arvoreQuantidade,
       medidaAreaHa: medidaAreaHa,
       mediaDapCm: arvoreQuantidade == 0 ? null : dapSoma / arvoreQuantidade,
-      mediaAlturaM: arvoreQuantidade == 0 ? null : alturaSoma / arvoreQuantidade,
-      amostraVolumeM3: amostraVolumeM3,
-      volumePorHaM3: medidaAreaHa == 0
+      mediaAlturaM: arvoreQuantidade == 0
           ? null
-          : amostraVolumeM3 / medidaAreaHa,
+          : alturaSoma / arvoreQuantidade,
+      amostraVolumeM3: amostraVolumeM3,
+      volumePorHaM3: medidaAreaHa == 0 ? null : amostraVolumeM3 / medidaAreaHa,
       estimadoVolumeM3: medidaAreaHa == 0 ? null : estimadoVolumeM3,
       arvoresPorHa: medidaAreaHa == 0 ? null : arvoreQuantidade / medidaAreaHa,
       diametroClasses: diametroClasses,
@@ -442,9 +451,9 @@ class RepositorioResultados {
   }
 
   Future<Map<String, double?>> _coeficientesParaTalhao({
-    required String talhaoLevantamentoId,
-    required String especieId,
-    required String modeloMatematicoId,
+    required int talhaoLevantamentoId,
+    required int especieId,
+    required int modeloMatematicoId,
   }) async {
     final linhas = await _bancoDados
         .customSelect(
@@ -453,7 +462,7 @@ SELECT simbolo, valor
 FROM coeficientes_talhao_levantamento
 WHERE talhao_levantamento_id = ?
 ''',
-          variables: [Variable<String>(talhaoLevantamentoId)],
+          variables: [Variable<int>(talhaoLevantamentoId)],
           readsFrom: {_bancoDados.talhaoLevantamentos},
         )
         .get();
@@ -464,9 +473,11 @@ WHERE talhao_levantamento_id = ?
     };
     if (values.isNotEmpty) return values;
 
-    final globalLinhas = await (_bancoDados.select(
-      _bancoDados.coeficientesModelo,
-    )..where((tabela) => tabela.modeloMatematicoId.equals(modeloMatematicoId))).get();
+    final globalLinhas =
+        await (_bancoDados.select(_bancoDados.coeficientesModelo)..where(
+              (tabela) => tabela.modeloMatematicoId.equals(modeloMatematicoId),
+            ))
+            .get();
     final especieLinhas =
         await (_bancoDados.select(_bancoDados.coeficientesEspecieModelo)..where(
               (tabela) =>
@@ -484,7 +495,9 @@ WHERE talhao_levantamento_id = ?
             especieValores[coeficiente.simbolo] ??
             coeficiente.valor ??
             CalculadoraVolumeFlorestal.valorPadraoCoeficiente(
-              modeloMatematicoId: modeloMatematicoId,
+              modeloMatematicoCodigo: await _bancoDados.codigoModeloPorId(
+                modeloMatematicoId,
+              ),
               simbolo: coeficiente.simbolo,
             ),
     };
@@ -549,7 +562,9 @@ class _TalhaoResultadosAcumulador {
       arvoreQuantidade: arvoreQuantidade,
       medidaAreaHa: medidaAreaHa,
       mediaDapCm: arvoreQuantidade == 0 ? null : dapSoma / arvoreQuantidade,
-      mediaAlturaM: arvoreQuantidade == 0 ? null : alturaSoma / arvoreQuantidade,
+      mediaAlturaM: arvoreQuantidade == 0
+          ? null
+          : alturaSoma / arvoreQuantidade,
       amostraVolumeM3: amostraVolumeM3,
       volumePorHaM3: volumePorHaM3,
       estimadoVolumeM3: estimadoVolumeM3,

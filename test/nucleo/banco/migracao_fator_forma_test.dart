@@ -1,111 +1,96 @@
 import 'dart:io';
-
-import 'package:dendro_mobile/nucleo/banco/banco_dendro.dart';
-import 'package:dendro_mobile/nucleo/floresta/calculadora_volume_florestal.dart';
-import 'package:drift/drift.dart' hide isNull, isNotNull;
+import 'dart:convert';
+import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dendro_mobile/nucleo/banco/banco_dendro.dart';
 
 void main() {
-  test('atualiza banco v7 preservando coeficientes e modelo padrao', () async {
-    final diretorio = await Directory.systemTemp.createTemp('dendro_ff_test_');
-    final arquivo = File('${diretorio.path}/test.sqlite');
-    var bancoDados = BancoDendro(NativeDatabase(arquivo));
-    try {
-      await bancoDados.select(bancoDados.modelosMatematicos).get();
-      const id = CalculadoraVolumeFlorestal.modeloFatorFormaId;
-      // Reproduce the v7 catalog. No table structure changed in v8.
-      for (final tabela in [
-        'coeficientes_especie_modelo',
-        'especies_modelos',
-        'variaveis_modelo',
-        'coeficientes_modelo',
-      ]) {
-        await bancoDados.customStatement(
-          'DELETE FROM $tabela WHERE modelo_matematico_id = ?',
-          [id],
+  for (final versao in [7, 8]) {
+    test(
+      'catalogo v$versao migra mantendo coeficientes e corrigindo fator de forma',
+      () async {
+        final pasta = Directory.systemTemp.createTempSync('dendro_ff_');
+        final arquivo = File('${pasta.path}/banco.sqlite');
+        final referencia =
+            jsonDecode(File('test/fixtures/banco_v10.json').readAsStringSync())
+                as Map<String, dynamic>;
+        final legado = sqlite.sqlite3.open(arquivo.path);
+        for (final e in referencia.entries) {
+          legado.execute(e.value['sql'] as String);
+          for (final item in e.value['dados'] as List) {
+            final r = Map<String, Object?>.from(item as Map);
+            legado.execute(
+              'INSERT INTO ${e.key} (${r.keys.join(',')}) VALUES (${List.filled(r.length, '?').join(',')})',
+              r.values.toList(),
+            );
+          }
+        }
+        legado.execute(
+          "UPDATE coeficientes_modelo SET valor=0.123 WHERE id='formula_spurr_a'",
         );
-      }
-      await (bancoDados.delete(
-        bancoDados.modelosMatematicos,
-      )..where((t) => t.id.equals(id))).go();
-      await (bancoDados.update(bancoDados.coeficientesModelo)
-            ..where((t) => t.id.equals('formula_spurr_a')))
-          .write(const CoeficientesModeloCompanion(valor: Value(0.123)));
-      await bancoDados.customStatement('PRAGMA user_version = 7');
-      await bancoDados.close();
-      bancoDados = BancoDendro(NativeDatabase(arquivo));
-
-      final modelosMatematicos = await bancoDados.select(bancoDados.modelosMatematicos).get();
-      expect(modelosMatematicos.where((f) => f.id == id), hasLength(1));
-      final coeficientes = await bancoDados
-          .select(bancoDados.coeficientesModelo)
-          .get();
-      expect(
-        coeficientes.singleWhere((c) => c.id == 'formula_spurr_a').valor,
-        0.123,
-      );
-      expect(coeficientes.singleWhere((c) => c.modeloMatematicoId == id).valor, isNull);
-      final vinculos = await bancoDados.select(bancoDados.especiesModelos).get();
-      expect(vinculos.where((l) => l.modeloMatematicoId == id), hasLength(2));
-      expect(
-        vinculos
-            .where((l) => l.padrao)
-            .every((l) => l.modeloMatematicoId == 'formula_spurr'),
-        isTrue,
-      );
-
-      await (bancoDados.update(bancoDados.coeficientesEspecieModelo)..where(
-            (t) => t.modeloMatematicoId.equals(id) & t.especieId.equals('species_pinus'),
-          ))
-          .write(const CoeficientesEspecieModeloCompanion(valor: Value(0.42)));
-      await bancoDados.close();
-      bancoDados = BancoDendro(NativeDatabase(arquivo));
-      final salvo =
-          await (bancoDados.select(bancoDados.coeficientesEspecieModelo)..where(
-                (t) =>
-                    t.modeloMatematicoId.equals(id) &
-                    t.especieId.equals('species_pinus'),
-              ))
-              .getSingle();
-      expect(salvo.valor, 0.42);
-
-      // Simulate the v8 model already configured by the user.
-      await (bancoDados.update(
-        bancoDados.modelosMatematicos,
-      )..where((t) => t.id.equals(id))).write(
-        const ModelosMatematicosCompanion(
-          nome: Value('Calcular Volume - Fator de Fórmula'),
-          expressao: Value('pi * D^2 * H * ff'),
-        ),
-      );
-      await (bancoDados.update(
-        bancoDados.coeficientesEspecieModelo,
-      )..where((t) => t.modeloMatematicoId.equals(id))).write(
-        const CoeficientesEspecieModeloCompanion(
-          rotulo: Value('Fator de fórmula'),
-        ),
-      );
-      await bancoDados.customStatement('PRAGMA user_version = 8');
-      await bancoDados.close();
-      bancoDados = BancoDendro(NativeDatabase(arquivo));
-      final atualizado = await (bancoDados.select(
-        bancoDados.modelosMatematicos,
-      )..where((t) => t.id.equals(id))).getSingle();
-      expect(atualizado.nome, 'Fator de Forma');
-      expect(atualizado.expressao, 'pi * (D / 100)^2 * H * ff');
-      final preservado =
-          await (bancoDados.select(bancoDados.coeficientesEspecieModelo)..where(
-                (t) =>
-                    t.modeloMatematicoId.equals(id) &
-                    t.especieId.equals('species_pinus'),
-              ))
-              .getSingle();
-      expect(preservado.valor, 0.42);
-      expect(preservado.rotulo, 'Fator de forma');
-    } finally {
-      await bancoDados.close();
-      await diretorio.delete(recursive: true);
-    }
-  });
+        if (versao == 7) {
+          for (final tabela in [
+            'coeficientes_especie_modelo',
+            'especies_modelos',
+            'variaveis_modelo',
+            'coeficientes_modelo',
+          ]) {
+            legado.execute(
+              "DELETE FROM $tabela WHERE modelo_matematico_id='formula_form_factor'",
+            );
+          }
+          legado.execute(
+            "DELETE FROM modelos_matematicos WHERE id='formula_form_factor'",
+          );
+        } else {
+          legado.execute(
+            "UPDATE modelos_matematicos SET nome='Calcular Volume - Fator de Fórmula', expressao='pi * D^2 * H * ff' WHERE id='formula_form_factor'",
+          );
+          legado.execute(
+            "UPDATE coeficientes_especie_modelo SET valor=0.42, rotulo='Fator de fórmula' WHERE modelo_matematico_id='formula_form_factor'",
+          );
+        }
+        legado.execute('PRAGMA user_version=$versao');
+        legado.close();
+        final banco = BancoDendro(NativeDatabase(arquivo));
+        try {
+          final modelos = await banco.select(banco.modelosMatematicos).get();
+          final fator = modelos.singleWhere(
+            (m) => m.codigo == 'formula_form_factor',
+          );
+          final spurr = modelos.singleWhere((m) => m.codigo == 'formula_spurr');
+          expect(fator.nome, 'Fator de Forma');
+          expect(fator.expressao, 'pi * (D / 100)^2 * H * ff');
+          final coeficientes = await banco
+              .select(banco.coeficientesModelo)
+              .get();
+          expect(
+            coeficientes
+                .singleWhere(
+                  (c) => c.modeloMatematicoId == spurr.id && c.simbolo == 'a',
+                )
+                .valor,
+            0.123,
+          );
+          expect(
+            (await banco.select(banco.especiesModelos).get())
+                .where((v) => v.padrao)
+                .every((v) => v.modeloMatematicoId == spurr.id),
+            isTrue,
+          );
+          final ff = (await banco.select(banco.coeficientesEspecieModelo).get())
+              .where((c) => c.modeloMatematicoId == fator.id);
+          expect(ff, hasLength(2));
+          expect(
+            ff.every((c) => c.valor == (versao == 8 ? 0.42 : null)),
+            isTrue,
+          );
+        } finally {
+          await banco.close();
+          pasta.deleteSync(recursive: true);
+        }
+      },
+    );
+  }
 }

@@ -3,7 +3,7 @@ import 'dart:math' as math;
 class CalculadoraVolumeFlorestal {
   const CalculadoraVolumeFlorestal._();
 
-  static const modeloFatorFormaId = 'formula_form_factor';
+  static const codigoModeloFatorForma = 'formula_form_factor';
   static const expressaoFatorForma = 'pi * (D / 100)^2 * H * ff';
 
   static const padraoAlturaIntercepto = 0.8203;
@@ -25,16 +25,17 @@ class CalculadoraVolumeFlorestal {
     required double dapCm,
     required double alturaM,
     required Map<String, double?> coeficientes,
-    String? modeloMatematicoId,
+    String? modeloMatematicoCodigo,
     String? modeloMatematicoExpressao,
   }) {
     final resolvidoAlturaM = alturaM > 0 ? alturaM : estimarAlturaM(dapCm);
     if (dapCm <= 0 || resolvidoAlturaM <= 0) return 0;
 
-    final normalizadoModeloMatematicoId = modeloMatematicoId?.toLowerCase() ?? '';
+    final normalizadoModeloMatematicoCodigo =
+        modeloMatematicoCodigo?.toLowerCase() ?? '';
     final normalizadoExpressao = _normalizar(modeloMatematicoExpressao ?? '');
 
-    if (normalizadoModeloMatematicoId == modeloFatorFormaId ||
+    if (normalizadoModeloMatematicoCodigo == codigoModeloFatorForma ||
         normalizadoExpressao.replaceAll('dap', 'd').replaceAll('π', 'pi') ==
             _normalizar(expressaoFatorForma)) {
       final ff = coeficientes['ff'] ?? coeficientes['FF'];
@@ -45,7 +46,7 @@ class CalculadoraVolumeFlorestal {
     }
 
     final volume =
-        normalizadoModeloMatematicoId.contains('schumacher') ||
+        normalizadoModeloMatematicoCodigo.contains('schumacher') ||
             normalizadoExpressao.startsWith('exp(')
         ? _volumeSchumacherHall(
             dapCm: dapCm,
@@ -71,7 +72,8 @@ class CalculadoraVolumeFlorestal {
         rotulo: 'toneladas',
       );
     }
-    if (normalizado.contains('eucalyptus') || normalizado.contains('eucalipto')) {
+    if (normalizado.contains('eucalyptus') ||
+        normalizado.contains('eucalipto')) {
       return const ConversaoVolumeMadeira(
         unidade: 'mst',
         fator: eucalyptusMstPorM3,
@@ -82,11 +84,12 @@ class CalculadoraVolumeFlorestal {
   }
 
   static double? valorPadraoCoeficiente({
-    required String? modeloMatematicoId,
+    required String? modeloMatematicoCodigo,
     required String simbolo,
   }) {
-    final normalizadoModeloMatematicoId = modeloMatematicoId?.toLowerCase() ?? '';
-    if (normalizadoModeloMatematicoId.contains('schumacher')) {
+    final normalizadoModeloMatematicoCodigo =
+        modeloMatematicoCodigo?.toLowerCase() ?? '';
+    if (normalizadoModeloMatematicoCodigo.contains('schumacher')) {
       return switch (simbolo.toLowerCase()) {
         'a' => padraoSchumacherHallA,
         'b' => padraoSchumacherHallB,
@@ -94,7 +97,7 @@ class CalculadoraVolumeFlorestal {
         _ => null,
       };
     }
-    if (!normalizadoModeloMatematicoId.contains('spurr')) return null;
+    if (!normalizadoModeloMatematicoCodigo.contains('spurr')) return null;
 
     return switch (simbolo.toLowerCase()) {
       'a' => padraoSpurrA,

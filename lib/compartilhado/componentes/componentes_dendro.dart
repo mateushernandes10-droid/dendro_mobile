@@ -256,10 +256,7 @@ class CartaoDendro extends StatelessWidget {
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final brutoFundo = fundoCor ?? tema.cardColor;
-    final resolvidoFundo = _cartaoFundoParaTema(
-      brutoFundo,
-      tema.brightness,
-    );
+    final resolvidoFundo = _cartaoFundoParaTema(brutoFundo, tema.brightness);
     final claroFundo =
         ThemeData.estimateBrightnessForColor(resolvidoFundo) ==
         Brightness.light;
@@ -417,10 +414,7 @@ class SituacaoIndicador extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvidoCor = _fundoParaTema(
-      cor,
-      Theme.of(context).brightness,
-    );
+    final resolvidoCor = _fundoParaTema(cor, Theme.of(context).brightness);
 
     return DecoratedBox(
       decoration: BoxDecoration(

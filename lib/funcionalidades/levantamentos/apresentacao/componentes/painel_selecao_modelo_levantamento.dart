@@ -9,9 +9,10 @@ import '../../../../compartilhado/componentes/componentes_dendro.dart';
 import '../../../ajustes/dados/repositorio_ajustes.dart';
 import '../../dados/selecao_modelo_levantamento.dart';
 
-Future<LevantamentoModeloMatematicoSelecao?> mostrarLevantamentoModeloMatematicoSelecaoPainel({
+Future<LevantamentoModeloMatematicoSelecao?>
+mostrarLevantamentoModeloMatematicoSelecaoPainel({
   required BuildContext context,
-  required String especieId,
+  required int especieId,
   LevantamentoModeloMatematicoSelecao? inicialSelecao,
 }) {
   return showModalBottomSheet<LevantamentoModeloMatematicoSelecao>(
@@ -26,13 +27,14 @@ Future<LevantamentoModeloMatematicoSelecao?> mostrarLevantamentoModeloMatematico
   );
 }
 
-class _LevantamentoModeloMatematicoSelecaoPainel extends ConsumerStatefulWidget {
+class _LevantamentoModeloMatematicoSelecaoPainel
+    extends ConsumerStatefulWidget {
   const _LevantamentoModeloMatematicoSelecaoPainel({
     required this.especieId,
     required this.inicialSelecao,
   });
 
-  final String especieId;
+  final int especieId;
   final LevantamentoModeloMatematicoSelecao? inicialSelecao;
 
   @override
@@ -43,8 +45,8 @@ class _LevantamentoModeloMatematicoSelecaoPainel extends ConsumerStatefulWidget 
 class _LevantamentoModeloMatematicoSelecaoPainelEstado
     extends ConsumerState<_LevantamentoModeloMatematicoSelecaoPainel> {
   final Map<String, TextEditingController> _controladores = {};
-  String? _selecionadoModeloMatematicoId;
-  String? _ultimoPreparadoModeloMatematicoId;
+  int? _selecionadoModeloMatematicoId;
+  int? _ultimoPreparadoModeloMatematicoId;
 
   @override
   void dispose() {
@@ -56,7 +58,9 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
 
   @override
   Widget build(BuildContext context) {
-    final modelosMatematicosAsync = ref.watch(provedorAjustesModelosMatematicos);
+    final modelosMatematicosAsync = ref.watch(
+      provedorAjustesModelosMatematicos,
+    );
     final vinculosAsync = ref.watch(provedorAjustesEspecieModelosMatematicos);
     final especieCoeficientesAsync = ref.watch(
       provedorAjustesEspecieModeloMatematicoCoeficientes,
@@ -86,7 +90,9 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
               child: _ModeloMatematicoSelecaoErro(
                 aoTentarNovamente: () {
                   ref.invalidate(provedorAjustesEspecieModelosMatematicos);
-                  ref.invalidate(provedorAjustesEspecieModeloMatematicoCoeficientes);
+                  ref.invalidate(
+                    provedorAjustesEspecieModeloMatematicoCoeficientes,
+                  );
                 },
               ),
             );
@@ -104,13 +110,23 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
               .where(
                 (resumo) =>
                     resumo.modeloMatematico.ativo &&
-                    vinculadoModeloMatematicoIds.contains(resumo.modeloMatematico.id),
+                    vinculadoModeloMatematicoIds.contains(
+                      resumo.modeloMatematico.id,
+                    ),
               )
               .toList();
-          _garantirSelecionadoModeloMatematico(disponivelModelosMatematicos, vinculos);
+          _garantirSelecionadoModeloMatematico(
+            disponivelModelosMatematicos,
+            vinculos,
+          );
 
-          final selecionadoModeloMatematico = _selecionadoModeloMatematico(disponivelModelosMatematicos);
-          _prepararCoeficienteControllers(selecionadoModeloMatematico, especieCoeficientes);
+          final selecionadoModeloMatematico = _selecionadoModeloMatematico(
+            disponivelModelosMatematicos,
+          );
+          _prepararCoeficienteControllers(
+            selecionadoModeloMatematico,
+            especieCoeficientes,
+          );
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
@@ -152,10 +168,13 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
                   for (final modeloMatematico in disponivelModelosMatematicos)
                     _ModeloMatematicoEscolhaBloco(
                       resumo: modeloMatematico,
-                      selecionado: modeloMatematico.modeloMatematico.id == _selecionadoModeloMatematicoId,
+                      selecionado:
+                          modeloMatematico.modeloMatematico.id ==
+                          _selecionadoModeloMatematicoId,
                       aoTocar: () {
                         setState(() {
-                          _selecionadoModeloMatematicoId = modeloMatematico.modeloMatematico.id;
+                          _selecionadoModeloMatematicoId =
+                              modeloMatematico.modeloMatematico.id;
                           _ultimoPreparadoModeloMatematicoId = null;
                         });
                       },
@@ -189,7 +208,8 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
         error: (erro, pilhaTrace) => Padding(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
           child: _ModeloMatematicoSelecaoErro(
-            aoTentarNovamente: () => ref.invalidate(provedorAjustesModelosMatematicos),
+            aoTentarNovamente: () =>
+                ref.invalidate(provedorAjustesModelosMatematicos),
           ),
         ),
       ),
@@ -209,20 +229,27 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
     final selecionadoAindaExiste = modelosMatematicos.any(
       (resumo) => resumo.modeloMatematico.id == _selecionadoModeloMatematicoId,
     );
-    if (_selecionadoModeloMatematicoId != null && selecionadoAindaExiste) return;
+    if (_selecionadoModeloMatematicoId != null && selecionadoAindaExiste) {
+      return;
+    }
 
     if (inicialModeloMatematicoId != null &&
-        modelosMatematicos.any((resumo) => resumo.modeloMatematico.id == inicialModeloMatematicoId)) {
+        modelosMatematicos.any(
+          (resumo) => resumo.modeloMatematico.id == inicialModeloMatematicoId,
+        )) {
       _selecionadoModeloMatematicoId = inicialModeloMatematicoId;
       return;
     }
 
     final padraoVinculo = vinculos
-        .where((vinculo) => vinculo.especieId == widget.especieId && vinculo.padrao)
+        .where(
+          (vinculo) => vinculo.especieId == widget.especieId && vinculo.padrao,
+        )
         .firstOrNull;
     if (padraoVinculo != null &&
         modelosMatematicos.any(
-          (resumo) => resumo.modeloMatematico.id == padraoVinculo.modeloMatematicoId,
+          (resumo) =>
+              resumo.modeloMatematico.id == padraoVinculo.modeloMatematicoId,
         )) {
       _selecionadoModeloMatematicoId = padraoVinculo.modeloMatematicoId;
       return;
@@ -233,18 +260,26 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
         .firstOrNull;
     if (primeiroVinculado != null &&
         modelosMatematicos.any(
-          (resumo) => resumo.modeloMatematico.id == primeiroVinculado.modeloMatematicoId,
+          (resumo) =>
+              resumo.modeloMatematico.id ==
+              primeiroVinculado.modeloMatematicoId,
         )) {
       _selecionadoModeloMatematicoId = primeiroVinculado.modeloMatematicoId;
       return;
     }
 
-    _selecionadoModeloMatematicoId = modelosMatematicos.first.modeloMatematico.id;
+    _selecionadoModeloMatematicoId =
+        modelosMatematicos.first.modeloMatematico.id;
   }
 
-  ModeloMatematicoResumo? _selecionadoModeloMatematico(List<ModeloMatematicoResumo> modelosMatematicos) {
+  ModeloMatematicoResumo? _selecionadoModeloMatematico(
+    List<ModeloMatematicoResumo> modelosMatematicos,
+  ) {
     for (final modeloMatematico in modelosMatematicos) {
-      if (modeloMatematico.modeloMatematico.id == _selecionadoModeloMatematicoId) return modeloMatematico;
+      if (modeloMatematico.modeloMatematico.id ==
+          _selecionadoModeloMatematicoId) {
+        return modeloMatematico;
+      }
     }
     return null;
   }
@@ -254,7 +289,10 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
     List<CoeficienteEspecieModelo> especieCoeficientes,
   ) {
     if (selecionadoModeloMatematico == null) return;
-    if (_ultimoPreparadoModeloMatematicoId == selecionadoModeloMatematico.modeloMatematico.id) return;
+    if (_ultimoPreparadoModeloMatematicoId ==
+        selecionadoModeloMatematico.modeloMatematico.id) {
+      return;
+    }
 
     for (final controlador in _controladores.values) {
       controlador.dispose();
@@ -262,13 +300,15 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
     _controladores.clear();
 
     final inicialValores =
-        selecionadoModeloMatematico.modeloMatematico.id == widget.inicialSelecao?.modeloMatematicoId
+        selecionadoModeloMatematico.modeloMatematico.id ==
+            widget.inicialSelecao?.modeloMatematicoId
         ? widget.inicialSelecao!.coeficienteValoresPorSimbolo
         : const <String, double?>{};
     final especieValores = {
       for (final coeficiente in especieCoeficientes)
         if (coeficiente.especieId == widget.especieId &&
-            coeficiente.modeloMatematicoId == selecionadoModeloMatematico.modeloMatematico.id)
+            coeficiente.modeloMatematicoId ==
+                selecionadoModeloMatematico.modeloMatematico.id)
           coeficiente.simbolo: coeficiente.valor,
     };
 
@@ -278,7 +318,8 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
           : especieValores[coeficiente.simbolo] ??
                 coeficiente.valor ??
                 CalculadoraVolumeFlorestal.valorPadraoCoeficiente(
-                  modeloMatematicoId: selecionadoModeloMatematico.modeloMatematico.id,
+                  modeloMatematicoCodigo:
+                      selecionadoModeloMatematico.modeloMatematico.codigo,
                   simbolo: coeficiente.simbolo,
                 );
 
@@ -287,7 +328,8 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
       );
     }
 
-    _ultimoPreparadoModeloMatematicoId = selecionadoModeloMatematico.modeloMatematico.id;
+    _ultimoPreparadoModeloMatematicoId =
+        selecionadoModeloMatematico.modeloMatematico.id;
   }
 
   void _confirmar(ModeloMatematicoResumo selecionadoModeloMatematico) {
@@ -299,11 +341,15 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
       );
       if (interpretado == _invalidoReal ||
           (coeficiente.simbolo.toLowerCase() == 'ff' &&
-              (interpretado is! double || !interpretado.isFinite || interpretado <= 0))) {
+              (interpretado is! double ||
+                  !interpretado.isFinite ||
+                  interpretado <= 0))) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.red.shade700,
-            content: Text('Informe um valor válido para ${coeficiente.rotulo}.'),
+            content: Text(
+              'Informe um valor válido para ${coeficiente.rotulo}.',
+            ),
           ),
         );
         return;
@@ -352,7 +398,9 @@ class _ModeloMatematicoEscolhaBloco extends StatelessWidget {
                 selecionado
                     ? Icons.radio_button_checked
                     : Icons.radio_button_unchecked,
-                color: selecionado ? CoresDendro.principal : CoresDendro.textoDiscreto,
+                color: selecionado
+                    ? CoresDendro.principal
+                    : CoresDendro.textoDiscreto,
               ),
               const SizedBox(width: 10),
               Expanded(

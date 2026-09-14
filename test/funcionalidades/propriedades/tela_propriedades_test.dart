@@ -15,7 +15,9 @@ void main() {
 
     await testador.pumpWidget(
       ProviderScope(
-        overrides: [provedorRepositorioPropriedades.overrideWithValue(repositorio)],
+        overrides: [
+          provedorRepositorioPropriedades.overrideWithValue(repositorio),
+        ],
         child: MaterialApp(
           theme: TemaDendro.claro,
           home: const Scaffold(body: TelaPropriedades()),
@@ -77,19 +79,21 @@ class _RepositorioSimuladoPropriedades implements RepositorioPropriedades {
   }
 
   @override
-  Future<Propriedade?> buscarPorId(String id) async {
-    return _propriedades.where((propriedade) => propriedade.id == id).firstOrNull;
+  Future<Propriedade?> buscarPorId(int id) async {
+    return _propriedades
+        .where((propriedade) => propriedade.id == id)
+        .firstOrNull;
   }
 
   @override
-  Future<String> criar({
+  Future<int> criar({
     required String nome,
     required String municipio,
     String estado = 'RS',
     required double areaTotalHa,
   }) async {
     final agora = DateTime(2026, 8, 9);
-    final id = 'property_${_proximoId++}';
+    final id = _proximoId++;
 
     _propriedades.add(
       Propriedade(
@@ -109,13 +113,15 @@ class _RepositorioSimuladoPropriedades implements RepositorioPropriedades {
 
   @override
   Future<void> atualizar({
-    required String id,
+    required int id,
     required String nome,
     required String municipio,
     required String estado,
     required double areaTotalHa,
   }) async {
-    final indice = _propriedades.indexWhere((propriedade) => propriedade.id == id);
+    final indice = _propriedades.indexWhere(
+      (propriedade) => propriedade.id == id,
+    );
     if (indice == -1) return;
 
     final atual = _propriedades[indice];
@@ -132,13 +138,13 @@ class _RepositorioSimuladoPropriedades implements RepositorioPropriedades {
   }
 
   @override
-  Future<void> excluir(String id) async {
+  Future<void> excluir(int id) async {
     _propriedades.removeWhere((propriedade) => propriedade.id == id);
     _alteracoes.add(null);
   }
 
   @override
-  Future<PropriedadeResumo?> obterResumo(String id) async {
+  Future<PropriedadeResumo?> obterResumo(int id) async {
     final propriedade = await buscarPorId(id);
     if (propriedade == null) return null;
 
@@ -174,8 +180,9 @@ class _RepositorioSimuladoPropriedades implements RepositorioPropriedades {
         ? _propriedades
         : _propriedades
               .where(
-                (propriedade) =>
-                    propriedade.nome.toLowerCase().contains(normalizadoConsulta),
+                (propriedade) => propriedade.nome.toLowerCase().contains(
+                  normalizadoConsulta,
+                ),
               )
               .toList();
 

@@ -15,7 +15,9 @@ final provedorRepositorioLevantamentos = Provider<RepositorioLevantamentos>((
 
 final provedorAtivoLevantamento =
     StreamProvider.autoDispose<LevantamentoResumo?>((ref) {
-      return ref.watch(provedorRepositorioLevantamentos).observarMaisRecenteAtivo();
+      return ref
+          .watch(provedorRepositorioLevantamentos)
+          .observarMaisRecenteAtivo();
     });
 
 final provedorAtivoLevantamentos =
@@ -29,8 +31,10 @@ final provedorLevantamentos =
     });
 
 final provedorLevantamentoDetalhe = StreamProvider.autoDispose
-    .family<LevantamentoResumo?, String>((ref, levantamentoId) {
-      return ref.watch(provedorRepositorioLevantamentos).observarPorId(levantamentoId);
+    .family<LevantamentoResumo?, int>((ref, levantamentoId) {
+      return ref
+          .watch(provedorRepositorioLevantamentos)
+          .observarPorId(levantamentoId);
     });
 
 class LevantamentoResumo {
@@ -50,10 +54,13 @@ class LevantamentoResumo {
   int get parcelaQuantidade =>
       talhoes.fold(0, (total, talhao) => total + talhao.parcelaQuantidade);
 
-  int get coletadaParcelaQuantidade =>
-      talhoes.fold(0, (total, talhao) => total + talhao.coletadaParcelaQuantidade);
+  int get coletadaParcelaQuantidade => talhoes.fold(
+    0,
+    (total, talhao) => total + talhao.coletadaParcelaQuantidade,
+  );
 
-  int get abrirParcelaQuantidade => parcelaQuantidade - coletadaParcelaQuantidade;
+  int get abrirParcelaQuantidade =>
+      parcelaQuantidade - coletadaParcelaQuantidade;
 
   double get medidaAreaHa =>
       talhoes.fold(0, (total, talhao) => total + talhao.medidaAreaHa);
@@ -104,7 +111,8 @@ class RepositorioLevantamentos {
   Stream<List<LevantamentoResumo>> observarAtivo() {
     final consulta = _bancoDados.select(_bancoDados.levantamentos)
       ..where(
-        (tabela) => tabela.situacao.equalsValue(SituacaoLevantamento.emAndamento),
+        (tabela) =>
+            tabela.situacao.equalsValue(SituacaoLevantamento.emAndamento),
       )
       ..orderBy([(tabela) => OrderingTerm.desc(tabela.atualizadoEm)]);
 
@@ -140,14 +148,16 @@ class RepositorioLevantamentos {
           a.levantamento.situacao,
         ).compareTo(_situacaoPriority(b.levantamento.situacao));
         if (situacaoComparacao != 0) return situacaoComparacao;
-        return b.levantamento.atualizadoEm.compareTo(a.levantamento.atualizadoEm);
+        return b.levantamento.atualizadoEm.compareTo(
+          a.levantamento.atualizadoEm,
+        );
       });
 
       return resumos;
     });
   }
 
-  Stream<LevantamentoResumo?> observarPorId(String levantamentoId) {
+  Stream<LevantamentoResumo?> observarPorId(int levantamentoId) {
     final consulta = _bancoDados.select(_bancoDados.levantamentos)
       ..where((tabela) => tabela.id.equals(levantamentoId))
       ..limit(1);
@@ -158,7 +168,7 @@ class RepositorioLevantamentos {
     });
   }
 
-  Future<void> concluirLevantamento(String levantamentoId) async {
+  Future<void> concluirLevantamento(int levantamentoId) async {
     final agora = DateTime.now();
     final resumo = await _resumoPorId(levantamentoId);
 
@@ -197,13 +207,15 @@ class RepositorioLevantamentos {
     });
   }
 
-  Future<void> excluirLevantamento(String levantamentoId) {
+  Future<void> excluirLevantamento(int levantamentoId) {
     return _bancoDados.transaction(() async {
       final resumo = await _resumoPorId(levantamentoId);
       final talhoes = await (_bancoDados.select(
         _bancoDados.talhaoLevantamentos,
       )..where((tabela) => tabela.levantamentoId.equals(levantamentoId))).get();
-      final talhaoIds = talhoes.map((talhaoLevantamento) => talhaoLevantamento.id).toList();
+      final talhaoIds = talhoes
+          .map((talhaoLevantamento) => talhaoLevantamento.id)
+          .toList();
 
       if (talhaoIds.isNotEmpty) {
         await _excluirTalhaoLevantamentoDados(talhaoIds);
@@ -224,7 +236,7 @@ class RepositorioLevantamentos {
     });
   }
 
-  Future<void> removerTalhaoDeLevantamento(String talhaoLevantamentoId) {
+  Future<void> removerTalhaoDeLevantamento(int talhaoLevantamentoId) {
     return _bancoDados.transaction(() async {
       final talhaoLevantamento =
           await (_bancoDados.select(_bancoDados.talhaoLevantamentos)
@@ -233,14 +245,19 @@ class RepositorioLevantamentos {
               .getSingleOrNull();
 
       if (talhaoLevantamento == null) return;
-      final levantamento = await _levantamentoPorId(talhaoLevantamento.levantamentoId);
+      final levantamento = await _levantamentoPorId(
+        talhaoLevantamento.levantamentoId,
+      );
       final talhao = await _talhaoPorId(talhaoLevantamento.talhaoId);
-      final propriedade = levantamento == null ? null : await _propriedadePorId(levantamento.propriedadeId);
+      final propriedade = levantamento == null
+          ? null
+          : await _propriedadePorId(levantamento.propriedadeId);
 
       await _excluirTalhaoLevantamentoDados([talhaoLevantamento.id]);
 
-      await (_bancoDados.update(_bancoDados.levantamentos)
-            ..where((tabela) => tabela.id.equals(talhaoLevantamento.levantamentoId)))
+      await (_bancoDados.update(_bancoDados.levantamentos)..where(
+            (tabela) => tabela.id.equals(talhaoLevantamento.levantamentoId),
+          ))
           .write(LevantamentosCompanion(atualizadoEm: Value(DateTime.now())));
 
       if (talhao == null) return;
@@ -255,9 +272,9 @@ class RepositorioLevantamentos {
   }
 
   Future<void> atualizarTalhaoInLevantamento({
-    required String talhaoLevantamentoId,
+    required int talhaoLevantamentoId,
     required String identificacao,
-    required String especieId,
+    required int especieId,
     required double areaHa,
     int? anoPlantio,
     String? espacamento,
@@ -273,28 +290,33 @@ class RepositorioLevantamentos {
                 ..where((tabela) => tabela.id.equals(talhaoLevantamentoId))
                 ..limit(1))
               .getSingle();
-      final levantamento = await _levantamentoPorId(talhaoLevantamento.levantamentoId);
-      final propriedade = levantamento == null ? null : await _propriedadePorId(levantamento.propriedadeId);
+      final levantamento = await _levantamentoPorId(
+        talhaoLevantamento.levantamentoId,
+      );
+      final propriedade = levantamento == null
+          ? null
+          : await _propriedadePorId(levantamento.propriedadeId);
       final agora = DateTime.now();
       final modeloMatematicoId =
-          modeloMatematicoSelecao?.modeloMatematicoId ?? await _padraoModeloMatematicoId(especieId);
+          modeloMatematicoSelecao?.modeloMatematicoId ??
+          await _padraoModeloMatematicoId(especieId);
 
-      await (_bancoDados.update(
-        _bancoDados.talhoes,
-      )..where((tabela) => tabela.id.equals(talhaoLevantamento.talhaoId))).write(
-        TalhoesCompanion(
-          identificacao: Value(identificacao.trim()),
-          especieId: Value(especieId),
-          areaHa: Value(areaHa),
-          anoPlantio: Value(anoPlantio),
-          espacamento: Value(_vazioParaNulo(espacamento)),
-          regimeManejo: Value(_vazioParaNulo(regimeManejo)),
-          larguraParcelaM: Value(larguraParcelaM),
-          comprimentoParcelaM: Value(comprimentoParcelaM),
-          observacoes: Value(_vazioParaNulo(observacoes)),
-          atualizadoEm: Value(agora),
-        ),
-      );
+      await (_bancoDados.update(_bancoDados.talhoes)
+            ..where((tabela) => tabela.id.equals(talhaoLevantamento.talhaoId)))
+          .write(
+            TalhoesCompanion(
+              identificacao: Value(identificacao.trim()),
+              especieId: Value(especieId),
+              areaHa: Value(areaHa),
+              anoPlantio: Value(anoPlantio),
+              espacamento: Value(_vazioParaNulo(espacamento)),
+              regimeManejo: Value(_vazioParaNulo(regimeManejo)),
+              larguraParcelaM: Value(larguraParcelaM),
+              comprimentoParcelaM: Value(comprimentoParcelaM),
+              observacoes: Value(_vazioParaNulo(observacoes)),
+              atualizadoEm: Value(agora),
+            ),
+          );
 
       await (_bancoDados.update(
         _bancoDados.talhaoLevantamentos,
@@ -314,8 +336,9 @@ class RepositorioLevantamentos {
             modeloMatematicoSelecao?.coeficienteValoresPorSimbolo ?? const {},
       );
 
-      await (_bancoDados.update(_bancoDados.levantamentos)
-            ..where((tabela) => tabela.id.equals(talhaoLevantamento.levantamentoId)))
+      await (_bancoDados.update(_bancoDados.levantamentos)..where(
+            (tabela) => tabela.id.equals(talhaoLevantamento.levantamentoId),
+          ))
           .write(LevantamentosCompanion(atualizadoEm: Value(agora)));
 
       await _registroAtividade.registrar(
@@ -324,7 +347,12 @@ class RepositorioLevantamentos {
         subtitulo: _talhaoAtividadeSubtitulo(
           Talhao(
             id: talhaoLevantamento.talhaoId,
-            propriedadeId: propriedade?.id ?? '',
+            propriedadeId:
+                (await (_bancoDados.select(_bancoDados.talhoes)..where(
+                          (t) => t.id.equals(talhaoLevantamento.talhaoId),
+                        ))
+                        .getSingle())
+                    .propriedadeId,
             identificacao: identificacao.trim(),
             especieId: especieId,
             areaHa: areaHa,
@@ -346,7 +374,7 @@ class RepositorioLevantamentos {
     });
   }
 
-  Future<LevantamentoResumo?> _resumoPorId(String levantamentoId) async {
+  Future<LevantamentoResumo?> _resumoPorId(int levantamentoId) async {
     final levantamento =
         await (_bancoDados.select(_bancoDados.levantamentos)
               ..where((tabela) => tabela.id.equals(levantamentoId))
@@ -357,10 +385,13 @@ class RepositorioLevantamentos {
     return _resumoParaLevantamento(levantamento);
   }
 
-  Future<LevantamentoResumo> _resumoParaLevantamento(Levantamento levantamento) async {
-    final propriedade = await (_bancoDados.select(
-      _bancoDados.propriedades,
-    )..where((tabela) => tabela.id.equals(levantamento.propriedadeId))).getSingle();
+  Future<LevantamentoResumo> _resumoParaLevantamento(
+    Levantamento levantamento,
+  ) async {
+    final propriedade =
+        await (_bancoDados.select(_bancoDados.propriedades)
+              ..where((tabela) => tabela.id.equals(levantamento.propriedadeId)))
+            .getSingle();
 
     return LevantamentoResumo(
       levantamento: levantamento,
@@ -369,7 +400,9 @@ class RepositorioLevantamentos {
     );
   }
 
-  Future<List<LevantamentoTalhaoResumo>> _talhaoResumos(String levantamentoId) async {
+  Future<List<LevantamentoTalhaoResumo>> _talhaoResumos(
+    int levantamentoId,
+  ) async {
     final consulta =
         _bancoDados.select(_bancoDados.talhaoLevantamentos).join([
             innerJoin(
@@ -391,14 +424,20 @@ class RepositorioLevantamentos {
               ),
             ),
           ])
-          ..where(_bancoDados.talhaoLevantamentos.levantamentoId.equals(levantamentoId))
+          ..where(
+            _bancoDados.talhaoLevantamentos.levantamentoId.equals(
+              levantamentoId,
+            ),
+          )
           ..orderBy([OrderingTerm.asc(_bancoDados.talhoes.identificacao)]);
 
     final linhas = await consulta.get();
     final resumos = <LevantamentoTalhaoResumo>[];
 
     for (final linha in linhas) {
-      final talhaoLevantamento = linha.readTable(_bancoDados.talhaoLevantamentos);
+      final talhaoLevantamento = linha.readTable(
+        _bancoDados.talhaoLevantamentos,
+      );
       resumos.add(
         LevantamentoTalhaoResumo(
           talhaoLevantamento: talhaoLevantamento,
@@ -409,7 +448,9 @@ class RepositorioLevantamentos {
             talhaoLevantamento,
           ),
           parcelaQuantidade: await _quantidadeParcelas(talhaoLevantamento.id),
-          coletadaParcelaQuantidade: await _quantidadeColetadaParcelas(talhaoLevantamento.id),
+          coletadaParcelaQuantidade: await _quantidadeColetadaParcelas(
+            talhaoLevantamento.id,
+          ),
           arvoreQuantidade: await _quantidadeArvores(talhaoLevantamento.id),
           medidaAreaHa: await _somaMedidaArea(talhaoLevantamento.id),
         ),
@@ -423,8 +464,9 @@ class RepositorioLevantamentos {
     final ativoLevantamentos =
         await (_bancoDados.select(_bancoDados.levantamentos)
               ..where(
-                (tabela) =>
-                    tabela.situacao.equalsValue(SituacaoLevantamento.emAndamento),
+                (tabela) => tabela.situacao.equalsValue(
+                  SituacaoLevantamento.emAndamento,
+                ),
               )
               ..orderBy([
                 (tabela) => OrderingTerm.asc(tabela.propriedadeId),
@@ -432,9 +474,11 @@ class RepositorioLevantamentos {
               ]))
             .get();
 
-    final levantamentosPorPropriedade = <String, List<Levantamento>>{};
+    final levantamentosPorPropriedade = <int, List<Levantamento>>{};
     for (final levantamento in ativoLevantamentos) {
-      levantamentosPorPropriedade.putIfAbsent(levantamento.propriedadeId, () => []).add(levantamento);
+      levantamentosPorPropriedade
+          .putIfAbsent(levantamento.propriedadeId, () => [])
+          .add(levantamento);
     }
 
     final duplicadoGrupos = levantamentosPorPropriedade.values
@@ -450,9 +494,12 @@ class RepositorioLevantamentos {
         final destinoLevantamento = levantamentos.first;
 
         for (final origemLevantamento in levantamentos.skip(1)) {
-          final origemTalhoes = await (_bancoDados.select(
-            _bancoDados.talhaoLevantamentos,
-          )..where((tabela) => tabela.levantamentoId.equals(origemLevantamento.id))).get();
+          final origemTalhoes =
+              await (_bancoDados.select(_bancoDados.talhaoLevantamentos)..where(
+                    (tabela) =>
+                        tabela.levantamentoId.equals(origemLevantamento.id),
+                  ))
+                  .get();
 
           final possuiColisao = await _possuiTalhaoColisao(
             destinoLevantamentoId: destinoLevantamento.id,
@@ -462,14 +509,14 @@ class RepositorioLevantamentos {
 
           final agora = DateTime.now();
           for (final talhaoLevantamento in origemTalhoes) {
-            await (_bancoDados.update(
-              _bancoDados.talhaoLevantamentos,
-            )..where((tabela) => tabela.id.equals(talhaoLevantamento.id))).write(
-              TalhaoLevantamentosCompanion(
-                levantamentoId: Value(destinoLevantamento.id),
-                atualizadoEm: Value(agora),
-              ),
-            );
+            await (_bancoDados.update(_bancoDados.talhaoLevantamentos)
+                  ..where((tabela) => tabela.id.equals(talhaoLevantamento.id)))
+                .write(
+                  TalhaoLevantamentosCompanion(
+                    levantamentoId: Value(destinoLevantamento.id),
+                    atualizadoEm: Value(agora),
+                  ),
+                );
           }
 
           await (_bancoDados.delete(
@@ -489,7 +536,7 @@ class RepositorioLevantamentos {
   }
 
   Future<bool> _possuiTalhaoColisao({
-    required String destinoLevantamentoId,
+    required int destinoLevantamentoId,
     required List<TalhaoLevantamento> origemTalhoes,
   }) async {
     for (final talhaoLevantamento in origemTalhoes) {
@@ -509,7 +556,7 @@ class RepositorioLevantamentos {
     return false;
   }
 
-  Future<void> _excluirTalhaoLevantamentoDados(List<String> talhaoIds) async {
+  Future<void> _excluirTalhaoLevantamentoDados(List<int> talhaoIds) async {
     if (talhaoIds.isEmpty) return;
 
     final parcelas = await (_bancoDados.select(
@@ -536,7 +583,7 @@ class RepositorioLevantamentos {
     )..where((tabela) => tabela.id.isIn(talhaoIds))).go();
   }
 
-  Future<String> _padraoModeloMatematicoId(String especieId) async {
+  Future<int> _padraoModeloMatematicoId(int especieId) async {
     final modelosMatematicos = await (_bancoDados.select(
       _bancoDados.especiesModelos,
     )..where((tabela) => tabela.especieId.equals(especieId))).get();
@@ -546,8 +593,12 @@ class RepositorioLevantamentos {
         .cast<EspecieModelo?>()
         .firstOrNull;
 
-    if (padraoModeloMatematico != null) return padraoModeloMatematico.modeloMatematicoId;
-    if (modelosMatematicos.isNotEmpty) return modelosMatematicos.first.modeloMatematicoId;
+    if (padraoModeloMatematico != null) {
+      return padraoModeloMatematico.modeloMatematicoId;
+    }
+    if (modelosMatematicos.isNotEmpty) {
+      return modelosMatematicos.first.modeloMatematicoId;
+    }
 
     final alternativo = await (_bancoDados.select(
       _bancoDados.modelosMatematicos,
@@ -555,7 +606,8 @@ class RepositorioLevantamentos {
     return alternativo.id;
   }
 
-  Future<List<LevantamentoModeloMatematicoCoeficienteValor>> _modeloMatematicoCoeficientesParaTalhao(
+  Future<List<LevantamentoModeloMatematicoCoeficienteValor>>
+  _modeloMatematicoCoeficientesParaTalhao(
     TalhaoLevantamento talhaoLevantamento,
   ) async {
     final snapshot = await _bancoDados
@@ -566,7 +618,7 @@ FROM coeficientes_talhao_levantamento
 WHERE talhao_levantamento_id = ?
 ORDER BY simbolo
 ''',
-          variables: [Variable<String>(talhaoLevantamento.id)],
+          variables: [Variable<int>(talhaoLevantamento.id)],
           readsFrom: const {},
         )
         .get();
@@ -585,7 +637,9 @@ ORDER BY simbolo
     final global =
         await (_bancoDados.select(_bancoDados.coeficientesModelo)
               ..where(
-                (tabela) => tabela.modeloMatematicoId.equals(talhaoLevantamento.modeloMatematicoId),
+                (tabela) => tabela.modeloMatematicoId.equals(
+                  talhaoLevantamento.modeloMatematicoId,
+                ),
               )
               ..orderBy([(tabela) => OrderingTerm.asc(tabela.simbolo)]))
             .get();
@@ -603,7 +657,9 @@ ORDER BY simbolo
               especieValores[coeficiente.simbolo] ??
               coeficiente.valor ??
               CalculadoraVolumeFlorestal.valorPadraoCoeficiente(
-                modeloMatematicoId: talhaoLevantamento.modeloMatematicoId,
+                modeloMatematicoCodigo: await _bancoDados.codigoModeloPorId(
+                  talhaoLevantamento.modeloMatematicoId,
+                ),
                 simbolo: coeficiente.simbolo,
               ),
         ),
@@ -611,9 +667,9 @@ ORDER BY simbolo
   }
 
   Future<void> _substituirTalhaoModeloMatematicoCoeficientes({
-    required String talhaoLevantamentoId,
-    required String especieId,
-    required String modeloMatematicoId,
+    required int talhaoLevantamentoId,
+    required int especieId,
+    required int modeloMatematicoId,
     required Map<String, double?> coeficienteValoresPorSimbolo,
   }) async {
     await _bancoDados.customStatement(
@@ -623,7 +679,10 @@ ORDER BY simbolo
 
     final coeficientes =
         await (_bancoDados.select(_bancoDados.coeficientesModelo)
-              ..where((tabela) => tabela.modeloMatematicoId.equals(modeloMatematicoId))
+              ..where(
+                (tabela) =>
+                    tabela.modeloMatematicoId.equals(modeloMatematicoId),
+              )
               ..orderBy([(tabela) => OrderingTerm.asc(tabela.simbolo)]))
             .get();
     final especieValores = await _especieModeloMatematicoCoeficienteValores(
@@ -635,11 +694,10 @@ ORDER BY simbolo
       await _bancoDados.customStatement(
         '''
 INSERT INTO coeficientes_talhao_levantamento
-  (id, talhao_levantamento_id, simbolo, rotulo, valor)
-VALUES (?, ?, ?, ?, ?)
+  (talhao_levantamento_id, simbolo, rotulo, valor)
+VALUES (?, ?, ?, ?)
 ''',
         [
-          '${talhaoLevantamentoId}_${coeficiente.simbolo}',
           talhaoLevantamentoId,
           coeficiente.simbolo,
           coeficiente.rotulo,
@@ -648,7 +706,8 @@ VALUES (?, ?, ?, ?, ?)
               : especieValores[coeficiente.simbolo] ??
                     coeficiente.valor ??
                     CalculadoraVolumeFlorestal.valorPadraoCoeficiente(
-                      modeloMatematicoId: modeloMatematicoId,
+                      modeloMatematicoCodigo: await _bancoDados
+                          .codigoModeloPorId(modeloMatematicoId),
                       simbolo: coeficiente.simbolo,
                     ),
         ],
@@ -657,8 +716,8 @@ VALUES (?, ?, ?, ?, ?)
   }
 
   Future<Map<String, double?>> _especieModeloMatematicoCoeficienteValores({
-    required String especieId,
-    required String modeloMatematicoId,
+    required int especieId,
+    required int modeloMatematicoId,
   }) async {
     final linhas =
         await (_bancoDados.select(_bancoDados.coeficientesEspecieModelo)..where(
@@ -674,7 +733,7 @@ VALUES (?, ?, ?, ?, ?)
   }
 
   Future<void> _excluirModeloMatematicoCoeficienteCopias(
-    List<String> talhaoIds,
+    List<int> talhaoIds,
   ) async {
     for (final talhaoId in talhaoIds) {
       await _bancoDados.customStatement(
@@ -684,7 +743,7 @@ VALUES (?, ?, ?, ?, ?)
     }
   }
 
-  Future<int> _quantidadeParcelas(String talhaoLevantamentoId) async {
+  Future<int> _quantidadeParcelas(int talhaoLevantamentoId) async {
     final quantidade = _bancoDados.parcelas.id.count();
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.parcelas)
@@ -699,7 +758,7 @@ VALUES (?, ?, ?, ?, ?)
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<int> _quantidadeColetadaParcelas(String talhaoLevantamentoId) async {
+  Future<int> _quantidadeColetadaParcelas(int talhaoLevantamentoId) async {
     final quantidade = _bancoDados.parcelas.id.count();
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.parcelas)
@@ -708,20 +767,24 @@ VALUES (?, ?, ?, ?, ?)
                 _bancoDados.parcelas.talhaoLevantamentoId.equals(
                       talhaoLevantamentoId,
                     ) &
-                    _bancoDados.parcelas.situacao.equalsValue(SituacaoParcela.coletada),
+                    _bancoDados.parcelas.situacao.equalsValue(
+                      SituacaoParcela.coletada,
+                    ),
               ))
             .getSingle();
 
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<int> _quantidadeArvores(String talhaoLevantamentoId) async {
+  Future<int> _quantidadeArvores(int talhaoLevantamentoId) async {
     final quantidade = _bancoDados.arvores.id.count();
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.arvores).join([
                 innerJoin(
                   _bancoDados.parcelas,
-                  _bancoDados.parcelas.id.equalsExp(_bancoDados.arvores.parcelaId),
+                  _bancoDados.parcelas.id.equalsExp(
+                    _bancoDados.arvores.parcelaId,
+                  ),
                 ),
               ])
               ..addColumns([quantidade])
@@ -735,7 +798,7 @@ VALUES (?, ?, ?, ?, ?)
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<double> _somaMedidaArea(String talhaoLevantamentoId) async {
+  Future<double> _somaMedidaArea(int talhaoLevantamentoId) async {
     final area = _bancoDados.parcelas.areaHa.sum();
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.parcelas)
@@ -750,19 +813,19 @@ VALUES (?, ?, ?, ?, ?)
     return linha.read(area) ?? 0;
   }
 
-  Future<Levantamento?> _levantamentoPorId(String id) {
+  Future<Levantamento?> _levantamentoPorId(int id) {
     return (_bancoDados.select(
       _bancoDados.levantamentos,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();
   }
 
-  Future<Talhao?> _talhaoPorId(String id) {
+  Future<Talhao?> _talhaoPorId(int id) {
     return (_bancoDados.select(
       _bancoDados.talhoes,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();
   }
 
-  Future<Propriedade?> _propriedadePorId(String id) {
+  Future<Propriedade?> _propriedadePorId(int id) {
     return (_bancoDados.select(
       _bancoDados.propriedades,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();

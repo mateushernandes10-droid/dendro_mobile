@@ -8,7 +8,8 @@ void main() {
         dapCm: 20,
         alturaM: 10,
         coeficientes: const {'ff': 0.5},
-        modeloMatematicoId: CalculadoraVolumeFlorestal.modeloFatorFormaId,
+        modeloMatematicoCodigo:
+            CalculadoraVolumeFlorestal.codigoModeloFatorForma,
       ),
       closeTo(0.6283185307179586, 1e-12),
     );
@@ -17,7 +18,7 @@ void main() {
         dapCm: 20,
         alturaM: 10,
         coeficientes: const {'ff': 0.25},
-        modeloMatematicoId: 'custom_factor',
+        modeloMatematicoCodigo: 'custom_factor',
         modeloMatematicoExpressao: 'pi * (dap / 100)^2 * h * ff',
       ),
       closeTo(0.3141592653589793, 1e-12),
@@ -31,7 +32,8 @@ void main() {
           dapCm: 20,
           alturaM: 10,
           coeficientes: {'ff': ff},
-          modeloMatematicoId: CalculadoraVolumeFlorestal.modeloFatorFormaId,
+          modeloMatematicoCodigo:
+              CalculadoraVolumeFlorestal.codigoModeloFatorForma,
         ),
         0,
       );
@@ -66,7 +68,7 @@ void main() {
               'a': CalculadoraVolumeFlorestal.padraoSpurrA,
               'b': CalculadoraVolumeFlorestal.padraoSpurrB,
             },
-            modeloMatematicoId: 'formula_spurr',
+            modeloMatematicoCodigo: 'formula_spurr',
             modeloMatematicoExpressao: 'a + b * (D^2 * H)',
           ),
     );
@@ -80,7 +82,9 @@ void main() {
       closeTo(9.367, 0.00001),
     );
     expect(
-      CalculadoraVolumeFlorestal.conversaoParaEspecie('Eucalyptus').converter(10),
+      CalculadoraVolumeFlorestal.conversaoParaEspecie(
+        'Eucalyptus',
+      ).converter(10),
       closeTo(14, 0.00001),
     );
   });
@@ -110,7 +114,7 @@ void main() {
             dapCm: linha.dapCm,
             alturaM: linha.heightM,
             coeficientes: const {},
-            modeloMatematicoId: 'formula_schumacher_hall',
+            modeloMatematicoCodigo: 'formula_schumacher_hall',
             modeloMatematicoExpressao: 'exp(a + b * ln(D) + c * ln(H))',
           ),
     );
