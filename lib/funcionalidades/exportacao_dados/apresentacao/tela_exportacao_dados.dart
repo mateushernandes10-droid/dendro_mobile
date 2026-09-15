@@ -4,7 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../aplicativo/tema/tema_dendro.dart';
 import '../../../nucleo/banco/banco_dendro.dart';
-import '../../../nucleo/plataforma/salvador_arquivo_android.dart';
+import '../../../nucleo/plataforma/salvador_arquivo.dart';
 import '../../../compartilhado/componentes/componentes_dendro.dart';
 import '../dados/repositorio_exportacao_dados.dart';
 
@@ -135,52 +135,58 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
                 const SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed:
-                        _atualAcao != null ||
-                            estado.propriedade == null ||
-                            selecionadoTalhaoIds.isEmpty
-                        ? null
-                        : () => _prepararExportacao(
-                            estado,
-                            _ExportacaoAcao.compartilhar,
-                          ),
-                    icon: _atualAcao == _ExportacaoAcao.compartilhar
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.ios_share),
-                    label: Text(
-                      _atualAcao == _ExportacaoAcao.compartilhar
-                          ? 'Preparando...'
-                          : 'Compartilhar arquivo',
+                  child: Builder(
+                    builder: (contextoBotao) => FilledButton.icon(
+                      onPressed:
+                          _atualAcao != null ||
+                              estado.propriedade == null ||
+                              selecionadoTalhaoIds.isEmpty
+                          ? null
+                          : () => _prepararExportacao(
+                              estado,
+                              _ExportacaoAcao.compartilhar,
+                              contextoBotao,
+                            ),
+                      icon: _atualAcao == _ExportacaoAcao.compartilhar
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.ios_share),
+                      label: Text(
+                        _atualAcao == _ExportacaoAcao.compartilhar
+                            ? 'Preparando...'
+                            : 'Compartilhar arquivo',
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed:
-                        _atualAcao != null ||
-                            estado.propriedade == null ||
-                            selecionadoTalhaoIds.isEmpty
-                        ? null
-                        : () => _prepararExportacao(
-                            estado,
-                            _ExportacaoAcao.salvar,
-                          ),
-                    icon: _atualAcao == _ExportacaoAcao.salvar
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.save_alt_outlined),
-                    label: Text(
-                      _atualAcao == _ExportacaoAcao.salvar
-                          ? 'Salvando...'
-                          : 'Salvar no aparelho',
+                  child: Builder(
+                    builder: (contextoBotao) => OutlinedButton.icon(
+                      onPressed:
+                          _atualAcao != null ||
+                              estado.propriedade == null ||
+                              selecionadoTalhaoIds.isEmpty
+                          ? null
+                          : () => _prepararExportacao(
+                              estado,
+                              _ExportacaoAcao.salvar,
+                              contextoBotao,
+                            ),
+                      icon: _atualAcao == _ExportacaoAcao.salvar
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save_alt_outlined),
+                      label: Text(
+                        _atualAcao == _ExportacaoAcao.salvar
+                            ? 'Salvando...'
+                            : 'Salvar no aparelho',
+                      ),
                     ),
                   ),
                 ),
@@ -270,10 +276,16 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
   Future<void> _prepararExportacao(
     EstadoExportacaoDados estado,
     _ExportacaoAcao acao,
+    BuildContext contextoOrigem,
   ) async {
     final propriedade = estado.propriedade;
     final selecionadoTalhaoIds = _selecionadoTalhaoIds ?? const <int>{};
     if (propriedade == null || selecionadoTalhaoIds.isEmpty) return;
+
+    final caixaOrigem = contextoOrigem.findRenderObject() as RenderBox?;
+    final origemCompartilhamento = caixaOrigem == null
+        ? null
+        : caixaOrigem.localToGlobal(Offset.zero) & caixaOrigem.size;
 
     setState(() => _atualAcao = acao);
 
@@ -291,10 +303,11 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
       );
 
       if (acao == _ExportacaoAcao.salvar) {
-        final salvo = await SalvadorArquivoAndroid.salvarArquivo(
+        final salvo = await SalvadorArquivo.salvarArquivo(
           caminho: arquivo.caminho,
           nomeArquivo: arquivo.nomeArquivo,
           tipoMime: arquivo.tipoMime,
+          origemCompartilhamento: origemCompartilhamento,
         );
         if (!mounted) return;
         if (!salvo) {
@@ -323,6 +336,7 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
           text: 'Exportação DENDRO Mobile - ${propriedade.nome}',
           files: [XFile(arquivo.caminho, mimeType: arquivo.tipoMime)],
           fileNameOverrides: [arquivo.nomeArquivo],
+          sharePositionOrigin: origemCompartilhamento,
         ),
       );
 

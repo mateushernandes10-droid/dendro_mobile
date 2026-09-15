@@ -1,6 +1,6 @@
 # Fontes dos diagramas
 
-Revisadas contra a versão v11 com IDs inteiros em 13/09/2026. Arquivos .mmd são texto Mermaid editável. O conteúdo também está incorporado em ../ENGINEERING_MODELS.md, com explicações e limitações.
+Revisadas contra a versão final do banco em 14/09/2026. Arquivos .mmd são texto Mermaid editável. O conteúdo também está incorporado em ../ENGINEERING_MODELS.md, com explicações e limitações.
 
 | Arquivo | Uso |
 |---|---|
@@ -13,4 +13,4 @@ Revisadas contra a versão v11 com IDs inteiros em 13/09/2026. Arquivos .mmd sã
 | 07_estados_levantamento.mmd | Planejamento, andamento e finalização |
 | 08_classes_dados.mmd | Registros Drift e classes de cálculo/resultados |
 
-Verificação documental: 15 tabelas e 115 colunas comparadas automaticamente com as declarações do banco, incluindo tipos e nulabilidade. As oito fontes foram comparadas aos blocos incorporados no documento. Não foram renderizadas imagens nesta revisão; não afirmar revisão visual de PNG/SVG.
+Verificação documental: 15 tabelas e 114 colunas comparadas automaticamente com as declarações do banco, incluindo tipos e nulabilidade. As oito fontes foram comparadas aos blocos incorporados no documento. Não foram renderizadas imagens nesta revisão; não afirmar revisão visual de PNG/SVG.

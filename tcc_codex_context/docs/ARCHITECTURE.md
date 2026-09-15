@@ -1,6 +1,6 @@
 # Arquitetura implementada — DENDRO Mobile
 
-Revisão em 14/09/2026, baseada no código atual, schema v11. Este documento descreve a versão atual, não uma arquitetura a implementar.
+Revisão em 14/09/2026, baseada no código atual. Este documento descreve a versão final do aplicativo.
 
 ## Organização efetiva
 
@@ -13,14 +13,14 @@ A organização é por funcionalidades. As telas consomem providers Riverpod e r
 | Inicialização, tema e navegação | `lib/main.dart`, `lib/aplicativo/`, `lib/funcionalidades/estrutura/` |
 | Telas e estado | `lib/funcionalidades/*/apresentacao/`, providers Riverpod |
 | Instância do banco | `lib/nucleo/provedores/provedores_banco.dart` |
-| Tabelas, catálogo inicial e migrações | `lib/nucleo/banco/banco_dendro.dart` |
+| Tabelas e catálogo inicial | `lib/nucleo/banco/banco_dendro.dart`, `lib/nucleo/banco/catalogos_iniciais.dart` |
 | Código gerado do Drift | `lib/nucleo/banco/banco_dendro.g.dart` |
 | Persistência e orquestração | `lib/funcionalidades/*/dados/` |
 | Equações por árvore e conversões | `lib/nucleo/floresta/calculadora_volume_florestal.dart` |
 | Agregações do painel | `lib/funcionalidades/resultados/dados/repositorio_resultados.dart` |
 | Geração de arquivos e agregações dos relatórios | `lib/funcionalidades/exportacao_dados/dados/repositorio_exportacao_dados.dart` |
 | GPS | Chamadas ao Geolocator na tela de coleta; armazenamento em RepositorioArvores |
-| Salvamento de arquivo no Android | `lib/nucleo/plataforma/salvador_arquivo_android.dart` e integração de plataforma |
+| Salvamento de arquivo | `lib/nucleo/plataforma/salvador_arquivo.dart`; seletor de documentos no Android e folha de compartilhamento no iOS |
 | Preferência de tema | `lib/nucleo/preferencias/controlador_tema.dart` |
 | Histórico de atividades | `lib/funcionalidades/atividades/` |
 
@@ -28,21 +28,19 @@ As funcionalidades existentes são: atividades, exportacao_dados, inicio, levant
 
 ## Dependências efetivamente declaradas
 
-Além do Flutter e dos ícones, o pubspec declara drift, drift_flutter, flutter_riverpod, path_provider, geolocator, share_plus, pdf e excel. Os testes e a geração de código usam flutter_test, flutter_lints, drift_dev, build_runner e sqlite3 (fixtures de bancos legados). UUID não é dependência direta; permanece transitivamente em bibliotecas externas.
+Além do Flutter e dos ícones, o pubspec declara drift, drift_flutter, flutter_riverpod, path_provider, geolocator, share_plus, pdf e excel. Os testes e a geração de código usam flutter_test, flutter_lints, drift_dev e build_runner.
 
 Não estão instaladas math_expressions, fl_chart, printing ou csv. CSV e KML são montados pelo código do exportador. Não representar essas bibliotecas ausentes como componentes implementados.
 
-## Banco e histórico
+## Banco de dados
 
-O esquema é versão 11. Há 13 tabelas registradas em @DriftDatabase e duas criadas por SQL: coeficientes_talhao_levantamento e registros_atividade, totalizando 15 tabelas da aplicação. A classe CoeficientesTalhaoLevantamento está declarada no arquivo, mas sua tabela é criada/acessada por SQL e não integra a lista de tabelas geradas pelo Drift.
+O esquema é versão 1. As 15 tabelas da aplicação são declaradas em banco_dendro.dart e registradas em @DriftDatabase. O Drift cria a estrutura física do SQLite e gera as classes de dados correspondentes.
 
 Propriedade e talhão são cadastros permanentes. Levantamento representa o levantamento; TalhaoLevantamentos associa um talhão a um levantamento, com espécie e fórmula selecionadas. Parcelas pertencem a essa associação, e árvores pertencem às parcelas.
 
 Os coeficientes existem em três níveis: definição global da fórmula, configuração por espécie/fórmula e cópia por talhão do levantamento. O vínculo conserva os valores da coleta, mas não há cópia histórica integral da expressão matemática: a fórmula continua referenciada por ID. Portanto, não afirmar imutabilidade de todos os resultados após edição do catálogo.
 
 Os resultados são calculados em memória; não existe tabela de resultados. registros_atividade armazena eventos, com tipo_entidade/entidade_id opcionais e sem chave estrangeira para as entidades.
-
-A migração v11 fica em lib/nucleo/banco/migracao_ids_inteiros.dart. Em transação, renomeia as tabelas antigas temporariamente, cria a estrutura nova, copia cada registro sem sua PK antiga e remapeia todas as FKs pelo ID inteiro devolvido pelo SQLite. Valida contagens, restrições UNIQUE e foreign_key_check. As tabelas temporárias são removidas apenas depois da cópia; qualquer falha reverte a operação. Versões 1–9 primeiro completam as etapas históricas. O arquivo do banco continua dendro_mobile.
 
 O modelo completo, as chaves e os relacionamentos estão em ENGINEERING_MODELS.md.
 
@@ -62,10 +60,10 @@ O salvamento/compartilhamento usa recursos locais. Disponibilizar um APK por ser
 
 ## Verificação e alcance
 
-Existem testes em test/ para banco, migração do Fator de Forma, cálculos, exportações brutas, tema e fluxos de interface. A refatoração acrescenta cenários de migração das versões 1–9, tradução de todos os enums persistidos e reversão em caso de falha. Consultar REFATORACAO_NOMENCLATURA.md para o resultado da execução final.
+Existem testes em test/ para criação e integridade do banco, cálculos, exportações brutas, tema e fluxos de interface.
 
 Build Android e uso de emulador não comprovam validação científica, usabilidade em campo nem compatibilidade formal com todos os tablets. A estimativa econômica e a avaliação genérica de expressões ficaram fora da implementação entregue.
 
-## Identificadores — schema v11
+## Identificadores
 
-As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a PK composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional: os padrões conservam seus códigos estáveis; cadastros personalizados não precisam gerar códigos nem UUID. As regras de escolha de modelos usam codigo, sem alterar expressões ou coeficientes. registros_atividade usa entidade_id inteiro opcional, sem FK polimórfica; referencia_legada conserva apenas referências antigas sem entidade correspondente. São 15 tabelas e 115 colunas.
+As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional para identificar itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional, sem chave estrangeira, porque registra tipos diferentes de entidade. São 15 tabelas e 114 colunas.

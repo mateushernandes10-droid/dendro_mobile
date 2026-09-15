@@ -1,6 +1,6 @@
 # Regras de negócio e limites observados
 
-Revisão em 14/09/2026, versão v11 com IDs inteiros. Descreve comportamento implementado, inclusive limitações; não certifica a validade científica das equações.
+Revisão em 14/09/2026. Descreve o comportamento implementado, inclusive limitações; não certifica a validade científica das equações.
 
 ## BR-001 — Hierarquia
 Propriedade possui talhões e levantamentos. TalhaoLevantamentos associa um talhão a um levantamento, com espécie/modelo. Parcela pertence a essa associação; árvore pertence à parcela. Há histórico de diferentes levantamentos.
@@ -52,7 +52,7 @@ Os formulários de árvore exigem DAP e altura positivos. Há obrigatoriedade de
 Cadastros, coleta, consultas, cálculos e geração de arquivos ocorrem localmente. Compartilhar arquivos depende dos aplicativos/destinos escolhidos pelo usuário.
 
 ## BR-014 — Persistência
-SQLite via Drift, esquema v11. Há 15 tabelas de aplicação, incluindo duas criadas por SQL explícito. Resultados calculados não têm tabela própria.
+SQLite via Drift. Há 15 tabelas de aplicação declaradas no banco. Resultados calculados não têm tabela própria.
 
 ## BR-015 — Histórico
 Datas, situacao e registros_atividade apoiam a organização. Coeficientes por talhão do levantamento são armazenados separadamente. A expressão da fórmula permanece vinculada ao catálogo por ID; não existe versionamento histórico completo nem trilha de todas as alterações.
@@ -105,6 +105,6 @@ Limitação de apresentação no PDF: _volumeEquacaoComValores formata apenas Sc
 
 Fontes: lib/nucleo/banco/banco_dendro.dart; lib/nucleo/floresta/calculadora_volume_florestal.dart; repositórios em lib/funcionalidades/results, data_export, parcelas, levantamentos, tree_collection e settings; formulários correspondentes.
 
-## Identificadores — schema v11
+## Identificadores
 
-As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a PK composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional: os padrões conservam seus códigos estáveis; cadastros personalizados não precisam gerar códigos nem UUID. As regras de escolha de modelos usam codigo, sem alterar expressões ou coeficientes. registros_atividade usa entidade_id inteiro opcional, sem FK polimórfica; referencia_legada conserva apenas referências antigas sem entidade correspondente. São 15 tabelas e 115 colunas.
+As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional e sem chave estrangeira porque pode apontar para diferentes tipos de cadastro. São 15 tabelas e 114 colunas.

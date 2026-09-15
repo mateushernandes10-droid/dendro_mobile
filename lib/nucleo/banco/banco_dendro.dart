@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'migracao_ids_inteiros.dart';
 import 'catalogos_iniciais.dart';
 part 'banco_dendro.g.dart';
 
@@ -197,6 +196,17 @@ class CoeficientesTalhaoLevantamento extends Table {
   ];
 }
 
+@DataClassName('AtividadeBanco')
+class RegistrosAtividade extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get tipo => text()();
+  TextColumn get titulo => text()();
+  TextColumn get subtitulo => text().withDefault(const Constant(''))();
+  TextColumn get tipoEntidade => text().nullable()();
+  IntColumn get entidadeId => integer().nullable()();
+  DateTimeColumn get ocorridoEm => dateTime()();
+}
+
 @DataClassName('Parcela')
 class Parcelas extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -271,40 +281,27 @@ class Arvores extends Table {
     Talhoes,
     Levantamentos,
     TalhaoLevantamentos,
+    CoeficientesTalhaoLevantamento,
     Parcelas,
     PontosGeograficosParcela,
     Arvores,
+    RegistrosAtividade,
   ],
 )
 class BancoDendro extends _$BancoDendro {
   BancoDendro([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'dendro_mobile'));
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 1;
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
-      await criarTabelasManuais(this);
       await carregarCatalogosIniciais();
     },
-    onUpgrade: (m, de, para) => migrarParaIdsInteiros(this, m, de),
   );
   Future<void> carregarCatalogosIniciais() => inserirCatalogosIniciais(this);
   Future<String?> codigoModeloPorId(int id) async => (await (select(
     modelosMatematicos,
   )..where((m) => m.id.equals(id))).getSingleOrNull())?.codigo;
-}
-
-Future<void> criarTabelasManuais(GeneratedDatabase banco) async {
-  await banco.customStatement('''CREATE TABLE coeficientes_talhao_levantamento (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    talhao_levantamento_id INTEGER NOT NULL REFERENCES talhao_levantamentos(id) ON DELETE CASCADE,
-    simbolo TEXT NOT NULL, rotulo TEXT NOT NULL, valor REAL NULL,
-    UNIQUE(talhao_levantamento_id, simbolo))''');
-  await banco.customStatement('''CREATE TABLE registros_atividade (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    tipo TEXT NOT NULL, titulo TEXT NOT NULL, subtitulo TEXT NOT NULL DEFAULT '',
-    tipo_entidade TEXT NULL, entidade_id INTEGER NULL,
-    referencia_legada TEXT NULL, ocorrido_em INTEGER NOT NULL)''');
 }

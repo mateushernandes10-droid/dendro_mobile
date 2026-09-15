@@ -42,11 +42,10 @@ A interface deve seguir um visual profissional, legível e adequado ao uso em ca
 - Tela inicial, em tamanho moderado.
 - Cabeçalho ou área institucional quando fizer sentido.
 
-Não distorcer a proporção da logo. Para ícones Android/iOS, gerar os tamanhos finais a partir do arquivo-base durante a configuração do projeto Flutter.
+Não distorcer a proporção da logo. Os ícones Android e iOS usam tamanhos gerados a partir do arquivo-base. A abertura nas duas plataformas utiliza a composição vertical com floresta, logo, nome e subtítulo do aplicativo.
 
 ## Pendências
 
 - Definir paleta oficial em códigos hexadecimais.
 - Definir tipografia do app.
-- Gerar ícones adaptativos Android quando o projeto Flutter for criado.
 - Confirmar se haverá versão simplificada/monocromática da marca para usos pequenos.

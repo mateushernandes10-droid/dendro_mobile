@@ -4903,6 +4903,378 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
   }
 }
 
+class $CoeficientesTalhaoLevantamentoTable
+    extends CoeficientesTalhaoLevantamento
+    with
+        TableInfo<
+          $CoeficientesTalhaoLevantamentoTable,
+          CoeficienteTalhaoLevantamento
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CoeficientesTalhaoLevantamentoTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _talhaoLevantamentoIdMeta =
+      const VerificationMeta('talhaoLevantamentoId');
+  @override
+  late final GeneratedColumn<int> talhaoLevantamentoId = GeneratedColumn<int>(
+    'talhao_levantamento_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES talhao_levantamentos (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _simboloMeta = const VerificationMeta(
+    'simbolo',
+  );
+  @override
+  late final GeneratedColumn<String> simbolo = GeneratedColumn<String>(
+    'simbolo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rotuloMeta = const VerificationMeta('rotulo');
+  @override
+  late final GeneratedColumn<String> rotulo = GeneratedColumn<String>(
+    'rotulo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valorMeta = const VerificationMeta('valor');
+  @override
+  late final GeneratedColumn<double> valor = GeneratedColumn<double>(
+    'valor',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    talhaoLevantamentoId,
+    simbolo,
+    rotulo,
+    valor,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'coeficientes_talhao_levantamento';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CoeficienteTalhaoLevantamento> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('talhao_levantamento_id')) {
+      context.handle(
+        _talhaoLevantamentoIdMeta,
+        talhaoLevantamentoId.isAcceptableOrUnknown(
+          data['talhao_levantamento_id']!,
+          _talhaoLevantamentoIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_talhaoLevantamentoIdMeta);
+    }
+    if (data.containsKey('simbolo')) {
+      context.handle(
+        _simboloMeta,
+        simbolo.isAcceptableOrUnknown(data['simbolo']!, _simboloMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_simboloMeta);
+    }
+    if (data.containsKey('rotulo')) {
+      context.handle(
+        _rotuloMeta,
+        rotulo.isAcceptableOrUnknown(data['rotulo']!, _rotuloMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rotuloMeta);
+    }
+    if (data.containsKey('valor')) {
+      context.handle(
+        _valorMeta,
+        valor.isAcceptableOrUnknown(data['valor']!, _valorMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CoeficienteTalhaoLevantamento map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CoeficienteTalhaoLevantamento(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      talhaoLevantamentoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}talhao_levantamento_id'],
+      )!,
+      simbolo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}simbolo'],
+      )!,
+      rotulo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rotulo'],
+      )!,
+      valor: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}valor'],
+      ),
+    );
+  }
+
+  @override
+  $CoeficientesTalhaoLevantamentoTable createAlias(String alias) {
+    return $CoeficientesTalhaoLevantamentoTable(attachedDatabase, alias);
+  }
+}
+
+class CoeficienteTalhaoLevantamento extends DataClass
+    implements Insertable<CoeficienteTalhaoLevantamento> {
+  final int id;
+  final int talhaoLevantamentoId;
+  final String simbolo;
+  final String rotulo;
+  final double? valor;
+  const CoeficienteTalhaoLevantamento({
+    required this.id,
+    required this.talhaoLevantamentoId,
+    required this.simbolo,
+    required this.rotulo,
+    this.valor,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['talhao_levantamento_id'] = Variable<int>(talhaoLevantamentoId);
+    map['simbolo'] = Variable<String>(simbolo);
+    map['rotulo'] = Variable<String>(rotulo);
+    if (!nullToAbsent || valor != null) {
+      map['valor'] = Variable<double>(valor);
+    }
+    return map;
+  }
+
+  CoeficientesTalhaoLevantamentoCompanion toCompanion(bool nullToAbsent) {
+    return CoeficientesTalhaoLevantamentoCompanion(
+      id: Value(id),
+      talhaoLevantamentoId: Value(talhaoLevantamentoId),
+      simbolo: Value(simbolo),
+      rotulo: Value(rotulo),
+      valor: valor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(valor),
+    );
+  }
+
+  factory CoeficienteTalhaoLevantamento.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CoeficienteTalhaoLevantamento(
+      id: serializer.fromJson<int>(json['id']),
+      talhaoLevantamentoId: serializer.fromJson<int>(
+        json['talhaoLevantamentoId'],
+      ),
+      simbolo: serializer.fromJson<String>(json['simbolo']),
+      rotulo: serializer.fromJson<String>(json['rotulo']),
+      valor: serializer.fromJson<double?>(json['valor']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'talhaoLevantamentoId': serializer.toJson<int>(talhaoLevantamentoId),
+      'simbolo': serializer.toJson<String>(simbolo),
+      'rotulo': serializer.toJson<String>(rotulo),
+      'valor': serializer.toJson<double?>(valor),
+    };
+  }
+
+  CoeficienteTalhaoLevantamento copyWith({
+    int? id,
+    int? talhaoLevantamentoId,
+    String? simbolo,
+    String? rotulo,
+    Value<double?> valor = const Value.absent(),
+  }) => CoeficienteTalhaoLevantamento(
+    id: id ?? this.id,
+    talhaoLevantamentoId: talhaoLevantamentoId ?? this.talhaoLevantamentoId,
+    simbolo: simbolo ?? this.simbolo,
+    rotulo: rotulo ?? this.rotulo,
+    valor: valor.present ? valor.value : this.valor,
+  );
+  CoeficienteTalhaoLevantamento copyWithCompanion(
+    CoeficientesTalhaoLevantamentoCompanion data,
+  ) {
+    return CoeficienteTalhaoLevantamento(
+      id: data.id.present ? data.id.value : this.id,
+      talhaoLevantamentoId: data.talhaoLevantamentoId.present
+          ? data.talhaoLevantamentoId.value
+          : this.talhaoLevantamentoId,
+      simbolo: data.simbolo.present ? data.simbolo.value : this.simbolo,
+      rotulo: data.rotulo.present ? data.rotulo.value : this.rotulo,
+      valor: data.valor.present ? data.valor.value : this.valor,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CoeficienteTalhaoLevantamento(')
+          ..write('id: $id, ')
+          ..write('talhaoLevantamentoId: $talhaoLevantamentoId, ')
+          ..write('simbolo: $simbolo, ')
+          ..write('rotulo: $rotulo, ')
+          ..write('valor: $valor')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, talhaoLevantamentoId, simbolo, rotulo, valor);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CoeficienteTalhaoLevantamento &&
+          other.id == this.id &&
+          other.talhaoLevantamentoId == this.talhaoLevantamentoId &&
+          other.simbolo == this.simbolo &&
+          other.rotulo == this.rotulo &&
+          other.valor == this.valor);
+}
+
+class CoeficientesTalhaoLevantamentoCompanion
+    extends UpdateCompanion<CoeficienteTalhaoLevantamento> {
+  final Value<int> id;
+  final Value<int> talhaoLevantamentoId;
+  final Value<String> simbolo;
+  final Value<String> rotulo;
+  final Value<double?> valor;
+  const CoeficientesTalhaoLevantamentoCompanion({
+    this.id = const Value.absent(),
+    this.talhaoLevantamentoId = const Value.absent(),
+    this.simbolo = const Value.absent(),
+    this.rotulo = const Value.absent(),
+    this.valor = const Value.absent(),
+  });
+  CoeficientesTalhaoLevantamentoCompanion.insert({
+    this.id = const Value.absent(),
+    required int talhaoLevantamentoId,
+    required String simbolo,
+    required String rotulo,
+    this.valor = const Value.absent(),
+  }) : talhaoLevantamentoId = Value(talhaoLevantamentoId),
+       simbolo = Value(simbolo),
+       rotulo = Value(rotulo);
+  static Insertable<CoeficienteTalhaoLevantamento> custom({
+    Expression<int>? id,
+    Expression<int>? talhaoLevantamentoId,
+    Expression<String>? simbolo,
+    Expression<String>? rotulo,
+    Expression<double>? valor,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (talhaoLevantamentoId != null)
+        'talhao_levantamento_id': talhaoLevantamentoId,
+      if (simbolo != null) 'simbolo': simbolo,
+      if (rotulo != null) 'rotulo': rotulo,
+      if (valor != null) 'valor': valor,
+    });
+  }
+
+  CoeficientesTalhaoLevantamentoCompanion copyWith({
+    Value<int>? id,
+    Value<int>? talhaoLevantamentoId,
+    Value<String>? simbolo,
+    Value<String>? rotulo,
+    Value<double?>? valor,
+  }) {
+    return CoeficientesTalhaoLevantamentoCompanion(
+      id: id ?? this.id,
+      talhaoLevantamentoId: talhaoLevantamentoId ?? this.talhaoLevantamentoId,
+      simbolo: simbolo ?? this.simbolo,
+      rotulo: rotulo ?? this.rotulo,
+      valor: valor ?? this.valor,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (talhaoLevantamentoId.present) {
+      map['talhao_levantamento_id'] = Variable<int>(talhaoLevantamentoId.value);
+    }
+    if (simbolo.present) {
+      map['simbolo'] = Variable<String>(simbolo.value);
+    }
+    if (rotulo.present) {
+      map['rotulo'] = Variable<String>(rotulo.value);
+    }
+    if (valor.present) {
+      map['valor'] = Variable<double>(valor.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CoeficientesTalhaoLevantamentoCompanion(')
+          ..write('id: $id, ')
+          ..write('talhaoLevantamentoId: $talhaoLevantamentoId, ')
+          ..write('simbolo: $simbolo, ')
+          ..write('rotulo: $rotulo, ')
+          ..write('valor: $valor')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ParcelasTable extends Parcelas with TableInfo<$ParcelasTable, Parcela> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -6819,6 +7191,465 @@ class ArvoresCompanion extends UpdateCompanion<Arvore> {
   }
 }
 
+class $RegistrosAtividadeTable extends RegistrosAtividade
+    with TableInfo<$RegistrosAtividadeTable, AtividadeBanco> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RegistrosAtividadeTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _tipoMeta = const VerificationMeta('tipo');
+  @override
+  late final GeneratedColumn<String> tipo = GeneratedColumn<String>(
+    'tipo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tituloMeta = const VerificationMeta('titulo');
+  @override
+  late final GeneratedColumn<String> titulo = GeneratedColumn<String>(
+    'titulo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subtituloMeta = const VerificationMeta(
+    'subtitulo',
+  );
+  @override
+  late final GeneratedColumn<String> subtitulo = GeneratedColumn<String>(
+    'subtitulo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _tipoEntidadeMeta = const VerificationMeta(
+    'tipoEntidade',
+  );
+  @override
+  late final GeneratedColumn<String> tipoEntidade = GeneratedColumn<String>(
+    'tipo_entidade',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _entidadeIdMeta = const VerificationMeta(
+    'entidadeId',
+  );
+  @override
+  late final GeneratedColumn<int> entidadeId = GeneratedColumn<int>(
+    'entidade_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ocorridoEmMeta = const VerificationMeta(
+    'ocorridoEm',
+  );
+  @override
+  late final GeneratedColumn<DateTime> ocorridoEm = GeneratedColumn<DateTime>(
+    'ocorrido_em',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    tipo,
+    titulo,
+    subtitulo,
+    tipoEntidade,
+    entidadeId,
+    ocorridoEm,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'registros_atividade';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AtividadeBanco> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tipo')) {
+      context.handle(
+        _tipoMeta,
+        tipo.isAcceptableOrUnknown(data['tipo']!, _tipoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tipoMeta);
+    }
+    if (data.containsKey('titulo')) {
+      context.handle(
+        _tituloMeta,
+        titulo.isAcceptableOrUnknown(data['titulo']!, _tituloMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tituloMeta);
+    }
+    if (data.containsKey('subtitulo')) {
+      context.handle(
+        _subtituloMeta,
+        subtitulo.isAcceptableOrUnknown(data['subtitulo']!, _subtituloMeta),
+      );
+    }
+    if (data.containsKey('tipo_entidade')) {
+      context.handle(
+        _tipoEntidadeMeta,
+        tipoEntidade.isAcceptableOrUnknown(
+          data['tipo_entidade']!,
+          _tipoEntidadeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('entidade_id')) {
+      context.handle(
+        _entidadeIdMeta,
+        entidadeId.isAcceptableOrUnknown(data['entidade_id']!, _entidadeIdMeta),
+      );
+    }
+    if (data.containsKey('ocorrido_em')) {
+      context.handle(
+        _ocorridoEmMeta,
+        ocorridoEm.isAcceptableOrUnknown(data['ocorrido_em']!, _ocorridoEmMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ocorridoEmMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AtividadeBanco map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AtividadeBanco(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      tipo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tipo'],
+      )!,
+      titulo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}titulo'],
+      )!,
+      subtitulo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subtitulo'],
+      )!,
+      tipoEntidade: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tipo_entidade'],
+      ),
+      entidadeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}entidade_id'],
+      ),
+      ocorridoEm: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}ocorrido_em'],
+      )!,
+    );
+  }
+
+  @override
+  $RegistrosAtividadeTable createAlias(String alias) {
+    return $RegistrosAtividadeTable(attachedDatabase, alias);
+  }
+}
+
+class AtividadeBanco extends DataClass implements Insertable<AtividadeBanco> {
+  final int id;
+  final String tipo;
+  final String titulo;
+  final String subtitulo;
+  final String? tipoEntidade;
+  final int? entidadeId;
+  final DateTime ocorridoEm;
+  const AtividadeBanco({
+    required this.id,
+    required this.tipo,
+    required this.titulo,
+    required this.subtitulo,
+    this.tipoEntidade,
+    this.entidadeId,
+    required this.ocorridoEm,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['tipo'] = Variable<String>(tipo);
+    map['titulo'] = Variable<String>(titulo);
+    map['subtitulo'] = Variable<String>(subtitulo);
+    if (!nullToAbsent || tipoEntidade != null) {
+      map['tipo_entidade'] = Variable<String>(tipoEntidade);
+    }
+    if (!nullToAbsent || entidadeId != null) {
+      map['entidade_id'] = Variable<int>(entidadeId);
+    }
+    map['ocorrido_em'] = Variable<DateTime>(ocorridoEm);
+    return map;
+  }
+
+  RegistrosAtividadeCompanion toCompanion(bool nullToAbsent) {
+    return RegistrosAtividadeCompanion(
+      id: Value(id),
+      tipo: Value(tipo),
+      titulo: Value(titulo),
+      subtitulo: Value(subtitulo),
+      tipoEntidade: tipoEntidade == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tipoEntidade),
+      entidadeId: entidadeId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(entidadeId),
+      ocorridoEm: Value(ocorridoEm),
+    );
+  }
+
+  factory AtividadeBanco.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AtividadeBanco(
+      id: serializer.fromJson<int>(json['id']),
+      tipo: serializer.fromJson<String>(json['tipo']),
+      titulo: serializer.fromJson<String>(json['titulo']),
+      subtitulo: serializer.fromJson<String>(json['subtitulo']),
+      tipoEntidade: serializer.fromJson<String?>(json['tipoEntidade']),
+      entidadeId: serializer.fromJson<int?>(json['entidadeId']),
+      ocorridoEm: serializer.fromJson<DateTime>(json['ocorridoEm']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'tipo': serializer.toJson<String>(tipo),
+      'titulo': serializer.toJson<String>(titulo),
+      'subtitulo': serializer.toJson<String>(subtitulo),
+      'tipoEntidade': serializer.toJson<String?>(tipoEntidade),
+      'entidadeId': serializer.toJson<int?>(entidadeId),
+      'ocorridoEm': serializer.toJson<DateTime>(ocorridoEm),
+    };
+  }
+
+  AtividadeBanco copyWith({
+    int? id,
+    String? tipo,
+    String? titulo,
+    String? subtitulo,
+    Value<String?> tipoEntidade = const Value.absent(),
+    Value<int?> entidadeId = const Value.absent(),
+    DateTime? ocorridoEm,
+  }) => AtividadeBanco(
+    id: id ?? this.id,
+    tipo: tipo ?? this.tipo,
+    titulo: titulo ?? this.titulo,
+    subtitulo: subtitulo ?? this.subtitulo,
+    tipoEntidade: tipoEntidade.present ? tipoEntidade.value : this.tipoEntidade,
+    entidadeId: entidadeId.present ? entidadeId.value : this.entidadeId,
+    ocorridoEm: ocorridoEm ?? this.ocorridoEm,
+  );
+  AtividadeBanco copyWithCompanion(RegistrosAtividadeCompanion data) {
+    return AtividadeBanco(
+      id: data.id.present ? data.id.value : this.id,
+      tipo: data.tipo.present ? data.tipo.value : this.tipo,
+      titulo: data.titulo.present ? data.titulo.value : this.titulo,
+      subtitulo: data.subtitulo.present ? data.subtitulo.value : this.subtitulo,
+      tipoEntidade: data.tipoEntidade.present
+          ? data.tipoEntidade.value
+          : this.tipoEntidade,
+      entidadeId: data.entidadeId.present
+          ? data.entidadeId.value
+          : this.entidadeId,
+      ocorridoEm: data.ocorridoEm.present
+          ? data.ocorridoEm.value
+          : this.ocorridoEm,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AtividadeBanco(')
+          ..write('id: $id, ')
+          ..write('tipo: $tipo, ')
+          ..write('titulo: $titulo, ')
+          ..write('subtitulo: $subtitulo, ')
+          ..write('tipoEntidade: $tipoEntidade, ')
+          ..write('entidadeId: $entidadeId, ')
+          ..write('ocorridoEm: $ocorridoEm')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    tipo,
+    titulo,
+    subtitulo,
+    tipoEntidade,
+    entidadeId,
+    ocorridoEm,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AtividadeBanco &&
+          other.id == this.id &&
+          other.tipo == this.tipo &&
+          other.titulo == this.titulo &&
+          other.subtitulo == this.subtitulo &&
+          other.tipoEntidade == this.tipoEntidade &&
+          other.entidadeId == this.entidadeId &&
+          other.ocorridoEm == this.ocorridoEm);
+}
+
+class RegistrosAtividadeCompanion extends UpdateCompanion<AtividadeBanco> {
+  final Value<int> id;
+  final Value<String> tipo;
+  final Value<String> titulo;
+  final Value<String> subtitulo;
+  final Value<String?> tipoEntidade;
+  final Value<int?> entidadeId;
+  final Value<DateTime> ocorridoEm;
+  const RegistrosAtividadeCompanion({
+    this.id = const Value.absent(),
+    this.tipo = const Value.absent(),
+    this.titulo = const Value.absent(),
+    this.subtitulo = const Value.absent(),
+    this.tipoEntidade = const Value.absent(),
+    this.entidadeId = const Value.absent(),
+    this.ocorridoEm = const Value.absent(),
+  });
+  RegistrosAtividadeCompanion.insert({
+    this.id = const Value.absent(),
+    required String tipo,
+    required String titulo,
+    this.subtitulo = const Value.absent(),
+    this.tipoEntidade = const Value.absent(),
+    this.entidadeId = const Value.absent(),
+    required DateTime ocorridoEm,
+  }) : tipo = Value(tipo),
+       titulo = Value(titulo),
+       ocorridoEm = Value(ocorridoEm);
+  static Insertable<AtividadeBanco> custom({
+    Expression<int>? id,
+    Expression<String>? tipo,
+    Expression<String>? titulo,
+    Expression<String>? subtitulo,
+    Expression<String>? tipoEntidade,
+    Expression<int>? entidadeId,
+    Expression<DateTime>? ocorridoEm,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tipo != null) 'tipo': tipo,
+      if (titulo != null) 'titulo': titulo,
+      if (subtitulo != null) 'subtitulo': subtitulo,
+      if (tipoEntidade != null) 'tipo_entidade': tipoEntidade,
+      if (entidadeId != null) 'entidade_id': entidadeId,
+      if (ocorridoEm != null) 'ocorrido_em': ocorridoEm,
+    });
+  }
+
+  RegistrosAtividadeCompanion copyWith({
+    Value<int>? id,
+    Value<String>? tipo,
+    Value<String>? titulo,
+    Value<String>? subtitulo,
+    Value<String?>? tipoEntidade,
+    Value<int?>? entidadeId,
+    Value<DateTime>? ocorridoEm,
+  }) {
+    return RegistrosAtividadeCompanion(
+      id: id ?? this.id,
+      tipo: tipo ?? this.tipo,
+      titulo: titulo ?? this.titulo,
+      subtitulo: subtitulo ?? this.subtitulo,
+      tipoEntidade: tipoEntidade ?? this.tipoEntidade,
+      entidadeId: entidadeId ?? this.entidadeId,
+      ocorridoEm: ocorridoEm ?? this.ocorridoEm,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (tipo.present) {
+      map['tipo'] = Variable<String>(tipo.value);
+    }
+    if (titulo.present) {
+      map['titulo'] = Variable<String>(titulo.value);
+    }
+    if (subtitulo.present) {
+      map['subtitulo'] = Variable<String>(subtitulo.value);
+    }
+    if (tipoEntidade.present) {
+      map['tipo_entidade'] = Variable<String>(tipoEntidade.value);
+    }
+    if (entidadeId.present) {
+      map['entidade_id'] = Variable<int>(entidadeId.value);
+    }
+    if (ocorridoEm.present) {
+      map['ocorrido_em'] = Variable<DateTime>(ocorridoEm.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RegistrosAtividadeCompanion(')
+          ..write('id: $id, ')
+          ..write('tipo: $tipo, ')
+          ..write('titulo: $titulo, ')
+          ..write('subtitulo: $subtitulo, ')
+          ..write('tipoEntidade: $tipoEntidade, ')
+          ..write('entidadeId: $entidadeId, ')
+          ..write('ocorridoEm: $ocorridoEm')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$BancoDendro extends GeneratedDatabase {
   _$BancoDendro(QueryExecutor e) : super(e);
   $BancoDendroManager get managers => $BancoDendroManager(this);
@@ -6840,10 +7671,14 @@ abstract class _$BancoDendro extends GeneratedDatabase {
   late final $LevantamentosTable levantamentos = $LevantamentosTable(this);
   late final $TalhaoLevantamentosTable talhaoLevantamentos =
       $TalhaoLevantamentosTable(this);
+  late final $CoeficientesTalhaoLevantamentoTable
+  coeficientesTalhaoLevantamento = $CoeficientesTalhaoLevantamentoTable(this);
   late final $ParcelasTable parcelas = $ParcelasTable(this);
   late final $PontosGeograficosParcelaTable pontosGeograficosParcela =
       $PontosGeograficosParcelaTable(this);
   late final $ArvoresTable arvores = $ArvoresTable(this);
+  late final $RegistrosAtividadeTable registrosAtividade =
+      $RegistrosAtividadeTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6859,9 +7694,11 @@ abstract class _$BancoDendro extends GeneratedDatabase {
     talhoes,
     levantamentos,
     talhaoLevantamentos,
+    coeficientesTalhaoLevantamento,
     parcelas,
     pontosGeograficosParcela,
     arvores,
+    registrosAtividade,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -6938,6 +7775,18 @@ abstract class _$BancoDendro extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('talhao_levantamentos', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'talhao_levantamentos',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate(
+          'coeficientes_talhao_levantamento',
+          kind: UpdateKind.delete,
+        ),
+      ],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -11671,6 +12520,36 @@ final class $$TalhaoLevantamentosTableReferences
     );
   }
 
+  static MultiTypedResultKey<
+    $CoeficientesTalhaoLevantamentoTable,
+    List<CoeficienteTalhaoLevantamento>
+  >
+  _coeficientesTalhaoLevantamentoRefsTable(
+    _$BancoDendro db,
+  ) => MultiTypedResultKey.fromTable(
+    db.coeficientesTalhaoLevantamento,
+    aliasName:
+        'talhao_levantamentos__id__coeficientes_talhao_levantamento__talhao_levantamento_id',
+  );
+
+  $$CoeficientesTalhaoLevantamentoTableProcessedTableManager
+  get coeficientesTalhaoLevantamentoRefs {
+    final manager =
+        $$CoeficientesTalhaoLevantamentoTableTableManager(
+          $_db,
+          $_db.coeficientesTalhaoLevantamento,
+        ).filter(
+          (f) => f.talhaoLevantamentoId.id.sqlEquals($_itemColumn<int>('id')!),
+        );
+
+    final cache = $_typedResult.readTableOrNull(
+      _coeficientesTalhaoLevantamentoRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$ParcelasTable, List<Parcela>> _parcelasRefsTable(
     _$BancoDendro db,
   ) => MultiTypedResultKey.fromTable(
@@ -11809,6 +12688,35 @@ class $$TalhaoLevantamentosTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> coeficientesTalhaoLevantamentoRefs(
+    Expression<bool> Function(
+      $$CoeficientesTalhaoLevantamentoTableFilterComposer f,
+    )
+    f,
+  ) {
+    final $$CoeficientesTalhaoLevantamentoTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.coeficientesTalhaoLevantamento,
+          getReferencedColumn: (t) => t.talhaoLevantamentoId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CoeficientesTalhaoLevantamentoTableFilterComposer(
+                $db: $db,
+                $table: $db.coeficientesTalhaoLevantamento,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
   }
 
   Expression<bool> parcelasRefs(
@@ -12077,6 +12985,35 @@ class $$TalhaoLevantamentosTableAnnotationComposer
     return composer;
   }
 
+  Expression<T> coeficientesTalhaoLevantamentoRefs<T extends Object>(
+    Expression<T> Function(
+      $$CoeficientesTalhaoLevantamentoTableAnnotationComposer a,
+    )
+    f,
+  ) {
+    final $$CoeficientesTalhaoLevantamentoTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.coeficientesTalhaoLevantamento,
+          getReferencedColumn: (t) => t.talhaoLevantamentoId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CoeficientesTalhaoLevantamentoTableAnnotationComposer(
+                $db: $db,
+                $table: $db.coeficientesTalhaoLevantamento,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> parcelasRefs<T extends Object>(
     Expression<T> Function($$ParcelasTableAnnotationComposer a) f,
   ) {
@@ -12121,6 +13058,7 @@ class $$TalhaoLevantamentosTableTableManager
             bool talhaoId,
             bool especieId,
             bool modeloMatematicoId,
+            bool coeficientesTalhaoLevantamentoRefs,
             bool parcelasRefs,
           })
         > {
@@ -12199,11 +13137,16 @@ class $$TalhaoLevantamentosTableTableManager
                 talhaoId = false,
                 especieId = false,
                 modeloMatematicoId = false,
+                coeficientesTalhaoLevantamentoRefs = false,
                 parcelasRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
-                  explicitlyWatchedTables: [if (parcelasRefs) db.parcelas],
+                  explicitlyWatchedTables: [
+                    if (coeficientesTalhaoLevantamentoRefs)
+                      db.coeficientesTalhaoLevantamento,
+                    if (parcelasRefs) db.parcelas,
+                  ],
                   addJoins:
                       <
                         T extends TableManagerState<
@@ -12285,6 +13228,27 @@ class $$TalhaoLevantamentosTableTableManager
                       },
                   getPrefetchedDataCallback: (items) async {
                     return [
+                      if (coeficientesTalhaoLevantamentoRefs)
+                        await $_getPrefetchedData<
+                          TalhaoLevantamento,
+                          $TalhaoLevantamentosTable,
+                          CoeficienteTalhaoLevantamento
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TalhaoLevantamentosTableReferences
+                              ._coeficientesTalhaoLevantamentoRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TalhaoLevantamentosTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).coeficientesTalhaoLevantamentoRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.talhaoLevantamentoId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (parcelasRefs)
                         await $_getPrefetchedData<
                           TalhaoLevantamento,
@@ -12331,8 +13295,358 @@ typedef $$TalhaoLevantamentosTableProcessedTableManager =
         bool talhaoId,
         bool especieId,
         bool modeloMatematicoId,
+        bool coeficientesTalhaoLevantamentoRefs,
         bool parcelasRefs,
       })
+    >;
+typedef $$CoeficientesTalhaoLevantamentoTableCreateCompanionBuilder =
+    CoeficientesTalhaoLevantamentoCompanion Function({
+      Value<int> id,
+      required int talhaoLevantamentoId,
+      required String simbolo,
+      required String rotulo,
+      Value<double?> valor,
+    });
+typedef $$CoeficientesTalhaoLevantamentoTableUpdateCompanionBuilder =
+    CoeficientesTalhaoLevantamentoCompanion Function({
+      Value<int> id,
+      Value<int> talhaoLevantamentoId,
+      Value<String> simbolo,
+      Value<String> rotulo,
+      Value<double?> valor,
+    });
+
+final class $$CoeficientesTalhaoLevantamentoTableReferences
+    extends
+        BaseReferences<
+          _$BancoDendro,
+          $CoeficientesTalhaoLevantamentoTable,
+          CoeficienteTalhaoLevantamento
+        > {
+  $$CoeficientesTalhaoLevantamentoTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TalhaoLevantamentosTable _talhaoLevantamentoIdTable(
+    _$BancoDendro db,
+  ) => db.talhaoLevantamentos.createAlias(
+    'coeficientes_talhao_levantamento__talhao_levantamento_id__talhao_levantamentos__id',
+  );
+
+  $$TalhaoLevantamentosTableProcessedTableManager get talhaoLevantamentoId {
+    final $_column = $_itemColumn<int>('talhao_levantamento_id')!;
+
+    final manager = $$TalhaoLevantamentosTableTableManager(
+      $_db,
+      $_db.talhaoLevantamentos,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(
+      _talhaoLevantamentoIdTable($_db),
+    );
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$CoeficientesTalhaoLevantamentoTableFilterComposer
+    extends Composer<_$BancoDendro, $CoeficientesTalhaoLevantamentoTable> {
+  $$CoeficientesTalhaoLevantamentoTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get simbolo => $composableBuilder(
+    column: $table.simbolo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rotulo => $composableBuilder(
+    column: $table.rotulo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get valor => $composableBuilder(
+    column: $table.valor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TalhaoLevantamentosTableFilterComposer get talhaoLevantamentoId {
+    final $$TalhaoLevantamentosTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.talhaoLevantamentoId,
+      referencedTable: $db.talhaoLevantamentos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TalhaoLevantamentosTableFilterComposer(
+            $db: $db,
+            $table: $db.talhaoLevantamentos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CoeficientesTalhaoLevantamentoTableOrderingComposer
+    extends Composer<_$BancoDendro, $CoeficientesTalhaoLevantamentoTable> {
+  $$CoeficientesTalhaoLevantamentoTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get simbolo => $composableBuilder(
+    column: $table.simbolo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rotulo => $composableBuilder(
+    column: $table.rotulo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get valor => $composableBuilder(
+    column: $table.valor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TalhaoLevantamentosTableOrderingComposer get talhaoLevantamentoId {
+    final $$TalhaoLevantamentosTableOrderingComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.talhaoLevantamentoId,
+          referencedTable: $db.talhaoLevantamentos,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$TalhaoLevantamentosTableOrderingComposer(
+                $db: $db,
+                $table: $db.talhaoLevantamentos,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$CoeficientesTalhaoLevantamentoTableAnnotationComposer
+    extends Composer<_$BancoDendro, $CoeficientesTalhaoLevantamentoTable> {
+  $$CoeficientesTalhaoLevantamentoTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get simbolo =>
+      $composableBuilder(column: $table.simbolo, builder: (column) => column);
+
+  GeneratedColumn<String> get rotulo =>
+      $composableBuilder(column: $table.rotulo, builder: (column) => column);
+
+  GeneratedColumn<double> get valor =>
+      $composableBuilder(column: $table.valor, builder: (column) => column);
+
+  $$TalhaoLevantamentosTableAnnotationComposer get talhaoLevantamentoId {
+    final $$TalhaoLevantamentosTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.talhaoLevantamentoId,
+          referencedTable: $db.talhaoLevantamentos,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$TalhaoLevantamentosTableAnnotationComposer(
+                $db: $db,
+                $table: $db.talhaoLevantamentos,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$CoeficientesTalhaoLevantamentoTableTableManager
+    extends
+        RootTableManager<
+          _$BancoDendro,
+          $CoeficientesTalhaoLevantamentoTable,
+          CoeficienteTalhaoLevantamento,
+          $$CoeficientesTalhaoLevantamentoTableFilterComposer,
+          $$CoeficientesTalhaoLevantamentoTableOrderingComposer,
+          $$CoeficientesTalhaoLevantamentoTableAnnotationComposer,
+          $$CoeficientesTalhaoLevantamentoTableCreateCompanionBuilder,
+          $$CoeficientesTalhaoLevantamentoTableUpdateCompanionBuilder,
+          (
+            CoeficienteTalhaoLevantamento,
+            $$CoeficientesTalhaoLevantamentoTableReferences,
+          ),
+          CoeficienteTalhaoLevantamento,
+          PrefetchHooks Function({bool talhaoLevantamentoId})
+        > {
+  $$CoeficientesTalhaoLevantamentoTableTableManager(
+    _$BancoDendro db,
+    $CoeficientesTalhaoLevantamentoTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CoeficientesTalhaoLevantamentoTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$CoeficientesTalhaoLevantamentoTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CoeficientesTalhaoLevantamentoTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> talhaoLevantamentoId = const Value.absent(),
+                Value<String> simbolo = const Value.absent(),
+                Value<String> rotulo = const Value.absent(),
+                Value<double?> valor = const Value.absent(),
+              }) => CoeficientesTalhaoLevantamentoCompanion(
+                id: id,
+                talhaoLevantamentoId: talhaoLevantamentoId,
+                simbolo: simbolo,
+                rotulo: rotulo,
+                valor: valor,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int talhaoLevantamentoId,
+                required String simbolo,
+                required String rotulo,
+                Value<double?> valor = const Value.absent(),
+              }) => CoeficientesTalhaoLevantamentoCompanion.insert(
+                id: id,
+                talhaoLevantamentoId: talhaoLevantamentoId,
+                simbolo: simbolo,
+                rotulo: rotulo,
+                valor: valor,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $CoeficientesTalhaoLevantamentoTable,
+                    CoeficienteTalhaoLevantamento
+                  >(table),
+                  $$CoeficientesTalhaoLevantamentoTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({talhaoLevantamentoId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (talhaoLevantamentoId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.talhaoLevantamentoId,
+                                referencedTable:
+                                    $$CoeficientesTalhaoLevantamentoTableReferences
+                                        ._talhaoLevantamentoIdTable(db),
+                                referencedColumn:
+                                    $$CoeficientesTalhaoLevantamentoTableReferences
+                                        ._talhaoLevantamentoIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CoeficientesTalhaoLevantamentoTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BancoDendro,
+      $CoeficientesTalhaoLevantamentoTable,
+      CoeficienteTalhaoLevantamento,
+      $$CoeficientesTalhaoLevantamentoTableFilterComposer,
+      $$CoeficientesTalhaoLevantamentoTableOrderingComposer,
+      $$CoeficientesTalhaoLevantamentoTableAnnotationComposer,
+      $$CoeficientesTalhaoLevantamentoTableCreateCompanionBuilder,
+      $$CoeficientesTalhaoLevantamentoTableUpdateCompanionBuilder,
+      (
+        CoeficienteTalhaoLevantamento,
+        $$CoeficientesTalhaoLevantamentoTableReferences,
+      ),
+      CoeficienteTalhaoLevantamento,
+      PrefetchHooks Function({bool talhaoLevantamentoId})
     >;
 typedef $$ParcelasTableCreateCompanionBuilder =
     ParcelasCompanion Function({
@@ -13822,6 +15136,262 @@ typedef $$ArvoresTableProcessedTableManager =
       Arvore,
       PrefetchHooks Function({bool parcelaId})
     >;
+typedef $$RegistrosAtividadeTableCreateCompanionBuilder =
+    RegistrosAtividadeCompanion Function({
+      Value<int> id,
+      required String tipo,
+      required String titulo,
+      Value<String> subtitulo,
+      Value<String?> tipoEntidade,
+      Value<int?> entidadeId,
+      required DateTime ocorridoEm,
+    });
+typedef $$RegistrosAtividadeTableUpdateCompanionBuilder =
+    RegistrosAtividadeCompanion Function({
+      Value<int> id,
+      Value<String> tipo,
+      Value<String> titulo,
+      Value<String> subtitulo,
+      Value<String?> tipoEntidade,
+      Value<int?> entidadeId,
+      Value<DateTime> ocorridoEm,
+    });
+
+class $$RegistrosAtividadeTableFilterComposer
+    extends Composer<_$BancoDendro, $RegistrosAtividadeTable> {
+  $$RegistrosAtividadeTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tipo => $composableBuilder(
+    column: $table.tipo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get titulo => $composableBuilder(
+    column: $table.titulo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subtitulo => $composableBuilder(
+    column: $table.subtitulo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tipoEntidade => $composableBuilder(
+    column: $table.tipoEntidade,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get entidadeId => $composableBuilder(
+    column: $table.entidadeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get ocorridoEm => $composableBuilder(
+    column: $table.ocorridoEm,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RegistrosAtividadeTableOrderingComposer
+    extends Composer<_$BancoDendro, $RegistrosAtividadeTable> {
+  $$RegistrosAtividadeTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tipo => $composableBuilder(
+    column: $table.tipo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get titulo => $composableBuilder(
+    column: $table.titulo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subtitulo => $composableBuilder(
+    column: $table.subtitulo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tipoEntidade => $composableBuilder(
+    column: $table.tipoEntidade,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get entidadeId => $composableBuilder(
+    column: $table.entidadeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get ocorridoEm => $composableBuilder(
+    column: $table.ocorridoEm,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RegistrosAtividadeTableAnnotationComposer
+    extends Composer<_$BancoDendro, $RegistrosAtividadeTable> {
+  $$RegistrosAtividadeTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get tipo =>
+      $composableBuilder(column: $table.tipo, builder: (column) => column);
+
+  GeneratedColumn<String> get titulo =>
+      $composableBuilder(column: $table.titulo, builder: (column) => column);
+
+  GeneratedColumn<String> get subtitulo =>
+      $composableBuilder(column: $table.subtitulo, builder: (column) => column);
+
+  GeneratedColumn<String> get tipoEntidade => $composableBuilder(
+    column: $table.tipoEntidade,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get entidadeId => $composableBuilder(
+    column: $table.entidadeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get ocorridoEm => $composableBuilder(
+    column: $table.ocorridoEm,
+    builder: (column) => column,
+  );
+}
+
+class $$RegistrosAtividadeTableTableManager
+    extends
+        RootTableManager<
+          _$BancoDendro,
+          $RegistrosAtividadeTable,
+          AtividadeBanco,
+          $$RegistrosAtividadeTableFilterComposer,
+          $$RegistrosAtividadeTableOrderingComposer,
+          $$RegistrosAtividadeTableAnnotationComposer,
+          $$RegistrosAtividadeTableCreateCompanionBuilder,
+          $$RegistrosAtividadeTableUpdateCompanionBuilder,
+          (
+            AtividadeBanco,
+            BaseReferences<
+              _$BancoDendro,
+              $RegistrosAtividadeTable,
+              AtividadeBanco
+            >,
+          ),
+          AtividadeBanco,
+          PrefetchHooks Function()
+        > {
+  $$RegistrosAtividadeTableTableManager(
+    _$BancoDendro db,
+    $RegistrosAtividadeTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RegistrosAtividadeTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RegistrosAtividadeTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RegistrosAtividadeTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> tipo = const Value.absent(),
+                Value<String> titulo = const Value.absent(),
+                Value<String> subtitulo = const Value.absent(),
+                Value<String?> tipoEntidade = const Value.absent(),
+                Value<int?> entidadeId = const Value.absent(),
+                Value<DateTime> ocorridoEm = const Value.absent(),
+              }) => RegistrosAtividadeCompanion(
+                id: id,
+                tipo: tipo,
+                titulo: titulo,
+                subtitulo: subtitulo,
+                tipoEntidade: tipoEntidade,
+                entidadeId: entidadeId,
+                ocorridoEm: ocorridoEm,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String tipo,
+                required String titulo,
+                Value<String> subtitulo = const Value.absent(),
+                Value<String?> tipoEntidade = const Value.absent(),
+                Value<int?> entidadeId = const Value.absent(),
+                required DateTime ocorridoEm,
+              }) => RegistrosAtividadeCompanion.insert(
+                id: id,
+                tipo: tipo,
+                titulo: titulo,
+                subtitulo: subtitulo,
+                tipoEntidade: tipoEntidade,
+                entidadeId: entidadeId,
+                ocorridoEm: ocorridoEm,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$RegistrosAtividadeTable, AtividadeBanco>(table),
+                  BaseReferences<
+                    _$BancoDendro,
+                    $RegistrosAtividadeTable,
+                    AtividadeBanco
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RegistrosAtividadeTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BancoDendro,
+      $RegistrosAtividadeTable,
+      AtividadeBanco,
+      $$RegistrosAtividadeTableFilterComposer,
+      $$RegistrosAtividadeTableOrderingComposer,
+      $$RegistrosAtividadeTableAnnotationComposer,
+      $$RegistrosAtividadeTableCreateCompanionBuilder,
+      $$RegistrosAtividadeTableUpdateCompanionBuilder,
+      (
+        AtividadeBanco,
+        BaseReferences<_$BancoDendro, $RegistrosAtividadeTable, AtividadeBanco>,
+      ),
+      AtividadeBanco,
+      PrefetchHooks Function()
+    >;
 
 class $BancoDendroManager {
   final _$BancoDendro _db;
@@ -13849,6 +15419,12 @@ class $BancoDendroManager {
       $$LevantamentosTableTableManager(_db, _db.levantamentos);
   $$TalhaoLevantamentosTableTableManager get talhaoLevantamentos =>
       $$TalhaoLevantamentosTableTableManager(_db, _db.talhaoLevantamentos);
+  $$CoeficientesTalhaoLevantamentoTableTableManager
+  get coeficientesTalhaoLevantamento =>
+      $$CoeficientesTalhaoLevantamentoTableTableManager(
+        _db,
+        _db.coeficientesTalhaoLevantamento,
+      );
   $$ParcelasTableTableManager get parcelas =>
       $$ParcelasTableTableManager(_db, _db.parcelas);
   $$PontosGeograficosParcelaTableTableManager get pontosGeograficosParcela =>
@@ -13858,4 +15434,6 @@ class $BancoDendroManager {
       );
   $$ArvoresTableTableManager get arvores =>
       $$ArvoresTableTableManager(_db, _db.arvores);
+  $$RegistrosAtividadeTableTableManager get registrosAtividade =>
+      $$RegistrosAtividadeTableTableManager(_db, _db.registrosAtividade);
 }

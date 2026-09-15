@@ -236,7 +236,7 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
       }
 
       if (permissao == LocationPermission.deniedForever) {
-        _mostrarAviso('Libere a localização nas configurações do Android.');
+        _mostrarAviso('Libere a localização nas configurações do dispositivo.');
         return;
       }
 

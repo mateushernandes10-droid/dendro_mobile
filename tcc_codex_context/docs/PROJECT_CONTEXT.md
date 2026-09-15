@@ -1,6 +1,6 @@
 # Contexto atual — DENDRO Mobile
 
-Revisão em 14/09/2026. Esta documentação retrata a versão v11 com IDs inteiros e a migração solicitada pelo usuário.
+Revisão em 14/09/2026. Esta documentação retrata a versão final do aplicativo e seu banco de dados.
 
 ## Tema e objetivo
 
@@ -41,10 +41,10 @@ Exportações: PDF, CSV e XLSX com resultados, CSV/XLSX brutos e KML. Há difere
 - ARCHITECTURE.md: componentes efetivamente existentes.
 - ENGINEERING_MODELS.md: diagramas revisados e modelo do banco.
 - IMPLEMENTATION_NOTES.md: evidências, escopo e verificações.
-- DECISIONS.md: histórico de decisões; D-045 estabelece IDs inteiros e a migração para v11; D-044 registra a tradução anterior.
+- DECISIONS.md: justificativas das principais decisões de projeto.
 
 A validação científica, a comparação manual de inventário completo, os testes com usuários e a escrita final do artigo permanecem trabalhos acadêmicos pendentes. Um APK gerado e testes automatizados aprovados não substituem essas etapas.
 
-## Identificadores — schema v11
+## Identificadores
 
-As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a PK composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional: os padrões conservam seus códigos estáveis; cadastros personalizados não precisam gerar códigos nem UUID. As regras de escolha de modelos usam codigo, sem alterar expressões ou coeficientes. registros_atividade usa entidade_id inteiro opcional, sem FK polimórfica; referencia_legada conserva apenas referências antigas sem entidade correspondente. São 15 tabelas e 115 colunas.
+As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. São 15 tabelas e 114 colunas.

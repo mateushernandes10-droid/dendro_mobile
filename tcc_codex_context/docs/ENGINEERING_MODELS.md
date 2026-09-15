@@ -1,6 +1,6 @@
 # Modelos de engenharia da versão implementada
 
-Revisão em 14/09/2026, versão v11 com IDs inteiros. Substitui os diagramas conceituais anteriores. Fontes editáveis estão em diagrams/. Os diagramas representam código e persistência atuais; não certificam validação científica ou ensaios com usuários.
+Revisão em 14/09/2026. Fontes editáveis estão em diagrams/. Os diagramas representam código e persistência atuais; não certificam validação científica ou ensaios com usuários.
 
 ## 1. Atores e funções
 
@@ -65,7 +65,7 @@ flowchart TB
     RP["Provedores Riverpod<br/>estado e acesso aos repositórios"]
     REPO["Repositórios por funcionalidade<br/>persistência, orquestração e agregações"]
     CALC["CalculadoraVolumeFlorestal<br/>equações por árvore e conversões"]
-    DB["BancoDendro / Drift<br/>migrações e SQL explícito"]
+    DB["BancoDendro / Drift<br/>15 tabelas declaradas"]
     SQL[("SQLite local — 15 tabelas")]
     GEO["Geolocator<br/>permissão e posição do dispositivo"]
     EXPORT["RepositorioExportacaoDados<br/>PDF, CSV, XLSX e KML"]
@@ -169,7 +169,6 @@ classDiagram
     class RegistroAtividade {
         int id
         int entidadeId
-        String referenciaLegada
     }
     class PainelResultados
     class RepositorioResultados {
@@ -191,7 +190,7 @@ São nomes reais de registros gerados pelo Drift e de classes de cálculo/result
 
 ```mermaid
 erDiagram
-    %% Schema v11: PKs e FKs inteiras; cardinalidades preservadas.
+    %% Chaves primárias e estrangeiras inteiras.
     propriedades ||--o{ talhoes : possui
     propriedades ||--o{ levantamentos : possui
     especies ||--o{ talhoes : classifica
@@ -222,7 +221,7 @@ registros_atividade é independente: tipo_entidade/entidade_id são referências
 
 ## 5. Modelo físico completo — 15 tabelas
 
-Fonte: classes Table e comandos CREATE TABLE em banco_dendro.dart, schemaVersion 11. IDs inteiros autoincrementados; FKs inteiras, números reais, booleanos armazenados como inteiros, enums como texto e datas no armazenamento inteiro padrão do Drift. “nullable” identifica campo opcional.
+Fonte: classes Table e comandos CREATE TABLE em banco_dendro.dart. IDs inteiros autoincrementados; FKs inteiras, números reais, booleanos armazenados como inteiros, enums como texto e datas no armazenamento inteiro padrão do Drift. “nullable” identifica campo opcional.
 
 ```mermaid
 erDiagram
@@ -385,7 +384,6 @@ erDiagram
         text subtitulo
         text tipo_entidade "nullable"
         integer entidade_id "nullable"
-        text referencia_legada "nullable"
         integer ocorrido_em
     }
 ```
@@ -407,7 +405,7 @@ erDiagram
 
 As FKs declaram CASCADE, exceto talhoes.especie_id e talhao_levantamentos.especie_id/modelo_matematico_id, que declaram RESTRICT. Essa descrição é do esquema; repositórios também executam exclusões explícitas. Não afirmar que constraints sozinhas cobrem toda regra de interface.
 
-coeficientes_talhao_levantamento e registros_atividade são criadas por SQL nas rotinas de criação/migração, além das 13 tabelas de @DriftDatabase. ResultadoInventario, Medicoes e VolumeModel não são tabelas adicionais. DAP/altura ficam em arvores; o catálogo volumétrico fica em modelos_matematicos.
+As 15 tabelas são declaradas em banco_dendro.dart e registradas em @DriftDatabase. ResultadoInventario, Medicoes e VolumeModel não são tabelas adicionais. DAP/altura ficam em arvores; o catálogo volumétrico fica em modelos_matematicos.
 
 ## 6. Fluxo operacional
 
@@ -490,8 +488,8 @@ A visão de relacionamentos é mais legível no corpo do artigo; o modelo com to
 
 Para descrever resultados, observar as limitações em BUSINESS_RULES.md: fórmulas genéricas não interpretadas, valores padrão, ausência de estimativa econômica, escopos históricos distintos e validação acadêmica pendente.
 
-No diagrama de classes, codigo de Especie/ModeloMatematico e entidadeId/referenciaLegada de RegistroAtividade são opcionais. A nulabilidade física está detalhada no diagrama completo. EspecieModelo conserva PK composta; RegistroAtividade não tem FK para uma entidade única.
+No diagrama de classes, codigo de Especie/ModeloMatematico e entidadeId de RegistroAtividade são opcionais. A nulabilidade física está detalhada no diagrama completo. EspecieModelo conserva chave primária composta; RegistroAtividade não tem chave estrangeira para uma entidade única.
 
-## Identificadores — schema v11
+## Identificadores
 
-As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a PK composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional: os padrões conservam seus códigos estáveis; cadastros personalizados não precisam gerar códigos nem UUID. As regras de escolha de modelos usam codigo, sem alterar expressões ou coeficientes. registros_atividade usa entidade_id inteiro opcional, sem FK polimórfica; referencia_legada conserva apenas referências antigas sem entidade correspondente. São 15 tabelas e 115 colunas.
+As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional para identificar itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional, sem chave estrangeira, porque representa diferentes tipos de entidade. São 15 tabelas e 114 colunas.

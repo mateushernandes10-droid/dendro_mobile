@@ -5,7 +5,7 @@ import 'package:dendro_mobile/nucleo/banco/banco_dendro.dart';
 
 void main() {
   test(
-    'diagrama completo representa tabelas campos tipos e nulabilidade v11',
+    'diagrama completo representa tabelas campos tipos e nulabilidade',
     () async {
       final banco = BancoDendro(NativeDatabase.memory());
       try {
@@ -52,7 +52,7 @@ void main() {
             total++;
           }
         }
-        expect(total, 115);
+        expect(total, 114);
         final documento = File(
           'tcc_codex_context/docs/ENGINEERING_MODELS.md',
         ).readAsStringSync().replaceAll('\r', '');

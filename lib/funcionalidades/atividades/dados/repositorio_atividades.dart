@@ -74,7 +74,6 @@ class RegistroAtividade {
     required this.ocorridoEm,
     this.tipoEntidade,
     this.entidadeId,
-    this.referenciaLegada,
   });
 
   final int id;
@@ -84,7 +83,6 @@ class RegistroAtividade {
   final DateTime ocorridoEm;
   final TipoEntidadeAtividade? tipoEntidade;
   final int? entidadeId;
-  final String? referenciaLegada;
 }
 
 class RepositorioAtividades {
@@ -103,7 +101,7 @@ class RepositorioAtividades {
     final linhas = await _bancoDados
         .customSelect(
           '''
-SELECT id, tipo, titulo, subtitulo, tipo_entidade, entidade_id, referencia_legada, ocorrido_em
+SELECT id, tipo, titulo, subtitulo, tipo_entidade, entidade_id, ocorrido_em
 FROM registros_atividade
 ORDER BY ocorrido_em DESC
 LIMIT ?
@@ -167,7 +165,6 @@ VALUES (?, ?, ?, ?, ?, ?)
         linha.readNullable<String>('tipo_entidade'),
       ),
       entidadeId: linha.readNullable<int>('entidade_id'),
-      referenciaLegada: linha.readNullable<String>('referencia_legada'),
       ocorridoEm: DateTime.fromMillisecondsSinceEpoch(
         linha.read<int>('ocorrido_em'),
       ),

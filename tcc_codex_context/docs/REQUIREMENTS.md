@@ -1,6 +1,6 @@
 # Requisitos e atendimento na versão atual
 
-Revisão em 14/09/2026, versão v11 com IDs inteiros. Os identificadores originais foram preservados para rastreabilidade. “Implementado” indica existência no código, não validação científica ou aprovação por usuários.
+Revisão em 14/09/2026. “Implementado” indica existência no código, não validação científica ou aprovação por usuários.
 
 ## Requisitos funcionais
 
@@ -19,7 +19,7 @@ Revisão em 14/09/2026, versão v11 com IDs inteiros. Os identificadores origina
 | RF-011 | Estimar valor econômico bruto | Não implementado: objetivo original do TCC, sem fluxo de preço da madeira ou cálculo monetário no código atual. Não incluir como caso de uso entregue. |
 | RF-012 | Corrigir dados coletados | Implementado: edição de cadastros e medições. Datas e atividades apoiam organização; não constituem auditoria completa de versões. |
 | RF-013 | Operar offline | Implementado para os fluxos locais de coleta, consulta e cálculo; não há backend. |
-| RF-014 | Persistir localmente | Implementado com SQLite/Drift, esquema v11. |
+| RF-014 | Persistir localmente | Implementado com SQLite/Drift. |
 | RF-015 | Exibir progresso da coleta | Implementado: parcelas pendentes, em andamento e coletadas; contagens e retomada. |
 | RF-016 | Exportar | Implementado: PDF, CSV, XLSX, CSV bruto, XLSX bruto e KML; KMZ e XLS binário não implementados. |
 | RF-017 | Gerenciar levantamentos | Implementado: planejamento, início/retomada, conclusão, edição do contexto de talhões e exclusão. Coletas ativas da mesma propriedade são reunidas; pode haver atividade simultânea em propriedades distintas. |
@@ -42,7 +42,7 @@ Ambos preservam as medições originais sem estimativa de altura ou volume. Expo
 |---|---|
 | RNF-001 — Mobile | Flutter com alvo inicial Android; houve build de APK e preparação de emulador de tablet. Validação formal em múltiplos dispositivos não realizada. |
 | RNF-002 — Offline | Dados e processamento essenciais locais. |
-| RNF-003 — Persistência | SQLite/Drift com migrações até v11; estrutura física em português e preservação dos dados legados. |
+| RNF-003 — Persistência | SQLite/Drift com estrutura física em português, chaves inteiras e relacionamentos por chaves estrangeiras. |
 | RNF-004 — Usabilidade | Interface pt-BR para coleta sequencial; avaliação com usuários ainda pendente. |
 | RNF-005 — Confiabilidade matemática | Testes automatizados de casos conhecidos existem; comparação independente de inventário completo ainda pendente. |
 | RNF-006 — Entradas | Formulários validam campos e valores numéricos; não há validação agronômica universal ou garantia sobre qualquer expressão cadastrada. |
@@ -60,6 +60,6 @@ O método de referência é amostragem sistemática com parcelas de área fixa, 
 
 A decisão de encerrar alterações no aplicativo não transforma requisitos não atendidos em implementados: eles são limitações da versão final de desenvolvimento.
 
-## Identificadores — schema v11
+## Identificadores
 
-As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a PK composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional: os padrões conservam seus códigos estáveis; cadastros personalizados não precisam gerar códigos nem UUID. As regras de escolha de modelos usam codigo, sem alterar expressões ou coeficientes. registros_atividade usa entidade_id inteiro opcional, sem FK polimórfica; referencia_legada conserva apenas referências antigas sem entidade correspondente. São 15 tabelas e 115 colunas.
+As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. São 15 tabelas e 114 colunas.
