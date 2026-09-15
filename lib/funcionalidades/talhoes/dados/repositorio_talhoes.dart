@@ -9,28 +9,26 @@ final provedorRepositorioTalhoes = Provider<RepositorioTalhoes>((ref) {
   return RepositorioTalhoes(ref.watch(provedorBancoDendro));
 });
 
-final provedorAtivoEspecie = StreamProvider.autoDispose<List<Especie>>((ref) {
-  return ref.watch(provedorRepositorioTalhoes).observarAtivoEspecie();
+final provedorEspeciesAtivas = StreamProvider.autoDispose<List<Especie>>((ref) {
+  return ref.watch(provedorRepositorioTalhoes).observarEspeciesAtivas();
 });
 
-final provedorPropriedadeTalhoes = StreamProvider.autoDispose
+final provedorTalhoesDaPropriedade = StreamProvider.autoDispose
     .family<List<TalhaoResumo>, int>((ref, propriedadeId) {
       return ref
           .watch(provedorRepositorioTalhoes)
           .observarPorPropriedade(propriedadeId);
     });
 
-final provedorLevantamentoIniciarOpcoes =
-    StreamProvider.autoDispose<List<LevantamentoIniciarPropriedadeOpcao>>((
-      ref,
-    ) {
+final provedorOpcoesNovoLevantamento =
+    StreamProvider.autoDispose<List<OpcaoPropriedadeNovoLevantamento>>((ref) {
       return ref
           .watch(provedorRepositorioTalhoes)
           .observarLevantamentoIniciarOpcoes();
     });
 
-class LevantamentoIniciarPropriedadeOpcao {
-  const LevantamentoIniciarPropriedadeOpcao({
+class OpcaoPropriedadeNovoLevantamento {
+  const OpcaoPropriedadeNovoLevantamento({
     required this.propriedade,
     required this.talhoes,
   });
@@ -38,8 +36,8 @@ class LevantamentoIniciarPropriedadeOpcao {
   final Propriedade propriedade;
   final List<TalhaoResumo> talhoes;
 
-  LevantamentoIniciarPropriedadeOpcao copyWith({List<TalhaoResumo>? talhoes}) {
-    return LevantamentoIniciarPropriedadeOpcao(
+  OpcaoPropriedadeNovoLevantamento copyWith({List<TalhaoResumo>? talhoes}) {
+    return OpcaoPropriedadeNovoLevantamento(
       propriedade: propriedade,
       talhoes: talhoes ?? this.talhoes,
     );
@@ -80,19 +78,19 @@ class _TalhaoResumoAcumulador {
   }
 }
 
-class _LevantamentoIniciarPropriedadeAcumulador {
-  _LevantamentoIniciarPropriedadeAcumulador(this.propriedade);
+class _AcumuladorPropriedadeNovoLevantamento {
+  _AcumuladorPropriedadeNovoLevantamento(this.propriedade);
 
   final Propriedade propriedade;
   final Map<int, _TalhaoResumoAcumulador> talhoesPorId = {};
 
-  LevantamentoIniciarPropriedadeOpcao paraOpcao() {
+  OpcaoPropriedadeNovoLevantamento paraOpcao() {
     final talhoes =
         talhoesPorId.values.map((resumo) => resumo.paraResumo()).toList()..sort(
           (a, b) => a.talhao.identificacao.compareTo(b.talhao.identificacao),
         );
 
-    return LevantamentoIniciarPropriedadeOpcao(
+    return OpcaoPropriedadeNovoLevantamento(
       propriedade: propriedade,
       talhoes: talhoes,
     );
@@ -107,7 +105,7 @@ class RepositorioTalhoes {
     _bancoDados,
   );
 
-  Stream<List<Especie>> observarAtivoEspecie() {
+  Stream<List<Especie>> observarEspeciesAtivas() {
     return (_bancoDados.select(_bancoDados.especies)
           ..where((tabela) => tabela.ativo.equals(true))
           ..orderBy([(tabela) => OrderingTerm.asc(tabela.nome)]))
@@ -168,7 +166,7 @@ class RepositorioTalhoes {
     });
   }
 
-  Stream<List<LevantamentoIniciarPropriedadeOpcao>>
+  Stream<List<OpcaoPropriedadeNovoLevantamento>>
   observarLevantamentoIniciarOpcoes() {
     final consulta =
         _bancoDados.select(_bancoDados.propriedades).join([
@@ -200,14 +198,13 @@ class RepositorioTalhoes {
         ]);
 
     return consulta.watch().map((linhas) {
-      final propriedadesPorId =
-          <int, _LevantamentoIniciarPropriedadeAcumulador>{};
+      final propriedadesPorId = <int, _AcumuladorPropriedadeNovoLevantamento>{};
 
       for (final linha in linhas) {
         final propriedade = linha.readTable(_bancoDados.propriedades);
         final propriedadeResumo = propriedadesPorId.putIfAbsent(
           propriedade.id,
-          () => _LevantamentoIniciarPropriedadeAcumulador(propriedade),
+          () => _AcumuladorPropriedadeNovoLevantamento(propriedade),
         );
 
         final talhao = linha.readTableOrNull(_bancoDados.talhoes);
@@ -372,14 +369,14 @@ class RepositorioTalhoes {
     return TalhaoResumo(
       talhao: talhao,
       especie: linha.readTable(_bancoDados.especies),
-      talhaoLevantamentoQuantidade: await _quantidadeTalhaoLevantamentos(
+      talhaoLevantamentoQuantidade: await _quantidadeLevantamentosDoTalhao(
         talhao.id,
       ),
-      possuiAtivoLevantamento: await _possuiAtivoLevantamento(talhao.id),
+      possuiAtivoLevantamento: await _possuiLevantamentoAtivo(talhao.id),
     );
   }
 
-  Future<int> _quantidadeTalhaoLevantamentos(int talhaoId) async {
+  Future<int> _quantidadeLevantamentosDoTalhao(int talhaoId) async {
     final quantidade = _bancoDados.talhaoLevantamentos.id.count();
 
     final linha =
@@ -393,7 +390,7 @@ class RepositorioTalhoes {
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<bool> _possuiAtivoLevantamento(int talhaoId) async {
+  Future<bool> _possuiLevantamentoAtivo(int talhaoId) async {
     final consulta =
         _bancoDados.select(_bancoDados.talhaoLevantamentos).join([
             innerJoin(

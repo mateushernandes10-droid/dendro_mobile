@@ -114,10 +114,10 @@ class _DendroEstruturaEstado extends ConsumerState<EstruturaDendro> {
     Set<int>? talhaoIds,
     int? especieId,
   }) {
-    ref.read(provedorResultadosPropriedadeFiltro.notifier).state =
+    ref.read(provedorFiltroPropriedadeResultados.notifier).state =
         propriedadeId;
-    ref.read(provedorResultadosTalhaoFiltro.notifier).state = {...?talhaoIds};
-    ref.read(provedorResultadosEspecieFiltro.notifier).state = especieId;
+    ref.read(provedorFiltroTalhoesResultados.notifier).state = {...?talhaoIds};
+    ref.read(provedorFiltroEspecieResultados.notifier).state = especieId;
 
     final resultadosNavegador =
         _navegadorKeys[_resultadosAbaIndex].currentState;

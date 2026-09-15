@@ -9,13 +9,13 @@ import '../../../../compartilhado/componentes/componentes_dendro.dart';
 import '../../../ajustes/dados/repositorio_ajustes.dart';
 import '../../dados/selecao_modelo_levantamento.dart';
 
-Future<LevantamentoModeloMatematicoSelecao?>
+Future<SelecaoModeloLevantamento?>
 mostrarLevantamentoModeloMatematicoSelecaoPainel({
   required BuildContext context,
   required int especieId,
-  LevantamentoModeloMatematicoSelecao? inicialSelecao,
+  SelecaoModeloLevantamento? inicialSelecao,
 }) {
-  return showModalBottomSheet<LevantamentoModeloMatematicoSelecao>(
+  return showModalBottomSheet<SelecaoModeloLevantamento>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
@@ -35,7 +35,7 @@ class _LevantamentoModeloMatematicoSelecaoPainel
   });
 
   final int especieId;
-  final LevantamentoModeloMatematicoSelecao? inicialSelecao;
+  final SelecaoModeloLevantamento? inicialSelecao;
 
   @override
   ConsumerState<_LevantamentoModeloMatematicoSelecaoPainel> createState() =>
@@ -61,9 +61,9 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
     final modelosMatematicosAsync = ref.watch(
       provedorAjustesModelosMatematicos,
     );
-    final vinculosAsync = ref.watch(provedorAjustesEspecieModelosMatematicos);
+    final vinculosAsync = ref.watch(provedorVinculosEspecieModelo);
     final especieCoeficientesAsync = ref.watch(
-      provedorAjustesEspecieModeloMatematicoCoeficientes,
+      provedorCoeficientesModeloPorEspecie,
     );
     final inferiorRecuo = MediaQuery.viewInsetsOf(context).bottom;
 
@@ -89,10 +89,8 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
               child: _ModeloMatematicoSelecaoErro(
                 aoTentarNovamente: () {
-                  ref.invalidate(provedorAjustesEspecieModelosMatematicos);
-                  ref.invalidate(
-                    provedorAjustesEspecieModeloMatematicoCoeficientes,
-                  );
+                  ref.invalidate(provedorVinculosEspecieModelo);
+                  ref.invalidate(provedorCoeficientesModeloPorEspecie);
                 },
               ),
             );
@@ -123,7 +121,7 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
           final selecionadoModeloMatematico = _selecionadoModeloMatematico(
             disponivelModelosMatematicos,
           );
-          _prepararCoeficienteControllers(
+          _prepararControladoresCoeficientes(
             selecionadoModeloMatematico,
             especieCoeficientes,
           );
@@ -284,7 +282,7 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
     return null;
   }
 
-  void _prepararCoeficienteControllers(
+  void _prepararControladoresCoeficientes(
     ModeloMatematicoResumo? selecionadoModeloMatematico,
     List<CoeficienteEspecieModelo> especieCoeficientes,
   ) {
@@ -359,7 +357,7 @@ class _LevantamentoModeloMatematicoSelecaoPainelEstado
     }
 
     Navigator.of(context).pop(
-      LevantamentoModeloMatematicoSelecao(
+      SelecaoModeloLevantamento(
         modeloMatematicoId: selecionadoModeloMatematico.modeloMatematico.id,
         modeloMatematicoNome: selecionadoModeloMatematico.modeloMatematico.nome,
         coeficienteValoresPorSimbolo: values,
@@ -420,7 +418,7 @@ class _ModeloMatematicoEscolhaBloco extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SituacaoIndicador(
+                        const IndicadorSituacao(
                           rotulo: 'Vinculado',
                           cor: Colors.white,
                         ),

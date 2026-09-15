@@ -12,25 +12,25 @@ final provedorRepositorioParcelas = Provider<RepositorioParcelas>((ref) {
 });
 
 final provedorParcelasTalhao = StreamProvider.autoDispose
-    .family<TalhaoParcelasEstado, int>((ref, talhaoId) {
+    .family<EstadoParcelasTalhao, int>((ref, talhaoId) {
       final repositorio = ref.watch(provedorRepositorioParcelas);
       return repositorio.observarParcelasTalhao(talhaoId);
     });
 
 final provedorParcelasTalhaoLevantamento = StreamProvider.autoDispose
-    .family<TalhaoParcelasEstado, int>((ref, talhaoLevantamentoId) {
+    .family<EstadoParcelasTalhao, int>((ref, talhaoLevantamentoId) {
       final repositorio = ref.watch(provedorRepositorioParcelas);
       return repositorio.observarParcelasTalhaoLevantamento(
         talhaoLevantamentoId,
       );
     });
 
-class TalhaoParcelasEstado {
-  const TalhaoParcelasEstado({
+class EstadoParcelasTalhao {
+  const EstadoParcelasTalhao({
     required this.talhao,
     required this.especie,
     required this.parcelas,
-    required this.proximoParcelaIdentificacao,
+    required this.proximaIdentificacaoParcela,
     this.ativoTalhaoLevantamento,
     this.atualTalhaoLevantamento,
     this.atualLevantamento,
@@ -39,7 +39,7 @@ class TalhaoParcelasEstado {
   final Talhao talhao;
   final Especie especie;
   final List<ParcelaResumo> parcelas;
-  final String proximoParcelaIdentificacao;
+  final String proximaIdentificacaoParcela;
   final TalhaoLevantamento? ativoTalhaoLevantamento;
   final TalhaoLevantamento? atualTalhaoLevantamento;
   final Levantamento? atualLevantamento;
@@ -106,8 +106,8 @@ class _ContextoTalhaoLevantamento {
   final Especie especie;
 }
 
-class AtivoLevantamentoParaTalhaoExcecao implements Exception {
-  const AtivoLevantamentoParaTalhaoExcecao(this.existente);
+class ExcecaoLevantamentoAtivoNoTalhao implements Exception {
+  const ExcecaoLevantamentoAtivoNoTalhao(this.existente);
 
   final TalhaoLevantamento existente;
 }
@@ -120,7 +120,7 @@ class RepositorioParcelas {
     _bancoDados,
   );
 
-  Stream<TalhaoParcelasEstado> observarParcelasTalhao(int talhaoId) async* {
+  Stream<EstadoParcelasTalhao> observarParcelasTalhao(int talhaoId) async* {
     final context = await _lerContextoTalhao(talhaoId);
 
     final consulta =
@@ -158,20 +158,21 @@ class RepositorioParcelas {
             talhaoLevantamento: talhaoLevantamento,
             levantamento: linha.readTable(_bancoDados.levantamentos),
             arvoreQuantidade: await _quantidadeArvores(parcela.id),
-            geograficoPontoQuantidade: await _quantidadeGeograficoPontos(
+            geograficoPontoQuantidade: await _quantidadePontosGeograficos(
               parcela.id,
             ),
-            primeiroGeograficoPonto: await _primeiroGeograficoPonto(parcela.id),
+            primeiroGeograficoPonto: await _primeiroPontoGeografico(parcela.id),
           ),
         );
       }
 
-      return TalhaoParcelasEstado(
+      return EstadoParcelasTalhao(
         talhao: context.talhao,
         especie: context.especie,
         parcelas: resumos,
-        proximoParcelaIdentificacao:
-            await _proximoParcelaIdentificacaoParaTalhao(talhaoId),
+        proximaIdentificacaoParcela: await _proximaIdentificacaoParcelaDoTalhao(
+          talhaoId,
+        ),
         ativoTalhaoLevantamento: await _buscarTalhaoLevantamentoPorSituacao(
           talhaoId,
           SituacaoLevantamento.emAndamento,
@@ -180,7 +181,7 @@ class RepositorioParcelas {
     });
   }
 
-  Stream<TalhaoParcelasEstado> observarParcelasTalhaoLevantamento(
+  Stream<EstadoParcelasTalhao> observarParcelasTalhaoLevantamento(
     int talhaoLevantamentoId,
   ) async* {
     final context = await _lerContextoTalhaoLevantamento(talhaoLevantamentoId);
@@ -220,20 +221,21 @@ class RepositorioParcelas {
             ),
             levantamento: linha.readTable(_bancoDados.levantamentos),
             arvoreQuantidade: await _quantidadeArvores(parcela.id),
-            geograficoPontoQuantidade: await _quantidadeGeograficoPontos(
+            geograficoPontoQuantidade: await _quantidadePontosGeograficos(
               parcela.id,
             ),
-            primeiroGeograficoPonto: await _primeiroGeograficoPonto(parcela.id),
+            primeiroGeograficoPonto: await _primeiroPontoGeografico(parcela.id),
           ),
         );
       }
 
-      return TalhaoParcelasEstado(
+      return EstadoParcelasTalhao(
         talhao: context.talhao,
         especie: context.especie,
         parcelas: resumos,
-        proximoParcelaIdentificacao:
-            await _proximoParcelaIdentificacaoParaTalhao(context.talhao.id),
+        proximaIdentificacaoParcela: await _proximaIdentificacaoParcelaDoTalhao(
+          context.talhao.id,
+        ),
         ativoTalhaoLevantamento: await _buscarTalhaoLevantamentoPorSituacao(
           context.talhao.id,
           SituacaoLevantamento.emAndamento,
@@ -244,7 +246,7 @@ class RepositorioParcelas {
     });
   }
 
-  Future<int> criarPlanejadoParcela({
+  Future<int> criarParcelaPlanejada({
     required int talhaoId,
     double? areaHa,
   }) async {
@@ -269,14 +271,14 @@ class RepositorioParcelas {
 
   Future<TalhaoLevantamento> iniciarNovoLevantamentoParaTalhao(
     int talhaoId, {
-    LevantamentoModeloMatematicoSelecao? modeloMatematicoSelecao,
+    SelecaoModeloLevantamento? modeloMatematicoSelecao,
   }) async {
     final ativo = await _buscarTalhaoLevantamentoPorSituacao(
       talhaoId,
       SituacaoLevantamento.emAndamento,
     );
     if (ativo != null) {
-      throw AtivoLevantamentoParaTalhaoExcecao(ativo);
+      throw ExcecaoLevantamentoAtivoNoTalhao(ativo);
     }
 
     final context = await _lerContextoTalhao(talhaoId);
@@ -297,19 +299,19 @@ class RepositorioParcelas {
           levantamentoId: reutilizavelAtivoLevantamento.id,
         );
         if (modeloMatematicoSelecao != null) {
-          await _aplicarModeloMatematicoSelecao(
+          await _aplicarSelecaoModeloMatematico(
             talhaoLevantamentoId: movido.id,
             modeloMatematicoSelecao: modeloMatematicoSelecao,
           );
           final atualizado = await _talhaoLevantamentoPorId(movido.id);
-          await _registroLevantamentoIniciar(
+          await _registrarInicioLevantamento(
             context: context,
             levantamentoId: atualizado.levantamentoId,
             criadoLevantamento: false,
           );
           return atualizado;
         }
-        await _registroLevantamentoIniciar(
+        await _registrarInicioLevantamento(
           context: context,
           levantamentoId: movido.levantamentoId,
           criadoLevantamento: false,
@@ -319,13 +321,13 @@ class RepositorioParcelas {
 
       await _promoverLevantamento(planejamento.levantamentoId);
       if (modeloMatematicoSelecao != null) {
-        await _aplicarModeloMatematicoSelecao(
+        await _aplicarSelecaoModeloMatematico(
           talhaoLevantamentoId: planejamento.id,
           modeloMatematicoSelecao: modeloMatematicoSelecao,
         );
       }
       final promovido = await _talhaoLevantamentoPorId(planejamento.id);
-      await _registroLevantamentoIniciar(
+      await _registrarInicioLevantamento(
         context: context,
         levantamentoId: promovido.levantamentoId,
         criadoLevantamento: true,
@@ -348,7 +350,7 @@ class RepositorioParcelas {
       modeloMatematicoSelecao: modeloMatematicoSelecao,
     );
 
-    await _registroLevantamentoIniciar(
+    await _registrarInicioLevantamento(
       context: context,
       levantamentoId: talhaoLevantamento.levantamentoId,
       criadoLevantamento: criadoLevantamento,
@@ -357,7 +359,7 @@ class RepositorioParcelas {
     return talhaoLevantamento;
   }
 
-  Future<void> atualizarParcelaArea({required int id, double? areaHa}) async {
+  Future<void> atualizarAreaParcela({required int id, double? areaHa}) async {
     final parcela = await (_bancoDados.select(
       _bancoDados.parcelas,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();
@@ -372,7 +374,7 @@ class RepositorioParcelas {
       )..where((tabela) => tabela.id.equals(id))).write(
         ParcelasCompanion(areaHa: Value(areaHa), atualizadoEm: Value(agora)),
       );
-      await atualizarDeParcela(id);
+      await atualizarLevantamentoDaParcela(id);
 
       if (parcela == null || context == null) return;
       await _registroAtividade.registrar(
@@ -421,7 +423,7 @@ class RepositorioParcelas {
         .get();
   }
 
-  Future<List<PontoGeograficoParcela>> geograficoPontosParaParcela(
+  Future<List<PontoGeograficoParcela>> pontosGeograficosDaParcela(
     int parcelaId,
   ) {
     return (_bancoDados.select(_bancoDados.pontosGeograficosParcela)
@@ -430,14 +432,14 @@ class RepositorioParcelas {
         .get();
   }
 
-  Future<String> proximoParcelaIdentificacao(int talhaoLevantamentoId) async {
+  Future<String> proximaIdentificacaoParcela(int talhaoLevantamentoId) async {
     final talhaoLevantamento = await _talhaoLevantamentoPorId(
       talhaoLevantamentoId,
     );
-    return _proximoParcelaIdentificacaoParaTalhao(talhaoLevantamento.talhaoId);
+    return _proximaIdentificacaoParcelaDoTalhao(talhaoLevantamento.talhaoId);
   }
 
-  Future<String> _proximoParcelaIdentificacaoParaTalhao(int talhaoId) async {
+  Future<String> _proximaIdentificacaoParcelaDoTalhao(int talhaoId) async {
     final existente = await (_bancoDados.select(_bancoDados.parcelas).join([
       innerJoin(
         _bancoDados.talhaoLevantamentos,
@@ -463,7 +465,7 @@ class RepositorioParcelas {
     return 'P${(maximoNumero + 1).toString().padLeft(2, '0')}';
   }
 
-  Future<void> atualizarDeParcela(int parcelaId) async {
+  Future<void> atualizarLevantamentoDaParcela(int parcelaId) async {
     final parcela = await (_bancoDados.select(
       _bancoDados.parcelas,
     )..where((tabela) => tabela.id.equals(parcelaId))).getSingleOrNull();
@@ -494,7 +496,7 @@ class RepositorioParcelas {
   }) async {
     late final int id;
     final agora = DateTime.now();
-    final identificacao = await proximoParcelaIdentificacao(
+    final identificacao = await proximaIdentificacaoParcela(
       talhaoLevantamentoId,
     );
     final context = await _lerContextoTalhaoLevantamento(talhaoLevantamentoId);
@@ -679,13 +681,13 @@ class RepositorioParcelas {
     required Talhao talhao,
     required Especie especie,
     required int levantamentoId,
-    LevantamentoModeloMatematicoSelecao? modeloMatematicoSelecao,
+    SelecaoModeloLevantamento? modeloMatematicoSelecao,
   }) async {
     late final int id;
     final agora = DateTime.now();
     final modeloMatematicoId =
         modeloMatematicoSelecao?.modeloMatematicoId ??
-        await _padraoModeloMatematicoId(especie.id);
+        await _obterIdModeloPadrao(especie.id);
 
     id = await _bancoDados
         .into(_bancoDados.talhaoLevantamentos)
@@ -700,7 +702,7 @@ class RepositorioParcelas {
           ),
         );
 
-    await _substituirTalhaoModeloMatematicoCoeficientes(
+    await _substituirCoeficientesModeloDoTalhao(
       talhaoLevantamentoId: id,
       especieId: especie.id,
       modeloMatematicoId: modeloMatematicoId,
@@ -711,9 +713,9 @@ class RepositorioParcelas {
     return _talhaoLevantamentoPorId(id);
   }
 
-  Future<void> _aplicarModeloMatematicoSelecao({
+  Future<void> _aplicarSelecaoModeloMatematico({
     required int talhaoLevantamentoId,
-    required LevantamentoModeloMatematicoSelecao modeloMatematicoSelecao,
+    required SelecaoModeloLevantamento modeloMatematicoSelecao,
   }) async {
     final agora = DateTime.now();
     final talhaoLevantamento = await _talhaoLevantamentoPorId(
@@ -729,7 +731,7 @@ class RepositorioParcelas {
       ),
     );
 
-    await _substituirTalhaoModeloMatematicoCoeficientes(
+    await _substituirCoeficientesModeloDoTalhao(
       talhaoLevantamentoId: talhaoLevantamentoId,
       especieId: talhaoLevantamento.especieId,
       modeloMatematicoId: modeloMatematicoSelecao.modeloMatematicoId,
@@ -742,7 +744,7 @@ class RepositorioParcelas {
     );
   }
 
-  Future<void> _substituirTalhaoModeloMatematicoCoeficientes({
+  Future<void> _substituirCoeficientesModeloDoTalhao({
     required int talhaoLevantamentoId,
     required int especieId,
     required int modeloMatematicoId,
@@ -761,7 +763,7 @@ class RepositorioParcelas {
               )
               ..orderBy([(tabela) => OrderingTerm.asc(tabela.simbolo)]))
             .get();
-    final especieValores = await _especieModeloMatematicoCoeficienteValores(
+    final especieValores = await _valoresCoeficientesModeloDaEspecie(
       especieId: especieId,
       modeloMatematicoId: modeloMatematicoId,
     );
@@ -791,7 +793,7 @@ VALUES (?, ?, ?, ?)
     }
   }
 
-  Future<Map<String, double?>> _especieModeloMatematicoCoeficienteValores({
+  Future<Map<String, double?>> _valoresCoeficientesModeloDaEspecie({
     required int especieId,
     required int modeloMatematicoId,
   }) async {
@@ -829,7 +831,7 @@ VALUES (?, ?, ?, ?)
     );
 
     await _atualizarLevantamento(levantamentoId, agora: agora);
-    await _excluirLevantamentoIfVazio(anteriorLevantamentoId);
+    await _excluirLevantamentoSeVazio(anteriorLevantamentoId);
 
     return _talhaoLevantamentoPorId(talhaoLevantamento.id);
   }
@@ -856,7 +858,7 @@ VALUES (?, ?, ?, ?)
     );
   }
 
-  Future<void> _excluirLevantamentoIfVazio(int levantamentoId) async {
+  Future<void> _excluirLevantamentoSeVazio(int levantamentoId) async {
     final quantidade = _bancoDados.talhaoLevantamentos.id.count();
     final linha =
         await (_bancoDados.selectOnly(_bancoDados.talhaoLevantamentos)
@@ -896,7 +898,7 @@ VALUES (?, ?, ?, ?)
     return (linha.read(quantidade) ?? 0) > 0;
   }
 
-  Future<int> _padraoModeloMatematicoId(int especieId) async {
+  Future<int> _obterIdModeloPadrao(int especieId) async {
     final modelosMatematicos = await (_bancoDados.select(
       _bancoDados.especiesModelos,
     )..where((tabela) => tabela.especieId.equals(especieId))).get();
@@ -931,7 +933,7 @@ VALUES (?, ?, ?, ?)
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<int> _quantidadeGeograficoPontos(int parcelaId) async {
+  Future<int> _quantidadePontosGeograficos(int parcelaId) async {
     final quantidade = _bancoDados.pontosGeograficosParcela.id.count();
 
     final linha =
@@ -947,7 +949,7 @@ VALUES (?, ?, ?, ?)
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<PontoGeograficoParcela?> _primeiroGeograficoPonto(int parcelaId) {
+  Future<PontoGeograficoParcela?> _primeiroPontoGeografico(int parcelaId) {
     return (_bancoDados.select(_bancoDados.pontosGeograficosParcela)
           ..where((tabela) => tabela.parcelaId.equals(parcelaId))
           ..orderBy([(tabela) => OrderingTerm.asc(tabela.ordemPonto)])
@@ -955,7 +957,7 @@ VALUES (?, ?, ?, ?)
         .getSingleOrNull();
   }
 
-  Future<void> _registroLevantamentoIniciar({
+  Future<void> _registrarInicioLevantamento({
     required _ContextoTalhao context,
     required int levantamentoId,
     required bool criadoLevantamento,

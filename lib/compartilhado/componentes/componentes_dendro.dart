@@ -142,19 +142,19 @@ class MarcaDendro extends StatelessWidget {
   }
 }
 
-class ParcelaDimensoesEntrada extends StatelessWidget {
-  const ParcelaDimensoesEntrada({
+class EntradaDimensoesParcela extends StatelessWidget {
+  const EntradaDimensoesParcela({
     required this.larguraControlador,
     required this.comprimentoControlador,
-    this.larguraValidator,
-    this.comprimentoValidator,
+    this.validadorLargura,
+    this.validadorComprimento,
     super.key,
   });
 
   final TextEditingController larguraControlador;
   final TextEditingController comprimentoControlador;
-  final String? Function(String?)? larguraValidator;
-  final String? Function(String?)? comprimentoValidator;
+  final String? Function(String?)? validadorLargura;
+  final String? Function(String?)? validadorComprimento;
 
   @override
   Widget build(BuildContext context) {
@@ -192,7 +192,7 @@ class ParcelaDimensoesEntrada extends StatelessWidget {
                 vertical: 12,
               ),
             ),
-            validator: larguraValidator,
+            validator: validadorLargura,
           ),
         ),
         Padding(
@@ -220,7 +220,7 @@ class ParcelaDimensoesEntrada extends StatelessWidget {
                 vertical: 12,
               ),
             ),
-            validator: comprimentoValidator,
+            validator: validadorComprimento,
           ),
         ),
         Padding(
@@ -370,8 +370,8 @@ class CartaoDendro extends StatelessWidget {
   }
 }
 
-class SecaoTitulo extends StatelessWidget {
-  const SecaoTitulo({required this.titulo, this.complemento, super.key});
+class TituloSecao extends StatelessWidget {
+  const TituloSecao({required this.titulo, this.complemento, super.key});
 
   final String titulo;
   final Widget? complemento;
@@ -400,8 +400,8 @@ class SecaoTitulo extends StatelessWidget {
   }
 }
 
-class SituacaoIndicador extends StatelessWidget {
-  const SituacaoIndicador({
+class IndicadorSituacao extends StatelessWidget {
+  const IndicadorSituacao({
     required this.rotulo,
     this.cor = CoresDendro.principalSuave,
     this.textoCor = CoresDendro.principal,
@@ -449,8 +449,8 @@ class SituacaoIndicador extends StatelessWidget {
   }
 }
 
-class IndicadorBloco extends StatelessWidget {
-  const IndicadorBloco({
+class BlocoIndicador extends StatelessWidget {
+  const BlocoIndicador({
     required this.rotulo,
     required this.valor,
     required this.icone,

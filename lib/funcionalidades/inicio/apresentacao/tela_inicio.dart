@@ -45,7 +45,7 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
 
   @override
   Widget build(BuildContext context) {
-    final ativoLevantamentos = ref.watch(provedorAtivoLevantamentos);
+    final ativoLevantamentos = ref.watch(provedorLevantamentosAtivos);
     final selecionadoColeta = _selecionadoColeta(
       _ativoColetaItens(ativoLevantamentos.asData?.value ?? []),
     );
@@ -66,7 +66,7 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
         ativoLevantamentos.when(
           data: (resumos) {
             final coletas = _ativoColetaItens(resumos);
-            return _AtivoColetasPaginador(
+            return _PaginadorColetasAtivas(
               controlador: _ativoLevantamentoControlador,
               coletas: coletas,
               selecionadoIndex: _selecionadoAtivoLevantamentoIndex,
@@ -75,17 +75,18 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
               aoContinuar: (coleta) => _abrirAtivoColeta(context, coleta),
             );
           },
-          loading: () => const _AtivoColetaCarregandoCartao(),
-          error: (erro, pilhaTrace) => _AtivoColetaErroCartao(
-            aoTentarNovamente: () => ref.invalidate(provedorAtivoLevantamentos),
+          loading: () => const _CartaoCarregamentoColetasAtivas(),
+          error: (erro, pilhaTrace) => _CartaoErroColetasAtivas(
+            aoTentarNovamente: () =>
+                ref.invalidate(provedorLevantamentosAtivos),
           ),
         ),
         const SizedBox(height: 20),
-        const SecaoTitulo(titulo: 'Resumo do levantamento'),
+        const TituloSecao(titulo: 'Resumo do levantamento'),
         Row(
           children: [
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Árvores medidas',
                 valor: (selecionadoLevantamentoResumo?.arvoreQuantidade ?? 0)
                     .toString(),
@@ -94,7 +95,7 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Área medida',
                 valor: _formatoArea(
                   selecionadoLevantamentoResumo?.medidaAreaHa ?? 0,
@@ -105,7 +106,7 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
           ],
         ),
         const SizedBox(height: 20),
-        SecaoTitulo(
+        TituloSecao(
           titulo: 'Atividades recentes',
           complemento: TextButton(
             onPressed: () => Navigator.of(context).push(
@@ -185,7 +186,7 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
     );
   }
 
-  void _abrirAtivoColeta(BuildContext context, _AtivoColetaItem coleta) {
+  void _abrirAtivoColeta(BuildContext context, _ItemColetaAtiva coleta) {
     final talhaoResumo = coleta.talhaoResumo;
     if (talhaoResumo == null) {
       _abrirLevantamento(context, coleta.levantamentoResumo.levantamento.id);
@@ -204,7 +205,7 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
     );
   }
 
-  _AtivoColetaItem? _selecionadoColeta(List<_AtivoColetaItem> coletas) {
+  _ItemColetaAtiva? _selecionadoColeta(List<_ItemColetaAtiva> coletas) {
     if (coletas.isEmpty) return null;
     if (_selecionadoAtivoLevantamentoIndex >= coletas.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -220,8 +221,8 @@ class _InicioTelaEstado extends ConsumerState<TelaInicio> {
   }
 }
 
-class _AtivoColetaItem {
-  const _AtivoColetaItem({
+class _ItemColetaAtiva {
+  const _ItemColetaAtiva({
     required this.levantamentoResumo,
     required this.talhaoResumo,
   });
@@ -230,22 +231,22 @@ class _AtivoColetaItem {
   final LevantamentoTalhaoResumo? talhaoResumo;
 }
 
-List<_AtivoColetaItem> _ativoColetaItens(List<LevantamentoResumo> resumos) {
+List<_ItemColetaAtiva> _ativoColetaItens(List<LevantamentoResumo> resumos) {
   return [
     for (final resumo in resumos)
       if (resumo.talhoes.isEmpty)
-        _AtivoColetaItem(levantamentoResumo: resumo, talhaoResumo: null)
+        _ItemColetaAtiva(levantamentoResumo: resumo, talhaoResumo: null)
       else
         for (final talhaoResumo in resumo.talhoes)
-          _AtivoColetaItem(
+          _ItemColetaAtiva(
             levantamentoResumo: resumo,
             talhaoResumo: talhaoResumo,
           ),
   ];
 }
 
-class _AtivoColetasPaginador extends StatelessWidget {
-  const _AtivoColetasPaginador({
+class _PaginadorColetasAtivas extends StatelessWidget {
+  const _PaginadorColetasAtivas({
     required this.controlador,
     required this.coletas,
     required this.selecionadoIndex,
@@ -254,15 +255,15 @@ class _AtivoColetasPaginador extends StatelessWidget {
   });
 
   final PageController controlador;
-  final List<_AtivoColetaItem> coletas;
+  final List<_ItemColetaAtiva> coletas;
   final int selecionadoIndex;
   final ValueChanged<int> aoPaginaAlterado;
-  final ValueChanged<_AtivoColetaItem> aoContinuar;
+  final ValueChanged<_ItemColetaAtiva> aoContinuar;
 
   @override
   Widget build(BuildContext context) {
     if (coletas.isEmpty) {
-      return const _AtivoColetaCartao(coleta: null, aoContinuar: null);
+      return const _CartaoColetaAtiva(coleta: null, aoContinuar: null);
     }
 
     final seguroIndex = selecionadoIndex >= coletas.length
@@ -282,7 +283,7 @@ class _AtivoColetasPaginador extends StatelessWidget {
             onPageChanged: aoPaginaAlterado,
             itemBuilder: (context, indice) {
               final coleta = coletas[indice];
-              return _AtivoColetaCartao(
+              return _CartaoColetaAtiva(
                 coleta: coleta,
                 aoContinuar: () => aoContinuar(coleta),
               );
@@ -290,7 +291,7 @@ class _AtivoColetasPaginador extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        _AtivoColetaPontos(
+        _IndicadorPaginasColetasAtivas(
           quantidade: coletas.length,
           selecionadoIndex: seguroIndex,
         ),
@@ -299,8 +300,8 @@ class _AtivoColetasPaginador extends StatelessWidget {
   }
 }
 
-class _AtivoColetaPontos extends StatelessWidget {
-  const _AtivoColetaPontos({
+class _IndicadorPaginasColetasAtivas extends StatelessWidget {
+  const _IndicadorPaginasColetasAtivas({
     required this.quantidade,
     required this.selecionadoIndex,
   });
@@ -334,10 +335,10 @@ class _AtivoColetaPontos extends StatelessWidget {
   }
 }
 
-class _AtivoColetaCartao extends StatelessWidget {
-  const _AtivoColetaCartao({required this.coleta, required this.aoContinuar});
+class _CartaoColetaAtiva extends StatelessWidget {
+  const _CartaoColetaAtiva({required this.coleta, required this.aoContinuar});
 
-  final _AtivoColetaItem? coleta;
+  final _ItemColetaAtiva? coleta;
   final VoidCallback? aoContinuar;
 
   @override
@@ -350,7 +351,7 @@ class _AtivoColetaCartao extends StatelessWidget {
         filho: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SituacaoIndicador(rotulo: 'Sem coleta aberta'),
+            IndicadorSituacao(rotulo: 'Sem coleta aberta'),
             SizedBox(height: 12),
             Text(
               'Nenhum levantamento em andamento',
@@ -397,7 +398,7 @@ class _AtivoColetaCartao extends StatelessWidget {
         children: [
           const Row(
             children: [
-              SituacaoIndicador(rotulo: 'Em andamento'),
+              IndicadorSituacao(rotulo: 'Em andamento'),
               Spacer(),
               Icon(Icons.play_arrow_rounded, color: CoresDendro.principal),
             ],
@@ -426,13 +427,13 @@ class _AtivoColetaCartao extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _EmLinhaIndicador(
+                child: _IndicadorEmLinha(
                   rotulo: 'Árvores medidas',
                   valor: arvoreQuantidade.toString(),
                 ),
               ),
               Expanded(
-                child: _EmLinhaIndicador(
+                child: _IndicadorEmLinha(
                   rotulo: 'Área medida',
                   valor: _formatoArea(medidaAreaHa),
                 ),
@@ -462,8 +463,8 @@ class _AtivoColetaCartao extends StatelessWidget {
   }
 }
 
-class _AtivoColetaCarregandoCartao extends StatelessWidget {
-  const _AtivoColetaCarregandoCartao();
+class _CartaoCarregamentoColetasAtivas extends StatelessWidget {
+  const _CartaoCarregamentoColetasAtivas();
 
   @override
   Widget build(BuildContext context) {
@@ -474,8 +475,8 @@ class _AtivoColetaCarregandoCartao extends StatelessWidget {
   }
 }
 
-class _AtivoColetaErroCartao extends StatelessWidget {
-  const _AtivoColetaErroCartao({required this.aoTentarNovamente});
+class _CartaoErroColetasAtivas extends StatelessWidget {
+  const _CartaoErroColetasAtivas({required this.aoTentarNovamente});
 
   final VoidCallback aoTentarNovamente;
 
@@ -518,13 +519,12 @@ class _NovoLevantamentoPainelEstado
   int? _talhaoId;
   int? _pendenteCriadoTalhaoId;
   String? _iniciarErroMensagem;
-  final Map<int, LevantamentoModeloMatematicoSelecao>
-  _selecoesModeloPorTalhaoId = {};
+  final Map<int, SelecaoModeloLevantamento> _selecoesModeloPorTalhaoId = {};
   bool _salvando = false;
 
   @override
   Widget build(BuildContext context) {
-    final propriedades = ref.watch(provedorPropriedadeResumos);
+    final propriedades = ref.watch(provedorResumosPropriedades);
     final inferiorRecuo = MediaQuery.viewInsetsOf(context).bottom;
 
     return Padding(
@@ -588,7 +588,7 @@ class _NovoLevantamentoPainelEstado
             titulo: 'Não foi possível carregar',
             mensagem: 'Tente novamente para selecionar propriedade e talhão.',
             acao: OutlinedButton.icon(
-              onPressed: () => ref.invalidate(provedorPropriedadeResumos),
+              onPressed: () => ref.invalidate(provedorResumosPropriedades),
               icon: const Icon(Icons.refresh),
               label: const Text('Tentar novamente'),
             ),
@@ -599,7 +599,7 @@ class _NovoLevantamentoPainelEstado
   }
 
   Widget _talhaoSeletor({required int propriedadeId}) {
-    final talhoes = ref.watch(provedorPropriedadeTalhoes(propriedadeId));
+    final talhoes = ref.watch(provedorTalhoesDaPropriedade(propriedadeId));
 
     return talhoes.when(
       data: (itens) {
@@ -702,7 +702,7 @@ class _NovoLevantamentoPainelEstado
         mensagem: 'Tente novamente para escolher o talhão do levantamento.',
         acao: OutlinedButton.icon(
           onPressed: () =>
-              ref.invalidate(provedorPropriedadeTalhoes(propriedadeId)),
+              ref.invalidate(provedorTalhoesDaPropriedade(propriedadeId)),
           icon: const Icon(Icons.refresh),
           label: const Text('Tentar novamente'),
         ),
@@ -725,15 +725,15 @@ class _NovoLevantamentoPainelEstado
             modeloMatematicoSelecao: _selecoesModeloPorTalhaoId[talhaoId],
           );
 
-      ref.invalidate(provedorAtivoLevantamentos);
-      ref.invalidate(provedorAtivoLevantamento);
+      ref.invalidate(provedorLevantamentosAtivos);
+      ref.invalidate(provedorLevantamentoAtivo);
       ref.invalidate(provedorParcelasTalhao(talhaoId));
 
       if (!mounted) return;
       Navigator.of(context).pop(talhaoLevantamento.levantamentoId);
-    } on AtivoLevantamentoParaTalhaoExcecao {
-      ref.invalidate(provedorAtivoLevantamentos);
-      ref.invalidate(provedorAtivoLevantamento);
+    } on ExcecaoLevantamentoAtivoNoTalhao {
+      ref.invalidate(provedorLevantamentosAtivos);
+      ref.invalidate(provedorLevantamentoAtivo);
 
       if (!mounted) return;
       setState(() {
@@ -766,13 +766,13 @@ class _NovoLevantamentoPainelEstado
   }
 
   Future<void> _abrirNovoTalhaoPainel(int propriedadeId) async {
-    final criacao = await showModalBottomSheet<_RapidoTalhaoCriacao>(
+    final criacao = await showModalBottomSheet<_ResultadoCadastroRapidoTalhao>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
       builder: (context) =>
-          _RapidoTalhaoFormularioPainel(propriedadeId: propriedadeId),
+          _PainelCadastroRapidoTalhao(propriedadeId: propriedadeId),
     );
 
     if (criacao == null || !mounted) return;
@@ -787,8 +787,8 @@ class _NovoLevantamentoPainelEstado
             criacao.modeloMatematicoSelecao!;
       }
     });
-    ref.invalidate(provedorPropriedadeTalhoes(propriedadeId));
-    ref.invalidate(provedorPropriedadeResumos);
+    ref.invalidate(provedorTalhoesDaPropriedade(propriedadeId));
+    ref.invalidate(provedorResumosPropriedades);
   }
 
   void _sincronizarPropriedadeSelecao(List<PropriedadeResumo> propriedades) {
@@ -874,18 +874,18 @@ class _PainelErroMensagem extends StatelessWidget {
   }
 }
 
-class _RapidoTalhaoFormularioPainel extends ConsumerStatefulWidget {
-  const _RapidoTalhaoFormularioPainel({required this.propriedadeId});
+class _PainelCadastroRapidoTalhao extends ConsumerStatefulWidget {
+  const _PainelCadastroRapidoTalhao({required this.propriedadeId});
 
   final int propriedadeId;
 
   @override
-  ConsumerState<_RapidoTalhaoFormularioPainel> createState() =>
-      _RapidoTalhaoFormularioPainelEstado();
+  ConsumerState<_PainelCadastroRapidoTalhao> createState() =>
+      _EstadoPainelCadastroRapidoTalhao();
 }
 
-class _RapidoTalhaoFormularioPainelEstado
-    extends ConsumerState<_RapidoTalhaoFormularioPainel> {
+class _EstadoPainelCadastroRapidoTalhao
+    extends ConsumerState<_PainelCadastroRapidoTalhao> {
   final _chaveFormulario = GlobalKey<FormState>();
   final _identificacaoControlador = TextEditingController();
   final _areaControlador = TextEditingController();
@@ -895,7 +895,7 @@ class _RapidoTalhaoFormularioPainelEstado
   final _parcelaLarguraControlador = TextEditingController();
   final _parcelaComprimentoControlador = TextEditingController();
   final _observacoesControlador = TextEditingController();
-  LevantamentoModeloMatematicoSelecao? _modeloMatematicoSelecao;
+  SelecaoModeloLevantamento? _modeloMatematicoSelecao;
   int? _especieId;
   bool _salvando = false;
 
@@ -914,7 +914,7 @@ class _RapidoTalhaoFormularioPainelEstado
 
   @override
   Widget build(BuildContext context) {
-    final especies = ref.watch(provedorAtivoEspecie);
+    final especies = ref.watch(provedorEspeciesAtivas);
     final inferiorRecuo = MediaQuery.viewInsetsOf(context).bottom;
 
     return Padding(
@@ -955,7 +955,7 @@ class _RapidoTalhaoFormularioPainelEstado
                   labelText: 'Identificação',
                   prefixIcon: Icon(Icons.label_outline),
                 ),
-                validator: _obrigatorioValidator,
+                validator: _validarCampoObrigatorio,
               ),
               const SizedBox(height: 12),
               especies.when(
@@ -1028,7 +1028,7 @@ class _RapidoTalhaoFormularioPainelEstado
                         LengthLimitingTextInputFormatter(4),
                       ],
                       decoration: const InputDecoration(labelText: 'Ano'),
-                      validator: _plantioAnoValidator,
+                      validator: _validarAnoPlantio,
                     ),
                   ),
                 ],
@@ -1052,15 +1052,15 @@ class _RapidoTalhaoFormularioPainelEstado
                 ),
               ),
               const SizedBox(height: 12),
-              ParcelaDimensoesEntrada(
+              EntradaDimensoesParcela(
                 larguraControlador: _parcelaLarguraControlador,
                 comprimentoControlador: _parcelaComprimentoControlador,
-                larguraValidator: (valor) => _parcelaDimensaoValidator(
+                validadorLargura: (valor) => _validarDimensaoParcela(
                   valor,
                   _parcelaComprimentoControlador.text,
                   'primeira medida',
                 ),
-                comprimentoValidator: (valor) => _parcelaDimensaoValidator(
+                validadorComprimento: (valor) => _validarDimensaoParcela(
                   valor,
                   _parcelaLarguraControlador.text,
                   'segunda medida',
@@ -1124,12 +1124,12 @@ class _RapidoTalhaoFormularioPainelEstado
             observacoes: _observacoesControlador.text,
           );
 
-      ref.invalidate(provedorPropriedadeTalhoes(widget.propriedadeId));
-      ref.invalidate(provedorPropriedadeResumos);
+      ref.invalidate(provedorTalhoesDaPropriedade(widget.propriedadeId));
+      ref.invalidate(provedorResumosPropriedades);
 
       if (!mounted) return;
       Navigator.of(context).pop(
-        _RapidoTalhaoCriacao(
+        _ResultadoCadastroRapidoTalhao(
           talhaoId: talhaoId,
           modeloMatematicoSelecao: _modeloMatematicoSelecao,
         ),
@@ -1177,7 +1177,7 @@ class _RapidoTalhaoFormularioPainelEstado
     setState(() => _modeloMatematicoSelecao = selecao);
   }
 
-  String? _obrigatorioValidator(String? valor) {
+  String? _validarCampoObrigatorio(String? valor) {
     if (valor == null || valor.trim().isEmpty) {
       return 'Campo obrigatório';
     }
@@ -1191,7 +1191,7 @@ class _RapidoTalhaoFormularioPainelEstado
     return null;
   }
 
-  String? _plantioAnoValidator(String? valor) {
+  String? _validarAnoPlantio(String? valor) {
     if (valor == null || valor.trim().isEmpty) return null;
 
     final ano = int.tryParse(valor.trim());
@@ -1202,7 +1202,7 @@ class _RapidoTalhaoFormularioPainelEstado
     return null;
   }
 
-  String? _parcelaDimensaoValidator(
+  String? _validarDimensaoParcela(
     String? valor,
     String pareadoValor,
     String rotulo,
@@ -1218,14 +1218,14 @@ class _RapidoTalhaoFormularioPainelEstado
   }
 }
 
-class _RapidoTalhaoCriacao {
-  const _RapidoTalhaoCriacao({
+class _ResultadoCadastroRapidoTalhao {
+  const _ResultadoCadastroRapidoTalhao({
     required this.talhaoId,
     required this.modeloMatematicoSelecao,
   });
 
   final int talhaoId;
-  final LevantamentoModeloMatematicoSelecao? modeloMatematicoSelecao;
+  final SelecaoModeloLevantamento? modeloMatematicoSelecao;
 }
 
 class _ModeloMatematicoAjusteCartao extends StatelessWidget {
@@ -1234,7 +1234,7 @@ class _ModeloMatematicoAjusteCartao extends StatelessWidget {
     required this.aoPressionado,
   });
 
-  final LevantamentoModeloMatematicoSelecao? selecao;
+  final SelecaoModeloLevantamento? selecao;
   final VoidCallback? aoPressionado;
 
   @override
@@ -1355,8 +1355,8 @@ class _VazioIniciarCartao extends StatelessWidget {
   }
 }
 
-class _EmLinhaIndicador extends StatelessWidget {
-  const _EmLinhaIndicador({required this.rotulo, required this.valor});
+class _IndicadorEmLinha extends StatelessWidget {
+  const _IndicadorEmLinha({required this.rotulo, required this.valor});
 
   final String rotulo;
   final String valor;

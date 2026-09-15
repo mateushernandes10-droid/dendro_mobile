@@ -1,6 +1,6 @@
 # Requisitos e atendimento na versão atual
 
-Revisão em 13/09/2026, versão refatorada em português (base 82f29e2). Os identificadores originais foram preservados para rastreabilidade. “Implementado” indica existência no código, não validação científica ou aprovação por usuários.
+Revisão em 14/09/2026, versão v11 com IDs inteiros. Os identificadores originais foram preservados para rastreabilidade. “Implementado” indica existência no código, não validação científica ou aprovação por usuários.
 
 ## Requisitos funcionais
 

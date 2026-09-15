@@ -48,7 +48,7 @@ class TelaLevantamentos extends ConsumerWidget {
             padding: EdgeInsets.symmetric(vertical: 36),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (erro, pilhaTrace) => _CarregarErroCartao(
+          error: (erro, pilhaTrace) => _CartaoErroCarregamento(
             aoTentarNovamente: () => ref.invalidate(provedorLevantamentos),
           ),
         ),
@@ -67,8 +67,8 @@ class TelaLevantamentos extends ConsumerWidget {
     );
 
     ref.invalidate(provedorLevantamentos);
-    ref.invalidate(provedorAtivoLevantamentos);
-    ref.invalidate(provedorAtivoLevantamento);
+    ref.invalidate(provedorLevantamentosAtivos);
+    ref.invalidate(provedorLevantamentoAtivo);
 
     if (levantamentoId == null || !context.mounted) return;
     await _abrirLevantamento(context, levantamentoId);
@@ -127,7 +127,7 @@ class _LevantamentoCartao extends StatelessWidget {
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: SituacaoIndicador(
+                      child: IndicadorSituacao(
                         rotulo: _situacaoRotulo(situacao),
                       ),
                     ),
@@ -344,8 +344,8 @@ class _VazioLevantamentosCartao extends StatelessWidget {
   }
 }
 
-class _CarregarErroCartao extends StatelessWidget {
-  const _CarregarErroCartao({required this.aoTentarNovamente});
+class _CartaoErroCarregamento extends StatelessWidget {
+  const _CartaoErroCarregamento({required this.aoTentarNovamente});
 
   final VoidCallback aoTentarNovamente;
 

@@ -1,6 +1,6 @@
 # Regras de negócio e limites observados
 
-Revisão em 13/09/2026, versão refatorada em português (base 82f29e2). Descreve comportamento implementado, inclusive limitações; não certifica a validade científica das equações.
+Revisão em 14/09/2026, versão v11 com IDs inteiros. Descreve comportamento implementado, inclusive limitações; não certifica a validade científica das equações.
 
 ## BR-001 — Hierarquia
 Propriedade possui talhões e levantamentos. TalhaoLevantamentos associa um talhão a um levantamento, com espécie/modelo. Parcela pertence a essa associação; árvore pertence à parcela. Há histórico de diferentes levantamentos.

@@ -65,7 +65,7 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
         child: coleta.when(
           data: (estado) => _corpo(estado),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (erro, pilhaTrace) => _CarregarErro(
+          error: (erro, pilhaTrace) => _ErroCarregamento(
             aoTentarNovamente: () =>
                 ref.invalidate(provedorColetaArvores(widget.parcelaId)),
           ),
@@ -78,7 +78,7 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        _ParcelCabecalho(
+        _CabecalhoParcela(
           estado: estado,
           aoFinalizar: _salvando ? null : () => _finalizarParcela(estado),
         ),
@@ -120,9 +120,9 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
             aoProximo: () => _salvarArvore(estado, manterAbrir: true),
           ),
         const SizedBox(height: 20),
-        SecaoTitulo(
+        TituloSecao(
           titulo: 'Árvores registradas',
-          complemento: SituacaoIndicador(
+          complemento: IndicadorSituacao(
             rotulo: '${estado.arvoreQuantidade} total',
           ),
         ),
@@ -142,7 +142,7 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
   void _abrirNovoArvoreFormulario(EstadoColetaArvores estado) {
     setState(() {
       _editandoArvore = null;
-      _arvoreNumero = estado.proximoArvoreNumero;
+      _arvoreNumero = estado.proximoNumeroArvore;
       _dapControlador.clear();
       _alturaControlador.clear();
       _possuiTroncoTortuoso = false;
@@ -349,7 +349,7 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
 
       if (!mounted) return;
       if (manterAbrir) {
-        final proximoNumero = await repositorio.proximoArvoreNumero(
+        final proximoNumero = await repositorio.proximoNumeroArvore(
           widget.parcelaId,
         );
         setState(() {
@@ -435,7 +435,7 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
 
     await ref
         .read(provedorRepositorioArvores)
-        .marcaParcelaColetada(widget.parcelaId);
+        .marcarParcelaColetada(widget.parcelaId);
     _invalidarRelacionadosProvedores(estado);
 
     if (!mounted) return;
@@ -449,8 +449,8 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
       provedorParcelasTalhaoLevantamento(estado.talhaoLevantamento.id),
     );
     ref.invalidate(provedorParcelasTalhao(estado.talhao.id));
-    ref.invalidate(provedorAtivoLevantamentos);
-    ref.invalidate(provedorAtivoLevantamento);
+    ref.invalidate(provedorLevantamentosAtivos);
+    ref.invalidate(provedorLevantamentoAtivo);
     ref.invalidate(provedorLevantamentoDetalhe(estado.levantamento.id));
   }
 
@@ -476,8 +476,8 @@ class _ColetaArvoresTelaEstado extends ConsumerState<TelaColetaArvores> {
   }
 }
 
-class _ParcelCabecalho extends StatelessWidget {
-  const _ParcelCabecalho({required this.estado, required this.aoFinalizar});
+class _CabecalhoParcela extends StatelessWidget {
+  const _CabecalhoParcela({required this.estado, required this.aoFinalizar});
 
   final EstadoColetaArvores estado;
   final VoidCallback? aoFinalizar;
@@ -505,7 +505,7 @@ class _ParcelCabecalho extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              SituacaoIndicador(
+              IndicadorSituacao(
                 rotulo: _parcelaSituacaoRotulo(estado.parcela.situacao),
               ),
               const SizedBox(width: 6),
@@ -734,7 +734,7 @@ class _ArvoreFormularioCartao extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             if (possuiLocalizacao)
-              _CapturadoLocalizacaoCartao(
+              _CartaoLocalizacaoCapturada(
                 latitude: latitude!,
                 longitude: longitude!,
                 precisaoMetros: precisaoMetros,
@@ -995,8 +995,8 @@ class _ReferenciaSeletor extends StatelessWidget {
   }
 }
 
-class _CapturadoLocalizacaoCartao extends StatelessWidget {
-  const _CapturadoLocalizacaoCartao({
+class _CartaoLocalizacaoCapturada extends StatelessWidget {
+  const _CartaoLocalizacaoCapturada({
     required this.latitude,
     required this.longitude,
     required this.precisaoMetros,
@@ -1086,7 +1086,7 @@ class _ArvoreItem extends StatelessWidget {
                         ),
                       ),
                       if (referencia != null)
-                        SituacaoIndicador(
+                        IndicadorSituacao(
                           rotulo: _referenciaRotulo(referencia),
                         ),
                     ],
@@ -1185,8 +1185,8 @@ class _VazioArvoresCartao extends StatelessWidget {
   }
 }
 
-class _CarregarErro extends StatelessWidget {
-  const _CarregarErro({required this.aoTentarNovamente});
+class _ErroCarregamento extends StatelessWidget {
+  const _ErroCarregamento({required this.aoTentarNovamente});
 
   final VoidCallback aoTentarNovamente;
 

@@ -45,8 +45,8 @@ class _PropriedadesTelaEstado extends ConsumerState<TelaPropriedades> {
 
   @override
   Widget build(BuildContext context) {
-    final resumos = ref.watch(provedorPropriedadeResumos);
-    final avancadoFiltros = ref.watch(provedorPropriedadeAvancadoFiltros);
+    final resumos = ref.watch(provedorResumosPropriedades);
+    final avancadoFiltros = ref.watch(provedorFiltrosAvancadosPropriedades);
 
     return TelaDendro(
       titulo: 'Propriedades',
@@ -62,12 +62,12 @@ class _PropriedadesTelaEstado extends ConsumerState<TelaPropriedades> {
           controlador: _buscaControlador,
           filtros: avancadoFiltros,
           aoAlterado: (valor) {
-            ref.read(provedorPropriedadeBuscaConsulta.notifier).state = valor;
+            ref.read(provedorConsultaBuscaPropriedades.notifier).state = valor;
           },
           aoAbrirFiltros: () => _abrirFiltros(context, avancadoFiltros),
           aoLimparFiltros: () {
-            ref.read(provedorPropriedadeAvancadoFiltros.notifier).state =
-                const PropriedadeAvancadoFiltros();
+            ref.read(provedorFiltrosAvancadosPropriedades.notifier).state =
+                const FiltrosAvancadosPropriedades();
           },
         ),
         const SizedBox(height: 16),
@@ -102,9 +102,10 @@ class _PropriedadesTelaEstado extends ConsumerState<TelaPropriedades> {
             padding: EdgeInsets.symmetric(vertical: 36),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (erro, pilhaTrace) => _CarregarErroCartao(
+          error: (erro, pilhaTrace) => _CartaoErroCarregamento(
             mensagem: 'Não foi possível carregar as propriedades.',
-            aoTentarNovamente: () => ref.invalidate(provedorPropriedadeResumos),
+            aoTentarNovamente: () =>
+                ref.invalidate(provedorResumosPropriedades),
           ),
         ),
       ],
@@ -131,7 +132,7 @@ class _PropriedadesTelaEstado extends ConsumerState<TelaPropriedades> {
 
   Future<void> _abrirFiltros(
     BuildContext context,
-    PropriedadeAvancadoFiltros filtros,
+    FiltrosAvancadosPropriedades filtros,
   ) {
     return showModalBottomSheet<void>(
       context: context,
@@ -140,7 +141,7 @@ class _PropriedadesTelaEstado extends ConsumerState<TelaPropriedades> {
       builder: (context) => _PropriedadeAvancadoFiltrosPainel(
         inicialFiltros: filtros,
         aoAplicar: (proximoFiltros) {
-          ref.read(provedorPropriedadeAvancadoFiltros.notifier).state =
+          ref.read(provedorFiltrosAvancadosPropriedades.notifier).state =
               proximoFiltros;
         },
       ),
@@ -196,7 +197,7 @@ class _PropriedadeFiltros extends StatelessWidget {
   });
 
   final TextEditingController controlador;
-  final PropriedadeAvancadoFiltros filtros;
+  final FiltrosAvancadosPropriedades filtros;
   final ValueChanged<String> aoAlterado;
   final VoidCallback aoAbrirFiltros;
   final VoidCallback aoLimparFiltros;
@@ -265,8 +266,8 @@ class _PropriedadeAvancadoFiltrosPainel extends StatefulWidget {
     required this.aoAplicar,
   });
 
-  final PropriedadeAvancadoFiltros inicialFiltros;
-  final ValueChanged<PropriedadeAvancadoFiltros> aoAplicar;
+  final FiltrosAvancadosPropriedades inicialFiltros;
+  final ValueChanged<FiltrosAvancadosPropriedades> aoAplicar;
 
   @override
   State<_PropriedadeAvancadoFiltrosPainel> createState() =>
@@ -431,7 +432,7 @@ class _PropriedadeAvancadoFiltrosPainelEstado
   }
 
   void _limpar() {
-    widget.aoAplicar(const PropriedadeAvancadoFiltros());
+    widget.aoAplicar(const FiltrosAvancadosPropriedades());
     Navigator.of(context).pop();
   }
 
@@ -466,7 +467,7 @@ class _PropriedadeAvancadoFiltrosPainelEstado
     }
 
     widget.aoAplicar(
-      PropriedadeAvancadoFiltros(
+      FiltrosAvancadosPropriedades(
         municipio: _municipioControlador.text.trim(),
         minimoAreaHa: minimoArea,
         maximoAreaHa: maximoArea,
@@ -703,7 +704,7 @@ class _PropriedadeFormularioPainelEstado
                   labelText: 'Nome da propriedade',
                   prefixIcon: Icon(Icons.home_work_outlined),
                 ),
-                validator: _obrigatorioValidator,
+                validator: _validarCampoObrigatorio,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -713,7 +714,7 @@ class _PropriedadeFormularioPainelEstado
                   labelText: 'Município',
                   prefixIcon: Icon(Icons.place_outlined),
                 ),
-                validator: _obrigatorioValidator,
+                validator: _validarCampoObrigatorio,
               ),
               const SizedBox(height: 12),
               Row(
@@ -728,7 +729,7 @@ class _PropriedadeFormularioPainelEstado
                         FilteringTextInputFormatter.allow(RegExp('[a-zA-Z]')),
                       ],
                       decoration: const InputDecoration(labelText: 'UF'),
-                      validator: _obrigatorioValidator,
+                      validator: _validarCampoObrigatorio,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -818,7 +819,7 @@ class _PropriedadeFormularioPainelEstado
     }
   }
 
-  String? _obrigatorioValidator(String? valor) {
+  String? _validarCampoObrigatorio(String? valor) {
     if (valor == null || valor.trim().isEmpty) {
       return 'Campo obrigatório';
     }
@@ -896,8 +897,8 @@ class _VazioPropriedadesEstado extends StatelessWidget {
   }
 }
 
-class _CarregarErroCartao extends StatelessWidget {
-  const _CarregarErroCartao({
+class _CartaoErroCarregamento extends StatelessWidget {
+  const _CartaoErroCarregamento({
     required this.mensagem,
     required this.aoTentarNovamente,
   });
@@ -931,7 +932,7 @@ class _CarregarErroCartao extends StatelessWidget {
 
 enum _PropriedadeAcao { editar, excluir }
 
-List<String> _ativoFiltroRotulos(PropriedadeAvancadoFiltros filtros) {
+List<String> _ativoFiltroRotulos(FiltrosAvancadosPropriedades filtros) {
   final rotulos = <String>[];
   final municipio = filtros.municipio.trim();
 

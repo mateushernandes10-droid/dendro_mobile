@@ -45,11 +45,11 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
   @override
   void dispose() {
     if (_restaurarAnteriorFiltros) {
-      ref.read(provedorResultadosPropriedadeFiltro.notifier).state =
+      ref.read(provedorFiltroPropriedadeResultados.notifier).state =
           _anteriorPropriedadeId;
-      ref.read(provedorResultadosTalhaoFiltro.notifier).state =
+      ref.read(provedorFiltroTalhoesResultados.notifier).state =
           _anteriorTalhaoIds;
-      ref.read(provedorResultadosEspecieFiltro.notifier).state =
+      ref.read(provedorFiltroEspecieResultados.notifier).state =
           _anteriorEspecieId;
     }
     super.dispose();
@@ -62,25 +62,25 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
     if (!_possuiInicialFiltros) return;
 
     _restaurarAnteriorFiltros = true;
-    _anteriorPropriedadeId = ref.read(provedorResultadosPropriedadeFiltro);
-    _anteriorTalhaoIds = {...ref.read(provedorResultadosTalhaoFiltro)};
-    _anteriorEspecieId = ref.read(provedorResultadosEspecieFiltro);
+    _anteriorPropriedadeId = ref.read(provedorFiltroPropriedadeResultados);
+    _anteriorTalhaoIds = {...ref.read(provedorFiltroTalhoesResultados)};
+    _anteriorEspecieId = ref.read(provedorFiltroEspecieResultados);
 
-    ref.read(provedorResultadosPropriedadeFiltro.notifier).state =
+    ref.read(provedorFiltroPropriedadeResultados.notifier).state =
         widget.inicialPropriedadeId;
-    ref.read(provedorResultadosTalhaoFiltro.notifier).state = {
+    ref.read(provedorFiltroTalhoesResultados.notifier).state = {
       ...widget.inicialTalhaoIds,
     };
-    ref.read(provedorResultadosEspecieFiltro.notifier).state =
+    ref.read(provedorFiltroEspecieResultados.notifier).state =
         widget.inicialEspecieId;
   }
 
   @override
   Widget build(BuildContext context) {
-    final propriedadeId = ref.watch(provedorResultadosPropriedadeFiltro);
-    final especieId = ref.watch(provedorResultadosEspecieFiltro);
+    final propriedadeId = ref.watch(provedorFiltroPropriedadeResultados);
+    final especieId = ref.watch(provedorFiltroEspecieResultados);
     final possuiBaseFiltro = _possuiBaseFiltro(propriedadeId, especieId);
-    final opcoes = ref.watch(provedorResultadosFiltroOpcoes);
+    final opcoes = ref.watch(provedorOpcoesFiltrosResultados);
     final painel = ref.watch(provedorPainelResultados);
 
     return TelaDendro(
@@ -96,10 +96,10 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
         opcoes.when(
           data: (dados) => _FiltroCartao(opcoes: dados),
           loading: () => const CartaoDendro(filho: LinearProgressIndicator()),
-          error: (erro, pilhaTrace) => _CarregarErroCartao(
+          error: (erro, pilhaTrace) => _CartaoErroCarregamento(
             mensagem: 'Não foi possível carregar os filtros.',
             aoTentarNovamente: () =>
-                ref.invalidate(provedorResultadosFiltroOpcoes),
+                ref.invalidate(provedorOpcoesFiltrosResultados),
           ),
         ),
         const SizedBox(height: 14),
@@ -112,7 +112,7 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
               padding: EdgeInsets.symmetric(vertical: 36),
               child: Center(child: CircularProgressIndicator()),
             ),
-            error: (erro, pilhaTrace) => _CarregarErroCartao(
+            error: (erro, pilhaTrace) => _CartaoErroCarregamento(
               mensagem: 'Não foi possível carregar os resultados.',
               aoTentarNovamente: () => ref.invalidate(provedorPainelResultados),
             ),
@@ -125,9 +125,9 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (context) => TelaExportacaoDados(
-          propriedadeId: ref.read(provedorResultadosPropriedadeFiltro),
-          inicialTalhaoIds: ref.read(provedorResultadosTalhaoFiltro),
-          especieId: ref.read(provedorResultadosEspecieFiltro),
+          propriedadeId: ref.read(provedorFiltroPropriedadeResultados),
+          inicialTalhaoIds: ref.read(provedorFiltroTalhoesResultados),
+          especieId: ref.read(provedorFiltroEspecieResultados),
         ),
       ),
     );
@@ -145,11 +145,11 @@ class _FiltroCartao extends ConsumerWidget {
     final campoCor = estaEscuroModo
         ? CoresDendro.escuroLegivelCampo
         : Colors.white;
-    final propriedadeId = ref.watch(provedorResultadosPropriedadeFiltro);
-    final especieId = ref.watch(provedorResultadosEspecieFiltro);
-    final selecionadoTalhoes = ref.watch(provedorResultadosTalhaoFiltro);
+    final propriedadeId = ref.watch(provedorFiltroPropriedadeResultados);
+    final especieId = ref.watch(provedorFiltroEspecieResultados);
+    final selecionadoTalhoes = ref.watch(provedorFiltroTalhoesResultados);
     final possuiBaseFiltro = _possuiBaseFiltro(propriedadeId, especieId);
-    final visivelTalhoes = opcoes.visivelTalhoes(
+    final talhoesVisiveis = opcoes.talhoesVisiveis(
       propriedadeId: propriedadeId,
       especieId: especieId,
     );
@@ -209,9 +209,10 @@ class _FiltroCartao extends ConsumerWidget {
                 ),
             ],
             onChanged: (valor) {
-              ref.read(provedorResultadosPropriedadeFiltro.notifier).state =
+              ref.read(provedorFiltroPropriedadeResultados.notifier).state =
                   valor == _todosFiltroValor ? null : valor;
-              ref.read(provedorResultadosTalhaoFiltro.notifier).state = <int>{};
+              ref.read(provedorFiltroTalhoesResultados.notifier).state =
+                  <int>{};
             },
           ),
           const SizedBox(height: 12),
@@ -254,9 +255,10 @@ class _FiltroCartao extends ConsumerWidget {
                 ),
             ],
             onChanged: (valor) {
-              ref.read(provedorResultadosEspecieFiltro.notifier).state =
+              ref.read(provedorFiltroEspecieResultados.notifier).state =
                   valor == _todosFiltroValor ? null : valor;
-              ref.read(provedorResultadosTalhaoFiltro.notifier).state = <int>{};
+              ref.read(provedorFiltroTalhoesResultados.notifier).state =
+                  <int>{};
             },
           ),
           const SizedBox(height: 12),
@@ -284,12 +286,12 @@ class _FiltroCartao extends ConsumerWidget {
                   ),
                   onPressed: () {
                     ref
-                            .read(provedorResultadosPropriedadeFiltro.notifier)
+                            .read(provedorFiltroPropriedadeResultados.notifier)
                             .state =
                         null;
-                    ref.read(provedorResultadosEspecieFiltro.notifier).state =
+                    ref.read(provedorFiltroEspecieResultados.notifier).state =
                         null;
-                    ref.read(provedorResultadosTalhaoFiltro.notifier).state =
+                    ref.read(provedorFiltroTalhoesResultados.notifier).state =
                         <int>{};
                   },
                   child: const Text('Limpar'),
@@ -305,7 +307,7 @@ class _FiltroCartao extends ConsumerWidget {
                 fontWeight: FontWeight.w700,
               ),
             )
-          else if (visivelTalhoes.isEmpty)
+          else if (talhoesVisiveis.isEmpty)
             const Text(
               'Nenhum talhão disponível para os filtros selecionados.',
               style: TextStyle(
@@ -319,7 +321,7 @@ class _FiltroCartao extends ConsumerWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final opcao in visivelTalhoes)
+                for (final opcao in talhoesVisiveis)
                   FilterChip(
                     backgroundColor: estaEscuroModo
                         ? const Color(0xFFCFE3D4)
@@ -348,7 +350,7 @@ class _FiltroCartao extends ConsumerWidget {
                       } else {
                         proximo.remove(opcao.talhao.id);
                       }
-                      ref.read(provedorResultadosTalhaoFiltro.notifier).state =
+                      ref.read(provedorFiltroTalhoesResultados.notifier).state =
                           proximo;
                     },
                   ),
@@ -374,7 +376,7 @@ class _VistaPainelResultados extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Árvores amostradas',
                 valor: painel.arvoreQuantidade.toString(),
                 icone: Icons.forest,
@@ -382,7 +384,7 @@ class _VistaPainelResultados extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Área medida',
                 valor: '${_formatoArea(painel.medidaAreaHa)} ha',
                 icone: Icons.area_chart,
@@ -394,7 +396,7 @@ class _VistaPainelResultados extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'DAP médio',
                 valor: _formatoOpcionalMedicao(painel.mediaDapCm, 'cm'),
                 icone: Icons.straighten,
@@ -402,7 +404,7 @@ class _VistaPainelResultados extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Altura média',
                 valor: _formatoOpcionalMedicao(painel.mediaAlturaM, 'm'),
                 icone: Icons.height,
@@ -414,7 +416,7 @@ class _VistaPainelResultados extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Parcelas coletadas',
                 valor:
                     '${painel.coletadaParcelaQuantidade}/${painel.parcelaQuantidade}',
@@ -423,7 +425,7 @@ class _VistaPainelResultados extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Parcelas medidas',
                 valor: painel.medidaParcelaQuantidade.toString(),
                 icone: Icons.check_circle_outline,
@@ -435,7 +437,7 @@ class _VistaPainelResultados extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Volume/ha',
                 valor: _formatoOpcionalMedicao(painel.volumePorHaM3, 'm³/ha'),
                 icone: Icons.inventory_2_outlined,
@@ -443,7 +445,7 @@ class _VistaPainelResultados extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Árvores/ha',
                 valor: _formatoOpcionalNumero(painel.arvoresPorHa),
                 icone: Icons.park_outlined,
@@ -452,10 +454,10 @@ class _VistaPainelResultados extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        const SecaoTitulo(titulo: 'Distribuição diamétrica'),
+        const TituloSecao(titulo: 'Distribuição diamétrica'),
         _DiametroDistribuicaoCartao(classes: painel.diametroClasses),
         const SizedBox(height: 20),
-        const SecaoTitulo(titulo: 'Resumo por talhão'),
+        const TituloSecao(titulo: 'Resumo por talhão'),
         if (painel.talhoes.isEmpty)
           const _VazioResultadosCartao()
         else
@@ -525,7 +527,7 @@ class _VolumeResumoCartao extends StatelessWidget {
 class _DiametroDistribuicaoCartao extends StatelessWidget {
   const _DiametroDistribuicaoCartao({required this.classes});
 
-  final List<DiametroClasseResumo> classes;
+  final List<ResumoClasseDiametro> classes;
 
   @override
   Widget build(BuildContext context) {
@@ -652,7 +654,7 @@ class _TalhaoResultadoLinha extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                 ),
-                SituacaoIndicador(rotulo: resumo.especie.nome),
+                IndicadorSituacao(rotulo: resumo.especie.nome),
               ],
             ),
             const SizedBox(height: 8),
@@ -660,25 +662,25 @@ class _TalhaoResultadoLinha extends StatelessWidget {
               spacing: 12,
               runSpacing: 6,
               children: [
-                _EmLinhaIndicador('${resumo.arvoreQuantidade} árvores'),
-                _EmLinhaIndicador('${_formatoArea(resumo.medidaAreaHa)} ha'),
-                _EmLinhaIndicador(
+                _IndicadorEmLinha('${resumo.arvoreQuantidade} árvores'),
+                _IndicadorEmLinha('${_formatoArea(resumo.medidaAreaHa)} ha'),
+                _IndicadorEmLinha(
                   '${resumo.coletadaParcelaQuantidade}/${resumo.parcelaQuantidade} parcelas',
                 ),
-                _EmLinhaIndicador(
+                _IndicadorEmLinha(
                   'DAP ${_formatoOpcionalMedicao(resumo.mediaDapCm, 'cm')}',
                 ),
-                _EmLinhaIndicador(
+                _IndicadorEmLinha(
                   'Alt. ${_formatoOpcionalMedicao(resumo.mediaAlturaM, 'm')}',
                 ),
-                _EmLinhaIndicador(
+                _IndicadorEmLinha(
                   'Vol. ${_formatoOpcionalMedicao(resumo.volumePorHaM3, 'm³/ha')}',
                 ),
-                _EmLinhaIndicador(
+                _IndicadorEmLinha(
                   'Total ${_formatoOpcionalVolume(resumo.estimadoVolumeM3)}',
                 ),
                 if (resumo.convertidoUnidade != 'm3')
-                  _EmLinhaIndicador(
+                  _IndicadorEmLinha(
                     '${_formatoOpcionalNumero(resumo.convertidoEstimadoVolume)} ${resumo.convertidoUnidade}',
                   ),
               ],
@@ -690,8 +692,8 @@ class _TalhaoResultadoLinha extends StatelessWidget {
   }
 }
 
-class _EmLinhaIndicador extends StatelessWidget {
-  const _EmLinhaIndicador(this.rotulo);
+class _IndicadorEmLinha extends StatelessWidget {
+  const _IndicadorEmLinha(this.rotulo);
 
   final String rotulo;
 
@@ -751,8 +753,8 @@ class _SemResultadosFiltroCartao extends StatelessWidget {
   }
 }
 
-class _CarregarErroCartao extends StatelessWidget {
-  const _CarregarErroCartao({
+class _CartaoErroCarregamento extends StatelessWidget {
+  const _CartaoErroCarregamento({
     required this.mensagem,
     required this.aoTentarNovamente,
   });

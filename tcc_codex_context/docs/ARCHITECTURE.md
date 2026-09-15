@@ -1,6 +1,6 @@
 # Arquitetura implementada — DENDRO Mobile
 
-Revisão em 13/09/2026, baseada no código refatorado a partir de `82f29e2`. Este documento descreve a versão atual, não uma arquitetura a implementar.
+Revisão em 14/09/2026, baseada no código atual, schema v11. Este documento descreve a versão atual, não uma arquitetura a implementar.
 
 ## Organização efetiva
 
@@ -28,7 +28,7 @@ As funcionalidades existentes são: atividades, exportacao_dados, inicio, levant
 
 ## Dependências efetivamente declaradas
 
-Além do Flutter e dos ícones, o pubspec declara drift, drift_flutter, flutter_riverpod, path_provider, uuid, geolocator, share_plus, pdf e excel. Os testes e a geração de código usam flutter_test, flutter_lints, drift_dev, build_runner e sqlite3 (fixtures de bancos legados). UUID não é dependência direta; permanece transitivamente em bibliotecas externas.
+Além do Flutter e dos ícones, o pubspec declara drift, drift_flutter, flutter_riverpod, path_provider, geolocator, share_plus, pdf e excel. Os testes e a geração de código usam flutter_test, flutter_lints, drift_dev, build_runner e sqlite3 (fixtures de bancos legados). UUID não é dependência direta; permanece transitivamente em bibliotecas externas.
 
 Não estão instaladas math_expressions, fl_chart, printing ou csv. CSV e KML são montados pelo código do exportador. Não representar essas bibliotecas ausentes como componentes implementados.
 

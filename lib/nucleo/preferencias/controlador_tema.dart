@@ -7,27 +7,27 @@ import 'package:path_provider/path_provider.dart';
 
 final provedorControladorTema =
     StateNotifierProvider<ControladorTemaAplicativo, ThemeMode>((ref) {
-      return ControladorTemaAplicativo(ArmazenamentoTemaArquivo());
+      return ControladorTemaAplicativo(ArmazenamentoTemaEmArquivo());
     });
 
 final provedorModoEscuro = Provider<bool>((ref) {
   return ref.watch(provedorControladorTema) == ThemeMode.dark;
 });
 
-abstract interface class ArmazenamentoModoTema {
-  Future<bool?> carregarEscuroModo();
+abstract interface class ArmazenamentoPreferenciaTema {
+  Future<bool?> carregarModoEscuro();
 
-  Future<void> salvarEscuroModo(bool habilitado);
+  Future<void> salvarModoEscuro(bool habilitado);
 }
 
-class ArmazenamentoTemaArquivo implements ArmazenamentoModoTema {
-  static const _arquivoNome = 'dendro_preferences.json';
+class ArmazenamentoTemaEmArquivo implements ArmazenamentoPreferenciaTema {
+  static const _nomeArquivo = 'dendro_preferences.json';
   static const _escuroModoChave = 'darkMode';
 
   @override
-  Future<bool?> carregarEscuroModo() async {
+  Future<bool?> carregarModoEscuro() async {
     try {
-      final arquivo = await _preferenciasArquivo();
+      final arquivo = await _arquivoPreferencias();
       if (!await arquivo.exists()) return null;
 
       final conteudo = await arquivo.readAsString();
@@ -42,8 +42,8 @@ class ArmazenamentoTemaArquivo implements ArmazenamentoModoTema {
   }
 
   @override
-  Future<void> salvarEscuroModo(bool habilitado) async {
-    final arquivo = await _preferenciasArquivo();
+  Future<void> salvarModoEscuro(bool habilitado) async {
+    final arquivo = await _arquivoPreferencias();
     final preferencias = await _carregarPreferencias(arquivo);
 
     preferencias[_escuroModoChave] = habilitado;
@@ -52,9 +52,9 @@ class ArmazenamentoTemaArquivo implements ArmazenamentoModoTema {
     await arquivo.writeAsString(jsonEncode(preferencias));
   }
 
-  Future<File> _preferenciasArquivo() async {
+  Future<File> _arquivoPreferencias() async {
     final diretorio = await getApplicationSupportDirectory();
-    return File('${diretorio.path}/$_arquivoNome');
+    return File('${diretorio.path}/$_nomeArquivo');
   }
 
   Future<Map<String, Object?>> _carregarPreferencias(File arquivo) async {
@@ -76,15 +76,15 @@ class ControladorTemaAplicativo extends StateNotifier<ThemeMode> {
     inicializado = _carregarPreferencia();
   }
 
-  final ArmazenamentoModoTema _armazenamento;
+  final ArmazenamentoPreferenciaTema _armazenamento;
   late final Future<void> inicializado;
 
-  Future<void> definirEscuroModo(bool habilitado) async {
+  Future<void> definirModoEscuro(bool habilitado) async {
     final anterior = state;
     state = habilitado ? ThemeMode.dark : ThemeMode.light;
 
     try {
-      await _armazenamento.salvarEscuroModo(habilitado);
+      await _armazenamento.salvarModoEscuro(habilitado);
     } catch (_) {
       state = anterior;
       rethrow;
@@ -92,7 +92,7 @@ class ControladorTemaAplicativo extends StateNotifier<ThemeMode> {
   }
 
   Future<void> _carregarPreferencia() async {
-    final habilitado = await _armazenamento.carregarEscuroModo();
+    final habilitado = await _armazenamento.carregarModoEscuro();
     if (!mounted || habilitado == null) return;
 
     state = habilitado ? ThemeMode.dark : ThemeMode.light;

@@ -18,7 +18,7 @@ class TelaDetalhePropriedade extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final talhoes = ref.watch(provedorPropriedadeTalhoes(propriedade.id));
+    final talhoes = ref.watch(provedorTalhoesDaPropriedade(propriedade.id));
 
     return Scaffold(
       appBar: AppBar(
@@ -47,7 +47,7 @@ class TelaDetalhePropriedade extends ConsumerWidget {
               aoExportacao: () => _abrirExportacao(context),
             ),
             const SizedBox(height: 18),
-            const SecaoTitulo(titulo: 'Talhões'),
+            const TituloSecao(titulo: 'Talhões'),
             talhoes.when(
               data: (itens) {
                 if (itens.isEmpty) {
@@ -78,10 +78,11 @@ class TelaDetalhePropriedade extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(vertical: 32),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (erro, pilhaTrace) => _CarregarErroCartao(
+              error: (erro, pilhaTrace) => _CartaoErroCarregamento(
                 mensagem: 'Não foi possível carregar os talhões.',
-                aoTentarNovamente: () =>
-                    ref.invalidate(provedorPropriedadeTalhoes(propriedade.id)),
+                aoTentarNovamente: () => ref.invalidate(
+                  provedorTalhoesDaPropriedade(propriedade.id),
+                ),
               ),
             ),
           ],
@@ -159,8 +160,8 @@ class TelaDetalhePropriedade extends ConsumerWidget {
     if (confirmado != true || !context.mounted) return;
 
     await ref.read(provedorRepositorioTalhoes).excluir(talhao.id);
-    ref.invalidate(provedorPropriedadeTalhoes(propriedade.id));
-    ref.invalidate(provedorPropriedadeResumos);
+    ref.invalidate(provedorTalhoesDaPropriedade(propriedade.id));
+    ref.invalidate(provedorResumosPropriedades);
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -292,7 +293,7 @@ class _TalhaoItem extends StatelessWidget {
                         ),
                         if (resumo.possuiAtivoLevantamento) ...[
                           const SizedBox(width: 8),
-                          const SituacaoIndicador(rotulo: 'Em coleta'),
+                          const IndicadorSituacao(rotulo: 'Em coleta'),
                         ],
                       ],
                     ),
@@ -445,7 +446,7 @@ class _TalhaoFormularioPainelEstado
 
   @override
   Widget build(BuildContext context) {
-    final especies = ref.watch(provedorAtivoEspecie);
+    final especies = ref.watch(provedorEspeciesAtivas);
     final inferiorRecuo = MediaQuery.viewInsetsOf(context).bottom;
 
     return Padding(
@@ -486,7 +487,7 @@ class _TalhaoFormularioPainelEstado
                   labelText: 'Identificação',
                   prefixIcon: Icon(Icons.label_outline),
                 ),
-                validator: _obrigatorioValidator,
+                validator: _validarCampoObrigatorio,
               ),
               const SizedBox(height: 12),
               especies.when(
@@ -539,7 +540,7 @@ class _TalhaoFormularioPainelEstado
                         LengthLimitingTextInputFormatter(4),
                       ],
                       decoration: const InputDecoration(labelText: 'Ano'),
-                      validator: _plantioAnoValidator,
+                      validator: _validarAnoPlantio,
                     ),
                   ),
                 ],
@@ -563,15 +564,15 @@ class _TalhaoFormularioPainelEstado
                 ),
               ),
               const SizedBox(height: 12),
-              ParcelaDimensoesEntrada(
+              EntradaDimensoesParcela(
                 larguraControlador: _parcelaLarguraControlador,
                 comprimentoControlador: _parcelaComprimentoControlador,
-                larguraValidator: (valor) => _parcelaDimensaoValidator(
+                validadorLargura: (valor) => _validarDimensaoParcela(
                   valor,
                   _parcelaComprimentoControlador.text,
                   'primeira medida',
                 ),
-                comprimentoValidator: (valor) => _parcelaDimensaoValidator(
+                validadorComprimento: (valor) => _validarDimensaoParcela(
                   valor,
                   _parcelaLarguraControlador.text,
                   'segunda medida',
@@ -657,8 +658,8 @@ class _TalhaoFormularioPainelEstado
       }
 
       if (!mounted) return;
-      ref.invalidate(provedorPropriedadeTalhoes(widget.propriedadeId));
-      ref.invalidate(provedorPropriedadeResumos);
+      ref.invalidate(provedorTalhoesDaPropriedade(widget.propriedadeId));
+      ref.invalidate(provedorResumosPropriedades);
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -677,7 +678,7 @@ class _TalhaoFormularioPainelEstado
     }
   }
 
-  String? _obrigatorioValidator(String? valor) {
+  String? _validarCampoObrigatorio(String? valor) {
     if (valor == null || valor.trim().isEmpty) {
       return 'Campo obrigatório';
     }
@@ -691,7 +692,7 @@ class _TalhaoFormularioPainelEstado
     return null;
   }
 
-  String? _plantioAnoValidator(String? valor) {
+  String? _validarAnoPlantio(String? valor) {
     if (valor == null || valor.trim().isEmpty) return null;
 
     final ano = int.tryParse(valor.trim());
@@ -702,7 +703,7 @@ class _TalhaoFormularioPainelEstado
     return null;
   }
 
-  String? _parcelaDimensaoValidator(
+  String? _validarDimensaoParcela(
     String? valor,
     String pareadoValor,
     String rotulo,
@@ -765,8 +766,8 @@ class _VazioTalhoesCartao extends StatelessWidget {
   }
 }
 
-class _CarregarErroCartao extends StatelessWidget {
-  const _CarregarErroCartao({
+class _CartaoErroCarregamento extends StatelessWidget {
+  const _CartaoErroCarregamento({
     required this.mensagem,
     required this.aoTentarNovamente,
   });

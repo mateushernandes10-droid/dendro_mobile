@@ -9,34 +9,34 @@ final provedorRepositorioResultados = Provider<RepositorioResultados>((ref) {
   return RepositorioResultados(ref.watch(provedorBancoDendro));
 });
 
-final provedorResultadosPropriedadeFiltro = StateProvider.autoDispose<int?>((
+final provedorFiltroPropriedadeResultados = StateProvider.autoDispose<int?>((
   ref,
 ) {
   return null;
 });
 
-final provedorResultadosTalhaoFiltro = StateProvider.autoDispose<Set<int>>((
+final provedorFiltroTalhoesResultados = StateProvider.autoDispose<Set<int>>((
   ref,
 ) {
   return <int>{};
 });
 
-final provedorResultadosEspecieFiltro = StateProvider.autoDispose<int?>((ref) {
+final provedorFiltroEspecieResultados = StateProvider.autoDispose<int?>((ref) {
   return null;
 });
 
-final provedorResultadosFiltroOpcoes =
+final provedorOpcoesFiltrosResultados =
     StreamProvider.autoDispose<OpcoesFiltrosResultados>((ref) {
-      return ref.watch(provedorRepositorioResultados).observarFiltroOpcoes();
+      return ref.watch(provedorRepositorioResultados).observarOpcoesFiltros();
     });
 
 final provedorPainelResultados = StreamProvider.autoDispose<PainelResultados>((
   ref,
 ) {
   final filtros = FiltrosResultados(
-    propriedadeId: ref.watch(provedorResultadosPropriedadeFiltro),
-    talhaoIds: ref.watch(provedorResultadosTalhaoFiltro),
-    especieId: ref.watch(provedorResultadosEspecieFiltro),
+    propriedadeId: ref.watch(provedorFiltroPropriedadeResultados),
+    talhaoIds: ref.watch(provedorFiltroTalhoesResultados),
+    especieId: ref.watch(provedorFiltroEspecieResultados),
   );
 
   return ref.watch(provedorRepositorioResultados).observarPainel(filtros);
@@ -67,7 +67,7 @@ class OpcoesFiltrosResultados {
   final List<OpcaoTalhaoResultados> talhoes;
   final List<Especie> especies;
 
-  List<OpcaoTalhaoResultados> visivelTalhoes({
+  List<OpcaoTalhaoResultados> talhoesVisiveis({
     int? propriedadeId,
     int? especieId,
   }) {
@@ -123,7 +123,7 @@ class PainelResultados {
   final double? volumePorHaM3;
   final double? estimadoVolumeM3;
   final double? arvoresPorHa;
-  final List<DiametroClasseResumo> diametroClasses;
+  final List<ResumoClasseDiametro> diametroClasses;
   final List<ResumoResultadosTalhao> talhoes;
 
   bool get possuiMedicoes => arvoreQuantidade > 0;
@@ -147,8 +147,8 @@ class PainelResultados {
   }
 }
 
-class DiametroClasseResumo {
-  const DiametroClasseResumo({
+class ResumoClasseDiametro {
+  const ResumoClasseDiametro({
     required this.iniciarCm,
     required this.fimCm,
     required this.quantidade,
@@ -204,7 +204,7 @@ class RepositorioResultados {
 
   final BancoDendro _bancoDados;
 
-  Stream<OpcoesFiltrosResultados> observarFiltroOpcoes() {
+  Stream<OpcoesFiltrosResultados> observarOpcoesFiltros() {
     final consulta =
         _bancoDados.select(_bancoDados.propriedades).join([
           leftOuterJoin(
@@ -329,10 +329,12 @@ class RepositorioResultados {
       consulta.where(condicoes.reduce((valor, elemento) => valor & elemento));
     }
 
-    return consulta.watch().asyncMap(_dashboardDeLinhas);
+    return consulta.watch().asyncMap(_montarPainelDasLinhas);
   }
 
-  Future<PainelResultados> _dashboardDeLinhas(List<TypedResult> linhas) async {
+  Future<PainelResultados> _montarPainelDasLinhas(
+    List<TypedResult> linhas,
+  ) async {
     final vistosParcelas = <int>{};
     final vistosArvores = <int>{};
     final diametroFaixas = <int, int>{};
@@ -415,7 +417,7 @@ class RepositorioResultados {
       for (final registro
           in diametroFaixas.entries.toList()
             ..sort((a, b) => a.key.compareTo(b.key)))
-        DiametroClasseResumo(
+        ResumoClasseDiametro(
           iniciarCm: registro.key,
           fimCm: registro.key + 4,
           quantidade: registro.value,

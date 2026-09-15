@@ -58,10 +58,10 @@ void main() {
               possuiTroncoTortuoso: false,
             ),
           );
-          if (i == 2) await arvores.marcaParcelaColetada(parcelaId);
+          if (i == 2) await arvores.marcarParcelaColetada(parcelaId);
         }
         final repositorio = RepositorioExportacaoDados(bancoDados);
-        final solicitacao = ExportacaoDadosSolicitacao(
+        final solicitacao = SolicitacaoExportacaoDados(
           levantamentoId: levantamentoTalhoes.first.levantamentoId,
         );
         final selecionado = levantamentoTalhoes.map((s) => s.id).toSet();

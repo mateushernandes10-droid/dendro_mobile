@@ -23,29 +23,29 @@ void main() {
     addTearDown(controlador.dispose);
 
     await controlador.inicializado;
-    await controlador.definirEscuroModo(true);
+    await controlador.definirModoEscuro(true);
 
     expect(controlador.state, ThemeMode.dark);
     expect(armazenamento.escuroModo, isTrue);
 
-    await controlador.definirEscuroModo(false);
+    await controlador.definirModoEscuro(false);
 
     expect(controlador.state, ThemeMode.light);
     expect(armazenamento.escuroModo, isFalse);
   });
 }
 
-class _MemoriaTemaModoArmazenamento implements ArmazenamentoModoTema {
+class _MemoriaTemaModoArmazenamento implements ArmazenamentoPreferenciaTema {
   _MemoriaTemaModoArmazenamento({bool? inicialEscuroModo})
     : escuroModo = inicialEscuroModo;
 
   bool? escuroModo;
 
   @override
-  Future<bool?> carregarEscuroModo() async => escuroModo;
+  Future<bool?> carregarModoEscuro() async => escuroModo;
 
   @override
-  Future<void> salvarEscuroModo(bool habilitado) async {
+  Future<void> salvarModoEscuro(bool habilitado) async {
     escuroModo = habilitado;
   }
 }

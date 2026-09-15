@@ -10,8 +10,10 @@ final provedorRepositorioAjustes = Provider<RepositorioAjustes>((ref) {
   return RepositorioAjustes(ref.watch(provedorBancoDendro));
 });
 
-final provedorAjustesEspecie = StreamProvider.autoDispose<List<Especie>>((ref) {
-  return ref.watch(provedorRepositorioAjustes).observarEspecie();
+final provedorEspeciesAjustes = StreamProvider.autoDispose<List<Especie>>((
+  ref,
+) {
+  return ref.watch(provedorRepositorioAjustes).observarEspecies();
 });
 
 final provedorAjustesModelosMatematicos =
@@ -19,14 +21,14 @@ final provedorAjustesModelosMatematicos =
       return ref.watch(provedorRepositorioAjustes).observarModelosMatematicos();
     });
 
-final provedorAjustesEspecieModelosMatematicos =
+final provedorVinculosEspecieModelo =
     StreamProvider.autoDispose<List<EspecieModelo>>((ref) {
       return ref
           .watch(provedorRepositorioAjustes)
-          .observarEspecieModelosMatematicos();
+          .observarVinculosEspecieModelo();
     });
 
-final provedorAjustesEspecieModeloMatematicoCoeficientes =
+final provedorCoeficientesModeloPorEspecie =
     StreamProvider.autoDispose<List<CoeficienteEspecieModelo>>((ref) {
       return ref
           .watch(provedorRepositorioAjustes)
@@ -45,8 +47,8 @@ class ModeloMatematicoResumo {
   final List<CoeficienteModelo> coeficientes;
 }
 
-class ModeloMatematicoVariavelRascunho {
-  const ModeloMatematicoVariavelRascunho({
+class RascunhoVariavelModelo {
+  const RascunhoVariavelModelo({
     required this.simbolo,
     required this.rotulo,
     required this.unidade,
@@ -69,13 +71,13 @@ class RepositorioAjustes {
     _bancoDados,
   );
 
-  Stream<List<Especie>> observarEspecie() {
+  Stream<List<Especie>> observarEspecies() {
     return (_bancoDados.select(
       _bancoDados.especies,
     )..orderBy([(tabela) => OrderingTerm.asc(tabela.nome)])).watch();
   }
 
-  Stream<List<EspecieModelo>> observarEspecieModelosMatematicos() {
+  Stream<List<EspecieModelo>> observarVinculosEspecieModelo() {
     return _bancoDados.select(_bancoDados.especiesModelos).watch();
   }
 
@@ -208,7 +210,7 @@ class RepositorioAjustes {
     required String nome,
     String? descricao,
     required String expressao,
-    required List<ModeloMatematicoVariavelRascunho> variaveis,
+    required List<RascunhoVariavelModelo> variaveis,
     required List<String> coeficienteSimbolos,
     bool ativo = true,
   }) async {
@@ -231,7 +233,7 @@ class RepositorioAjustes {
           );
 
       await _substituirVariaveis(id, variaveis);
-      await _substituirCoeficienteDefinicoes(id, coeficienteSimbolos);
+      await _substituirDefinicoesCoeficientes(id, coeficienteSimbolos);
 
       await _registroAtividade.registrar(
         tipo: TipoAtividade.modeloMatematicoCriado,
@@ -251,7 +253,7 @@ class RepositorioAjustes {
     required String nome,
     String? descricao,
     required String expressao,
-    required List<ModeloMatematicoVariavelRascunho> variaveis,
+    required List<RascunhoVariavelModelo> variaveis,
     required List<String> coeficienteSimbolos,
     required bool ativo,
   }) {
@@ -271,7 +273,7 @@ class RepositorioAjustes {
       );
 
       await _substituirVariaveis(id, variaveis);
-      await _substituirCoeficienteDefinicoes(id, coeficienteSimbolos);
+      await _substituirDefinicoesCoeficientes(id, coeficienteSimbolos);
 
       await _registroAtividade.registrar(
         tipo: TipoAtividade.modeloMatematicoAtualizado,
@@ -303,7 +305,7 @@ class RepositorioAjustes {
     });
   }
 
-  Future<void> atualizarCoeficienteValores({
+  Future<void> atualizarValoresCoeficientes({
     required int modeloMatematicoId,
     required Map<int, double?> valoresPorCoeficienteId,
   }) {
@@ -329,13 +331,13 @@ class RepositorioAjustes {
     });
   }
 
-  Future<void> atualizarEspecieModeloMatematicoCoeficienteValores({
+  Future<void> atualizarCoeficientesModeloDaEspecie({
     required int especieId,
     required int modeloMatematicoId,
     required Map<String, double?> valoresPorSimbolo,
   }) {
     return _bancoDados.transaction(() async {
-      await _garantirEspecieModeloMatematicoCoeficienteLinhas(
+      await _garantirCoeficientesModeloDaEspecie(
         especieId: especieId,
         modeloMatematicoId: modeloMatematicoId,
       );
@@ -372,7 +374,7 @@ class RepositorioAjustes {
     });
   }
 
-  Future<void> definirEspecieModeloMatematicoVinculado({
+  Future<void> definirVinculoEspecieModelo({
     required int especieId,
     required int modeloMatematicoId,
     required bool vinculado,
@@ -384,11 +386,11 @@ class RepositorioAjustes {
       );
 
       if (vinculado) {
-        await _garantirEspecieModeloMatematicoVinculado(
+        await _garantirVinculoEspecieModelo(
           especieId: especieId,
           modeloMatematicoId: modeloMatematicoId,
         );
-        await _garantirEspecieModeloMatematicoCoeficienteLinhas(
+        await _garantirCoeficientesModeloDaEspecie(
           especieId: especieId,
           modeloMatematicoId: modeloMatematicoId,
         );
@@ -417,7 +419,7 @@ class RepositorioAjustes {
           .go();
 
       if (existente.padrao) {
-        await _garantirEspeciePossuiPadraoModeloMatematico(especieId);
+        await _garantirModeloPadraoDaEspecie(especieId);
       }
 
       await _registroAtividade.registrar(
@@ -433,12 +435,12 @@ class RepositorioAjustes {
     });
   }
 
-  Future<void> definirPadraoModeloMatematicoParaEspecie({
+  Future<void> definirModeloPadraoDaEspecie({
     required int especieId,
     required int modeloMatematicoId,
   }) {
     return _bancoDados.transaction(() async {
-      await _garantirEspecieModeloMatematicoVinculado(
+      await _garantirVinculoEspecieModelo(
         especieId: especieId,
         modeloMatematicoId: modeloMatematicoId,
       );
@@ -491,7 +493,7 @@ class RepositorioAjustes {
 
   Future<void> _substituirVariaveis(
     int modeloMatematicoId,
-    List<ModeloMatematicoVariavelRascunho> variaveis,
+    List<RascunhoVariavelModelo> variaveis,
   ) async {
     await (_bancoDados.delete(_bancoDados.variaveisModelo)..where(
           (tabela) => tabela.modeloMatematicoId.equals(modeloMatematicoId),
@@ -514,7 +516,7 @@ class RepositorioAjustes {
     }
   }
 
-  Future<void> _substituirCoeficienteDefinicoes(
+  Future<void> _substituirDefinicoesCoeficientes(
     int modeloMatematicoId,
     List<String> simbolos,
   ) async {
@@ -596,7 +598,7 @@ class RepositorioAjustes {
     return '${modeloMatematico?.nome ?? 'Modelo'} - ${especie?.nome ?? 'Especie'}';
   }
 
-  Future<bool> _especiePossuiPadraoModeloMatematico(int especieId) async {
+  Future<bool> _especiePossuiModeloPadrao(int especieId) async {
     final linha =
         await (_bancoDados.select(_bancoDados.especiesModelos)
               ..where(
@@ -624,7 +626,7 @@ class RepositorioAjustes {
         .getSingleOrNull();
   }
 
-  Future<void> _garantirEspecieModeloMatematicoVinculado({
+  Future<void> _garantirVinculoEspecieModelo({
     required int especieId,
     required int modeloMatematicoId,
   }) async {
@@ -634,7 +636,7 @@ class RepositorioAjustes {
     );
     if (existente != null) return;
 
-    final possuiPadrao = await _especiePossuiPadraoModeloMatematico(especieId);
+    final possuiPadrao = await _especiePossuiModeloPadrao(especieId);
     await _bancoDados
         .into(_bancoDados.especiesModelos)
         .insert(
@@ -676,7 +678,7 @@ class RepositorioAjustes {
             .get();
 
     for (final vinculo in vinculos) {
-      await _garantirEspecieModeloMatematicoCoeficienteLinhas(
+      await _garantirCoeficientesModeloDaEspecie(
         especieId: vinculo.especieId,
         modeloMatematicoId: modeloMatematicoId,
         definicoes: definicoes,
@@ -684,7 +686,7 @@ class RepositorioAjustes {
     }
   }
 
-  Future<void> _garantirEspecieModeloMatematicoCoeficienteLinhas({
+  Future<void> _garantirCoeficientesModeloDaEspecie({
     required int especieId,
     required int modeloMatematicoId,
     List<CoeficienteModelo>? definicoes,
@@ -755,9 +757,7 @@ class RepositorioAjustes {
     }
   }
 
-  Future<void> _garantirEspeciePossuiPadraoModeloMatematico(
-    int especieId,
-  ) async {
+  Future<void> _garantirModeloPadraoDaEspecie(int especieId) async {
     final modelosMatematicos =
         await (_bancoDados.select(_bancoDados.especiesModelos)
               ..where((tabela) => tabela.especieId.equals(especieId))

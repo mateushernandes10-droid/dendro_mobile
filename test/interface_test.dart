@@ -121,7 +121,7 @@ void main() {
         municipio: 'Alegria',
         areaTotalHa: 20,
       );
-      final especies = await repositorioTalhoes.observarAtivoEspecie().first;
+      final especies = await repositorioTalhoes.observarEspeciesAtivas().first;
       final pinus = especies.firstWhere((item) => item.nome == 'Pinus');
       final talhaoId = await repositorioTalhoes.criar(
         propriedadeId: propriedadeId,
@@ -177,7 +177,7 @@ void main() {
         municipio: 'Vacaria',
         areaTotalHa: 40,
       );
-      final especies = await repositorioTalhoes.observarAtivoEspecie().first;
+      final especies = await repositorioTalhoes.observarEspeciesAtivas().first;
       final pinus = especies.firstWhere((item) => item.nome == 'Pinus');
 
       final primeiroTalhaoId = await repositorioTalhoes.criar(
@@ -289,7 +289,7 @@ void main() {
         municipio: 'Alegria',
         areaTotalHa: 20,
       );
-      final especies = await repositorioTalhoes.observarAtivoEspecie().first;
+      final especies = await repositorioTalhoes.observarEspeciesAtivas().first;
       final pinus = especies.firstWhere((item) => item.nome == 'Pinus');
       final talhaoId = await repositorioTalhoes.criar(
         propriedadeId: propriedadeId,
@@ -401,7 +401,7 @@ void main() {
       final repositorioPropriedades = RepositorioPropriedades(bancoDados);
       final repositorioTalhoes = RepositorioTalhoes(bancoDados);
 
-      await repositorioAjustes.definirEspecieModeloMatematicoVinculado(
+      await repositorioAjustes.definirVinculoEspecieModelo(
         especieId: (await bancoDados.select(bancoDados.especies).get())
             .singleWhere((e) => e.codigo == 'species_pinus')
             .id,

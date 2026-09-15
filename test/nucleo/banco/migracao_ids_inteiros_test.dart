@@ -154,8 +154,9 @@ void main() {
         for (final indice
             in await banco.customSelect('PRAGMA index_list("$tabela")').get()) {
           if (indice.read<int>('unique') == 0 ||
-              indice.read<String>('origin') == 'pk')
+              indice.read<String>('origin') == 'pk') {
             continue;
+          }
           final nomes =
               (await banco
                       .customSelect(

@@ -1,6 +1,6 @@
 # Modelos de engenharia da versão implementada
 
-Revisão em 13/09/2026, versão refatorada em português (base 82f29e2). Substitui os diagramas conceituais anteriores. Fontes editáveis estão em diagrams/. Os diagramas representam código e persistência atuais; não certificam validação científica ou ensaios com usuários.
+Revisão em 14/09/2026, versão v11 com IDs inteiros. Substitui os diagramas conceituais anteriores. Fontes editáveis estão em diagrams/. Os diagramas representam código e persistência atuais; não certificam validação científica ou ensaios com usuários.
 
 ## 1. Atores e funções
 

@@ -69,8 +69,9 @@ class TelaParcelasTalhao extends ConsumerWidget {
                 _confirmarExcluirParcela(context, ref, dados, resumo),
           ),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (erro, pilhaTrace) =>
-              _CarregarErro(aoTentarNovamente: () => _invalidarParcelas(ref)),
+          error: (erro, pilhaTrace) => _ErroCarregamento(
+            aoTentarNovamente: () => _invalidarParcelas(ref),
+          ),
         ),
       ),
     );
@@ -79,7 +80,7 @@ class TelaParcelasTalhao extends ConsumerWidget {
   Future<void> _confirmarConcluirLevantamento(
     BuildContext context,
     WidgetRef ref,
-    TalhaoParcelasEstado estado,
+    EstadoParcelasTalhao estado,
   ) async {
     final levantamento = estado.atualLevantamento;
     if (levantamento == null ||
@@ -127,8 +128,8 @@ class TelaParcelasTalhao extends ConsumerWidget {
       await ref
           .read(provedorRepositorioLevantamentos)
           .concluirLevantamento(levantamento.id);
-      ref.invalidate(provedorAtivoLevantamentos);
-      ref.invalidate(provedorAtivoLevantamento);
+      ref.invalidate(provedorLevantamentosAtivos);
+      ref.invalidate(provedorLevantamentoAtivo);
       ref.invalidate(provedorLevantamentoDetalhe(levantamento.id));
       _invalidarParcelas(ref);
 
@@ -150,7 +151,7 @@ class TelaParcelasTalhao extends ConsumerWidget {
   Future<void> _iniciarLevantamento(
     BuildContext context,
     WidgetRef ref,
-    TalhaoParcelasEstado estado,
+    EstadoParcelasTalhao estado,
   ) async {
     final ativoTalhao = estado.ativoTalhaoLevantamento;
     if (ativoTalhao != null) {
@@ -163,15 +164,15 @@ class TelaParcelasTalhao extends ConsumerWidget {
       final talhaoLevantamento = await ref
           .read(provedorRepositorioParcelas)
           .iniciarNovoLevantamentoParaTalhao(talhaoId);
-      ref.invalidate(provedorAtivoLevantamentos);
-      ref.invalidate(provedorAtivoLevantamento);
+      ref.invalidate(provedorLevantamentosAtivos);
+      ref.invalidate(provedorLevantamentoAtivo);
       _invalidarParcelas(ref);
       if (!context.mounted) return;
       await _abrirLevantamento(context, talhaoLevantamento.levantamentoId);
       return;
-    } on AtivoLevantamentoParaTalhaoExcecao catch (erro) {
-      ref.invalidate(provedorAtivoLevantamentos);
-      ref.invalidate(provedorAtivoLevantamento);
+    } on ExcecaoLevantamentoAtivoNoTalhao catch (erro) {
+      ref.invalidate(provedorLevantamentosAtivos);
+      ref.invalidate(provedorLevantamentoAtivo);
 
       if (!context.mounted) return;
       await _abrirLevantamento(context, erro.existente.levantamentoId);
@@ -196,7 +197,7 @@ class TelaParcelasTalhao extends ConsumerWidget {
     );
   }
 
-  void _abrirResultados(BuildContext context, TalhaoParcelasEstado estado) {
+  void _abrirResultados(BuildContext context, EstadoParcelasTalhao estado) {
     NavegacaoEstruturaDendro.de(context).abrirResultados(
       propriedadeId: estado.talhao.propriedadeId,
       talhaoIds: {estado.talhao.id},
@@ -229,7 +230,7 @@ class TelaParcelasTalhao extends ConsumerWidget {
   ) async {
     final repositorio = ref.read(provedorRepositorioParcelas);
     final arvores = await repositorio.arvoresParaParcela(resumo.parcela.id);
-    final pontos = await repositorio.geograficoPontosParaParcela(
+    final pontos = await repositorio.pontosGeograficosDaParcela(
       resumo.parcela.id,
     );
 
@@ -250,7 +251,7 @@ class TelaParcelasTalhao extends ConsumerWidget {
   Future<void> _abrirParcelaFormulario(
     BuildContext context,
     WidgetRef ref,
-    TalhaoParcelasEstado estado, {
+    EstadoParcelasTalhao estado, {
     ParcelaResumo? resumo,
   }) {
     return showModalBottomSheet<void>(
@@ -269,7 +270,7 @@ class TelaParcelasTalhao extends ConsumerWidget {
   Future<void> _confirmarExcluirParcela(
     BuildContext context,
     WidgetRef ref,
-    TalhaoParcelasEstado estado,
+    EstadoParcelasTalhao estado,
     ParcelaResumo resumo,
   ) async {
     final parcela = resumo.parcela;
@@ -332,7 +333,7 @@ class _ParcelasCorpo extends StatelessWidget {
     required this.aoExcluirParcela,
   });
 
-  final TalhaoParcelasEstado estado;
+  final EstadoParcelasTalhao estado;
   final bool mostrarIniciarLevantamentoAcao;
   final VoidCallback aoAdicionar;
   final VoidCallback aoIniciarLevantamento;
@@ -378,7 +379,7 @@ class _ParcelasCorpo extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 18),
-        const SecaoTitulo(titulo: 'Parcelas'),
+        const TituloSecao(titulo: 'Parcelas'),
         if (estado.parcelas.isEmpty)
           _VazioParcelasCartao(aoAdicionar: aoAdicionar)
         else
@@ -401,7 +402,7 @@ class _TalhaoResumoCartao extends StatelessWidget {
     this.aoConcluirLevantamento,
   });
 
-  final TalhaoParcelasEstado estado;
+  final EstadoParcelasTalhao estado;
   final VoidCallback aoAbrirResultados;
   final VoidCallback? aoConcluirLevantamento;
 
@@ -704,7 +705,7 @@ class _ParcelaSituacaoIndicador extends StatelessWidget {
   Widget build(BuildContext context) {
     final estaEscuro = cores.fundo == CoresDendro.principal;
 
-    return SituacaoIndicador(
+    return IndicadorSituacao(
       rotulo: rotulo,
       cor: estaEscuro ? Colors.white.withValues(alpha: 0.16) : cores.iconFundo,
       textoCor: estaEscuro ? Colors.white : cores.iconCor,
@@ -796,7 +797,7 @@ class _ParcelaFormularioPainel extends ConsumerStatefulWidget {
 
   final int talhaoId;
   final int? talhaoLevantamentoId;
-  final TalhaoParcelasEstado estado;
+  final EstadoParcelasTalhao estado;
   final ParcelaResumo? resumo;
 
   @override
@@ -818,7 +819,7 @@ class _ParcelaFormularioPainelEstado
     super.initState();
     final parcela = widget.resumo?.parcela;
     _identificacaoControlador = TextEditingController(
-      text: parcela?.identificacao ?? widget.estado.proximoParcelaIdentificacao,
+      text: parcela?.identificacao ?? widget.estado.proximaIdentificacaoParcela,
     );
     _areaControlador = TextEditingController(
       text: parcela?.areaHa == null ? '' : _formatoArea(parcela!.areaHa!),
@@ -922,7 +923,7 @@ class _ParcelaFormularioPainelEstado
 
     try {
       if (_estaEditando) {
-        await repositorio.atualizarParcelaArea(
+        await repositorio.atualizarAreaParcela(
           id: widget.resumo!.parcela.id,
           areaHa: areaHa,
         );
@@ -932,7 +933,7 @@ class _ParcelaFormularioPainelEstado
           areaHa: areaHa,
         );
       } else {
-        await repositorio.criarPlanejadoParcela(
+        await repositorio.criarParcelaPlanejada(
           talhaoId: widget.talhaoId,
           areaHa: areaHa,
         );
@@ -1006,7 +1007,7 @@ class _ParcelaDetalhesPainel extends StatelessWidget {
                   ),
                 ),
               ),
-              SituacaoIndicador(
+              IndicadorSituacao(
                 rotulo: _situacaoRotulo(
                   parcela.situacao,
                   resumo.levantamento.situacao,
@@ -1018,7 +1019,7 @@ class _ParcelaDetalhesPainel extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: IndicadorBloco(
+                child: BlocoIndicador(
                   rotulo: 'Árvores',
                   valor: arvores.length.toString(),
                   icone: Icons.forest,
@@ -1026,7 +1027,7 @@ class _ParcelaDetalhesPainel extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: IndicadorBloco(
+                child: BlocoIndicador(
                   rotulo: 'Pontos GPS',
                   valor: pontos.length.toString(),
                   icone: Icons.add_location_alt,
@@ -1044,7 +1045,7 @@ class _ParcelaDetalhesPainel extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 18),
-          const SecaoTitulo(titulo: 'Árvores registradas'),
+          const TituloSecao(titulo: 'Árvores registradas'),
           if (arvores.isEmpty)
             const CartaoDendro(
               filho: Text(
@@ -1056,9 +1057,9 @@ class _ParcelaDetalhesPainel extends StatelessWidget {
               ),
             )
           else
-            for (final arvore in arvores) _ArvoreLerSomenteItem(arvore: arvore),
+            for (final arvore in arvores) _ItemConsultaArvore(arvore: arvore),
           const SizedBox(height: 18),
-          const SecaoTitulo(titulo: 'Pontos GPS'),
+          const TituloSecao(titulo: 'Pontos GPS'),
           if (pontos.isEmpty)
             const CartaoDendro(
               filho: Text(
@@ -1071,15 +1072,15 @@ class _ParcelaDetalhesPainel extends StatelessWidget {
             )
           else
             for (final ponto in pontos)
-              _GeograficoPontoLerSomenteItem(ponto: ponto),
+              _ItemConsultaPontoGeografico(ponto: ponto),
         ],
       ),
     );
   }
 }
 
-class _ArvoreLerSomenteItem extends StatelessWidget {
-  const _ArvoreLerSomenteItem({required this.arvore});
+class _ItemConsultaArvore extends StatelessWidget {
+  const _ItemConsultaArvore({required this.arvore});
 
   final Arvore arvore;
 
@@ -1133,8 +1134,8 @@ class _ArvoreLerSomenteItem extends StatelessWidget {
   }
 }
 
-class _GeograficoPontoLerSomenteItem extends StatelessWidget {
-  const _GeograficoPontoLerSomenteItem({required this.ponto});
+class _ItemConsultaPontoGeografico extends StatelessWidget {
+  const _ItemConsultaPontoGeografico({required this.ponto});
 
   final PontoGeograficoParcela ponto;
 
@@ -1195,8 +1196,8 @@ class _GeograficoPontoLerSomenteItem extends StatelessWidget {
   }
 }
 
-class _CarregarErro extends StatelessWidget {
-  const _CarregarErro({required this.aoTentarNovamente});
+class _ErroCarregamento extends StatelessWidget {
+  const _ErroCarregamento({required this.aoTentarNovamente});
 
   final VoidCallback aoTentarNovamente;
 
@@ -1331,7 +1332,7 @@ String _situacaoRotulo(
   }
 }
 
-String _concluirLevantamentoMensagem(TalhaoParcelasEstado estado) {
+String _concluirLevantamentoMensagem(EstadoParcelasTalhao estado) {
   if (estado.totalParcelas == 0) {
     return 'Esse levantamento ainda não possui parcelas cadastradas. Deseja encerrar mesmo assim?';
   }

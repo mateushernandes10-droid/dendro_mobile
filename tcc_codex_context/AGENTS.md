@@ -3,7 +3,7 @@
 ## Projeto
 Aplicação mobile para apoio à coleta, armazenamento e análise de dados de inventário florestal em florestas plantadas de **Pinus** e **Eucalyptus**, com foco inicial no **Rio Grande do Sul**.
 
-## Estado vigente — revisão de 13/09/2026
+## Estado vigente — revisão de 14/09/2026
 
 O usuário autorizou uma refatoração de nomenclatura para português e substituição das chaves textuais por IDs inteiros autoincrementados, sem alterar regras, cálculos ou funcionalidades. D-045 em docs/DECISIONS.md e os documentos revisados descrevem o estado real. Não implementar pendências funcionais por inferência. Decisões anteriores e referências visuais são histórico/projeto, não prova de funcionalidade.
 O banco está na versão 11, com 15 tabelas. Cálculos implementados: Spurr, Schumacher-Hall e Fator de Forma. Cadastro de expressões existe, mas não há parser genérico. Estimativa econômica e KMZ não foram implementados. Não acrescentar esses itens aos diagramas como entregues.

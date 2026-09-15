@@ -17,10 +17,10 @@ class TelaAjustes extends StatelessWidget {
       titulo: 'Ajustes',
       icone: Icons.settings,
       filhos: [
-        const SecaoTitulo(titulo: 'Preferências'),
+        const TituloSecao(titulo: 'Preferências'),
         const _TemaModoCartao(),
         const SizedBox(height: 18),
-        const SecaoTitulo(titulo: 'Cadastros'),
+        const TituloSecao(titulo: 'Cadastros'),
         _AjustesOpcaoBloco(
           icone: Icons.eco_outlined,
           titulo: 'Cadastro de espécies',
@@ -56,15 +56,15 @@ class _TelaEspecieAjustes extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final especieAsync = ref.watch(provedorAjustesEspecie);
+    final especieAsync = ref.watch(provedorEspeciesAjustes);
     final modelosMatematicosAsync = ref.watch(
       provedorAjustesModelosMatematicos,
     );
     final especieModelosMatematicosAsync = ref.watch(
-      provedorAjustesEspecieModelosMatematicos,
+      provedorVinculosEspecieModelo,
     );
     final especieModeloMatematicoCoeficientesAsync = ref.watch(
-      provedorAjustesEspecieModeloMatematicoCoeficientes,
+      provedorCoeficientesModeloPorEspecie,
     );
 
     return TelaDendro(
@@ -77,7 +77,7 @@ class _TelaEspecieAjustes extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       filhos: [
-        const SecaoTitulo(titulo: 'Espécies cadastradas'),
+        const TituloSecao(titulo: 'Espécies cadastradas'),
         _CatalogoEstado(
           asyncValores: [
             especieAsync,
@@ -86,10 +86,10 @@ class _TelaEspecieAjustes extends ConsumerWidget {
             especieModeloMatematicoCoeficientesAsync,
           ],
           aoTentarNovamente: () {
-            ref.invalidate(provedorAjustesEspecie);
+            ref.invalidate(provedorEspeciesAjustes);
             ref.invalidate(provedorAjustesModelosMatematicos);
-            ref.invalidate(provedorAjustesEspecieModelosMatematicos);
-            ref.invalidate(provedorAjustesEspecieModeloMatematicoCoeficientes);
+            ref.invalidate(provedorVinculosEspecieModelo);
+            ref.invalidate(provedorCoeficientesModeloPorEspecie);
           },
           construtor: () {
             final especies = especieAsync.value ?? const <Especie>[];
@@ -163,7 +163,7 @@ class _TelaModeloMatematicoAjustes extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       filhos: [
-        const SecaoTitulo(titulo: 'Fórmulas cadastradas'),
+        const TituloSecao(titulo: 'Fórmulas cadastradas'),
         modelosMatematicosAsync.when(
           data: (modelosMatematicos) {
             if (modelosMatematicos.isEmpty) {
@@ -431,7 +431,7 @@ class _TemaModoCartao extends ConsumerWidget {
             try {
               await ref
                   .read(provedorControladorTema.notifier)
-                  .definirEscuroModo(habilitado);
+                  .definirModoEscuro(habilitado);
               if (!context.mounted) return;
               _mostrarAviso(
                 context,
@@ -504,7 +504,7 @@ class _EspecieCartao extends ConsumerWidget {
                 ),
               ),
             ),
-            SituacaoIndicador(
+            IndicadorSituacao(
               rotulo: especie.ativo ? 'Ativa' : 'Inativa',
               cor: especie.ativo
                   ? CoresDendro.principalSuave
@@ -599,7 +599,7 @@ class _EspecieCartao extends ConsumerWidget {
                   try {
                     await ref
                         .read(provedorRepositorioAjustes)
-                        .definirEspecieModeloMatematicoVinculado(
+                        .definirVinculoEspecieModelo(
                           especieId: especie.id,
                           modeloMatematicoId:
                               modeloMatematico.modeloMatematico.id,
@@ -618,7 +618,7 @@ class _EspecieCartao extends ConsumerWidget {
                   try {
                     await ref
                         .read(provedorRepositorioAjustes)
-                        .definirPadraoModeloMatematicoParaEspecie(
+                        .definirModeloPadraoDaEspecie(
                           especieId: especie.id,
                           modeloMatematicoId:
                               modeloMatematico.modeloMatematico.id,
@@ -673,14 +673,14 @@ class _EspecieModeloMatematicoLinhaEstado
   @override
   void initState() {
     super.initState();
-    _sincronizarControllers();
+    _sincronizarControladores();
   }
 
   @override
   void didUpdateWidget(covariant _EspecieModeloMatematicoLinha antigoWidget) {
     super.didUpdateWidget(antigoWidget);
     if (!_vinculado) _expandido = false;
-    _sincronizarControllers();
+    _sincronizarControladores();
   }
 
   @override
@@ -805,7 +805,7 @@ class _EspecieModeloMatematicoLinhaEstado
     );
   }
 
-  void _sincronizarControllers() {
+  void _sincronizarControladores() {
     final simbolos = widget.resumo.coeficientes
         .map((item) => item.simbolo)
         .toSet();
@@ -862,7 +862,7 @@ class _EspecieModeloMatematicoLinhaEstado
     try {
       await ref
           .read(provedorRepositorioAjustes)
-          .atualizarEspecieModeloMatematicoCoeficienteValores(
+          .atualizarCoeficientesModeloDaEspecie(
             especieId: widget.especieId,
             modeloMatematicoId: widget.resumo.modeloMatematico.id,
             valoresPorSimbolo: values,
@@ -995,7 +995,7 @@ class _ModeloMatematicoCartao extends StatelessWidget {
                 ),
               ),
             ),
-            SituacaoIndicador(
+            IndicadorSituacao(
               rotulo: modeloMatematico.ativo ? 'Ativo' : 'Inativo',
               cor: modeloMatematico.ativo
                   ? CoresDendro.principalSuave
@@ -1100,7 +1100,7 @@ class _VariaveisModelo extends StatelessWidget {
         runSpacing: 8,
         children: [
           for (final variavel in variaveis)
-            SituacaoIndicador(
+            IndicadorSituacao(
               rotulo:
                   '${variavel.simbolo} - ${variavel.rotulo} (${variavel.unidade})',
               cor: const Color(0xFFF3F4F3),
@@ -1143,7 +1143,7 @@ class _ModeloMatematicoCoeficienteSimbolos extends StatelessWidget {
           runSpacing: 8,
           children: [
             for (final coeficiente in coeficientes)
-              SituacaoIndicador(
+              IndicadorSituacao(
                 rotulo: '${coeficiente.simbolo} - ${coeficiente.rotulo}',
                 cor: const Color(0xFFF3F4F3),
                 textoCor: CoresDendro.texto,
@@ -1228,7 +1228,7 @@ class _EspecieFormularioPainelEstado
                   labelText: 'Nome da espécie',
                   prefixIcon: Icon(Icons.eco_outlined),
                 ),
-                validator: _obrigatorioValidator,
+                validator: _validarCampoObrigatorio,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -1407,7 +1407,7 @@ class _ModeloMatematicoFormularioPainelEstado
                   labelText: 'Nome do modelo',
                   prefixIcon: Icon(Icons.functions),
                 ),
-                validator: _obrigatorioValidator,
+                validator: _validarCampoObrigatorio,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -1418,7 +1418,7 @@ class _ModeloMatematicoFormularioPainelEstado
                   hintText: 'Ex.: a + b * (D^2 * H)',
                   prefixIcon: Icon(Icons.calculate_outlined),
                 ),
-                validator: _obrigatorioValidator,
+                validator: _validarCampoObrigatorio,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -1759,8 +1759,8 @@ class _VariavelDefinicao {
   final String unidade;
   final String origemValor;
 
-  ModeloMatematicoVariavelRascunho paraRascunho() {
-    return ModeloMatematicoVariavelRascunho(
+  RascunhoVariavelModelo paraRascunho() {
+    return RascunhoVariavelModelo(
       simbolo: simbolo,
       rotulo: rotulo,
       unidade: unidade,
@@ -1827,7 +1827,7 @@ String _especieSubtitulo(Especie especie) {
   return 'Sem observação cadastrada';
 }
 
-String? _obrigatorioValidator(String? valor) {
+String? _validarCampoObrigatorio(String? valor) {
   if (valor == null || valor.trim().isEmpty) {
     return 'Campo obrigatório';
   }

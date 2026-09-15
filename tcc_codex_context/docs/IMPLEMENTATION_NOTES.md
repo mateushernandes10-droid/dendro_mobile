@@ -1,6 +1,6 @@
 # Estado da implementação e evidências
 
-Revisão em 13/09/2026: schema v11, com IDs inteiros autoincrementados e FKs inteiras. A migração preserva dados e relacionamentos. Consultar REFATORACAO_IDS_INTEIROS.md para os arquivos e verificações desta etapa; REFATORACAO_NOMENCLATURA.md é o relatório histórico da v10.
+Revisão em 14/09/2026: schema v11, com IDs inteiros autoincrementados e FKs inteiras. A migração preserva dados e relacionamentos. Consultar REFATORACAO_IDS_INTEIROS.md para os arquivos e verificações desta etapa; REFATORACAO_NOMENCLATURA.md é o relatório histórico da v10.
 
 ## Implementação disponível
 
@@ -66,3 +66,7 @@ DECISIONS.md preserva decisões históricas: ler primeiro D-045. BRANDING.md e U
 ## Identificadores — schema v11
 
 As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a PK composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional: os padrões conservam seus códigos estáveis; cadastros personalizados não precisam gerar códigos nem UUID. As regras de escolha de modelos usam codigo, sem alterar expressões ou coeficientes. registros_atividade usa entidade_id inteiro opcional, sem FK polimórfica; referencia_legada conserva apenas referências antigas sem entidade correspondente. São 15 tabelas e 115 colunas.
+
+## Revisão de legibilidade dos nomes
+
+Em 14/09/2026, foram revisados nomes próprios com ordem de palavras pouco natural ou termos misturados com inglês. O schema continua 11 e não houve alterações funcionais. Consultar REVISAO_NOMES.md e D-046 para os nomes adotados e a verificação desta etapa.

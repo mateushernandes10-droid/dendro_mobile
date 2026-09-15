@@ -42,7 +42,7 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
 
   @override
   Widget build(BuildContext context) {
-    final solicitacao = ExportacaoDadosSolicitacao(
+    final solicitacao = SolicitacaoExportacaoDados(
       propriedadeId: _propriedadeId,
       levantamentoId: widget.levantamentoId,
       especieId: widget.especieId,
@@ -83,7 +83,7 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
                     aoAlterado: _alterarPropriedade,
                   ),
                 if (widget.levantamentoId == null) const SizedBox(height: 14),
-                const SecaoTitulo(titulo: 'Formato do arquivo'),
+                const TituloSecao(titulo: 'Formato do arquivo'),
                 for (final formato in FormatoExportacaoDados.values) ...[
                   _ExportacaoFormatoBloco(
                     formato: formato,
@@ -93,7 +93,7 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
                   const SizedBox(height: 8),
                 ],
                 const SizedBox(height: 12),
-                SecaoTitulo(
+                TituloSecao(
                   titulo: 'Seleção de dados',
                   complemento: estado.talhoes.isEmpty
                       ? null
@@ -244,7 +244,7 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
     });
   }
 
-  void _toggleTodosTalhoes(List<ExportacaoDadosTalhaoOpcao> talhoes) {
+  void _toggleTodosTalhoes(List<OpcaoTalhaoExportacao> talhoes) {
     final todosIds = {
       for (final talhao in talhoes) talhao.talhaoLevantamento.id,
     };
@@ -278,7 +278,7 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
     setState(() => _atualAcao = acao);
 
     try {
-      final solicitacao = ExportacaoDadosSolicitacao(
+      final solicitacao = SolicitacaoExportacaoDados(
         propriedadeId: _propriedadeId,
         levantamentoId: widget.levantamentoId,
         especieId: widget.especieId,
@@ -304,7 +304,7 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
           return;
         }
 
-        await repositorio.registroExportacao(
+        await repositorio.registrarExportacao(
           formatos: [_formato.rotulo],
           propriedade: propriedade,
           talhaoQuantidade: selecionadoTalhaoIds.length,
@@ -329,7 +329,7 @@ class _ExportacaoDadosTelaEstado extends ConsumerState<TelaExportacaoDados> {
       if (!mounted) return;
       if (resultado.status == ShareResultStatus.success ||
           resultado.status == ShareResultStatus.unavailable) {
-        await repositorio.registroExportacao(
+        await repositorio.registrarExportacao(
           formatos: [_formato.rotulo],
           propriedade: propriedade,
           talhaoQuantidade: selecionadoTalhaoIds.length,
@@ -445,7 +445,7 @@ class _ExportacaoIntroducaoCartao extends StatelessWidget {
           ),
           if (levantamento != null) ...[
             const SizedBox(height: 8),
-            SituacaoIndicador(
+            IndicadorSituacao(
               rotulo: 'Levantamento ${_formatoData(levantamento!.iniciadoEm)}',
             ),
           ],
@@ -578,7 +578,7 @@ class _ExportacaoTalhaoBloco extends StatelessWidget {
     required this.aoAlterado,
   });
 
-  final ExportacaoDadosTalhaoOpcao opcao;
+  final OpcaoTalhaoExportacao opcao;
   final bool selecionado;
   final ValueChanged<bool> aoAlterado;
 
@@ -634,7 +634,7 @@ class _ExportacaoTalhaoBloco extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            SituacaoIndicador(
+            IndicadorSituacao(
               rotulo:
                   '${opcao.coletadaParcelaQuantidade}/${opcao.parcelaQuantidade == 0 ? '-' : opcao.parcelaQuantidade}',
             ),

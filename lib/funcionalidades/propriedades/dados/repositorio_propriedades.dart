@@ -11,22 +11,22 @@ final provedorRepositorioPropriedades = Provider<RepositorioPropriedades>((
   return RepositorioPropriedades(ref.watch(provedorBancoDendro));
 });
 
-final provedorPropriedadeBuscaConsulta = StateProvider.autoDispose<String>((
+final provedorConsultaBuscaPropriedades = StateProvider.autoDispose<String>((
   ref,
 ) {
   return '';
 });
 
-final provedorPropriedadeAvancadoFiltros =
-    StateProvider.autoDispose<PropriedadeAvancadoFiltros>((ref) {
-      return const PropriedadeAvancadoFiltros();
+final provedorFiltrosAvancadosPropriedades =
+    StateProvider.autoDispose<FiltrosAvancadosPropriedades>((ref) {
+      return const FiltrosAvancadosPropriedades();
     });
 
-final provedorPropriedadeResumos =
+final provedorResumosPropriedades =
     StreamProvider.autoDispose<List<PropriedadeResumo>>((ref) {
       final repositorio = ref.watch(provedorRepositorioPropriedades);
-      final buscaConsulta = ref.watch(provedorPropriedadeBuscaConsulta);
-      final filtros = ref.watch(provedorPropriedadeAvancadoFiltros);
+      final buscaConsulta = ref.watch(provedorConsultaBuscaPropriedades);
+      final filtros = ref.watch(provedorFiltrosAvancadosPropriedades);
 
       return repositorio.observarResumos(
         buscaConsulta: buscaConsulta,
@@ -34,8 +34,8 @@ final provedorPropriedadeResumos =
       );
     });
 
-class PropriedadeAvancadoFiltros {
-  const PropriedadeAvancadoFiltros({
+class FiltrosAvancadosPropriedades {
+  const FiltrosAvancadosPropriedades({
     this.municipio = '',
     this.minimoAreaHa,
     this.maximoAreaHa,
@@ -82,7 +82,7 @@ class RepositorioPropriedades {
 
   Stream<List<PropriedadeResumo>> observarResumos({
     String buscaConsulta = '',
-    PropriedadeAvancadoFiltros filtros = const PropriedadeAvancadoFiltros(),
+    FiltrosAvancadosPropriedades filtros = const FiltrosAvancadosPropriedades(),
   }) {
     final normalizadoConsulta = buscaConsulta.trim();
     final municipio = filtros.municipio.trim();
@@ -139,7 +139,7 @@ class RepositorioPropriedades {
     });
   }
 
-  Future<List<Propriedade>> buscaPorNome(String consulta) {
+  Future<List<Propriedade>> buscarPorNome(String consulta) {
     final normalizadoConsulta = consulta.trim();
 
     final instrucaoSql = _bancoDados.select(_bancoDados.propriedades)

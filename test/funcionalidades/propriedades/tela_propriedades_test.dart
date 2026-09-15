@@ -67,14 +67,14 @@ class _RepositorioSimuladoPropriedades implements RepositorioPropriedades {
   @override
   Stream<List<PropriedadeResumo>> observarResumos({
     String buscaConsulta = '',
-    PropriedadeAvancadoFiltros filtros = const PropriedadeAvancadoFiltros(),
+    FiltrosAvancadosPropriedades filtros = const FiltrosAvancadosPropriedades(),
   }) async* {
     yield _resumos(buscaConsulta, filtros);
     yield* _alteracoes.stream.map((_) => _resumos(buscaConsulta, filtros));
   }
 
   @override
-  Future<List<Propriedade>> buscaPorNome(String consulta) async {
+  Future<List<Propriedade>> buscarPorNome(String consulta) async {
     return _filtrado(consulta);
   }
 
@@ -157,7 +157,7 @@ class _RepositorioSimuladoPropriedades implements RepositorioPropriedades {
 
   List<PropriedadeResumo> _resumos(
     String consulta,
-    PropriedadeAvancadoFiltros filtros,
+    FiltrosAvancadosPropriedades filtros,
   ) {
     return _filtrado(consulta, filtros)
         .map(
@@ -172,7 +172,7 @@ class _RepositorioSimuladoPropriedades implements RepositorioPropriedades {
 
   List<Propriedade> _filtrado(
     String consulta, [
-    PropriedadeAvancadoFiltros filtros = const PropriedadeAvancadoFiltros(),
+    FiltrosAvancadosPropriedades filtros = const FiltrosAvancadosPropriedades(),
   ]) {
     final normalizadoConsulta = consulta.trim().toLowerCase();
     final municipio = filtros.municipio.trim().toLowerCase();

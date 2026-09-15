@@ -35,7 +35,7 @@ class EstadoColetaArvores {
 
   int get arvoreQuantidade => arvores.length;
 
-  int get proximoArvoreNumero {
+  int get proximoNumeroArvore {
     if (arvores.isEmpty) return 1;
     return arvores
             .map((arvore) => arvore.numero)
@@ -88,7 +88,7 @@ class RepositorioArvores {
       ..orderBy([(tabela) => OrderingTerm.asc(tabela.numero)]);
 
     return arvoresConsulta.watch().asyncMap((arvores) async {
-      final context = await _lerColetaContexto(parcelaId);
+      final context = await _lerContextoColeta(parcelaId);
       final geograficoPontos =
           await (_bancoDados.select(_bancoDados.pontosGeograficosParcela)
                 ..where((tabela) => tabela.parcelaId.equals(parcelaId))
@@ -113,11 +113,11 @@ class RepositorioArvores {
   }) async {
     late final int id;
     final agora = DateTime.now();
-    final numero = await proximoArvoreNumero(parcelaId);
+    final numero = await proximoNumeroArvore(parcelaId);
 
     await _bancoDados.transaction(() async {
       if (rascunho.posicaoReferenciaParcela != null) {
-        await _limparReferenciaPosicaoDeArvores(
+        await _limparPosicaoReferenciaDasArvores(
           parcelaId: parcelaId,
           posicaoReferencia: rascunho.posicaoReferenciaParcela!,
         );
@@ -159,7 +159,7 @@ class RepositorioArvores {
 
     await _bancoDados.transaction(() async {
       if (rascunho.posicaoReferenciaParcela != null) {
-        await _limparReferenciaPosicaoDeArvores(
+        await _limparPosicaoReferenciaDasArvores(
           parcelaId: arvore.parcelaId,
           posicaoReferencia: rascunho.posicaoReferenciaParcela!,
         );
@@ -206,8 +206,8 @@ class RepositorioArvores {
     });
   }
 
-  Future<void> marcaParcelaColetada(int parcelaId) async {
-    final context = await _lerColetaContexto(parcelaId);
+  Future<void> marcarParcelaColetada(int parcelaId) async {
+    final context = await _lerContextoColeta(parcelaId);
     final jaColetada = context.parcela.situacao == SituacaoParcela.coletada;
     final agora = DateTime.now();
 
@@ -227,7 +227,7 @@ class RepositorioArvores {
     });
   }
 
-  Future<int> proximoArvoreNumero(int parcelaId) async {
+  Future<int> proximoNumeroArvore(int parcelaId) async {
     final arvores = await (_bancoDados.select(
       _bancoDados.arvores,
     )..where((tabela) => tabela.parcelaId.equals(parcelaId))).get();
@@ -239,7 +239,7 @@ class RepositorioArvores {
         1;
   }
 
-  Future<_ColetaContexto> _lerColetaContexto(int parcelaId) async {
+  Future<_ContextoColeta> _lerContextoColeta(int parcelaId) async {
     final consulta = _bancoDados.select(_bancoDados.parcelas).join([
       innerJoin(
         _bancoDados.talhaoLevantamentos,
@@ -268,7 +268,7 @@ class RepositorioArvores {
     ])..where(_bancoDados.parcelas.id.equals(parcelaId));
 
     final linha = await consulta.getSingle();
-    return _ColetaContexto(
+    return _ContextoColeta(
       parcela: linha.readTable(_bancoDados.parcelas),
       talhaoLevantamento: linha.readTable(_bancoDados.talhaoLevantamentos),
       levantamento: linha.readTable(_bancoDados.levantamentos),
@@ -371,7 +371,7 @@ class RepositorioArvores {
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<void> _limparReferenciaPosicaoDeArvores({
+  Future<void> _limparPosicaoReferenciaDasArvores({
     required int parcelaId,
     required PosicaoReferenciaParcela posicaoReferencia,
   }) {
@@ -391,8 +391,8 @@ class RepositorioArvores {
   }
 }
 
-class _ColetaContexto {
-  const _ColetaContexto({
+class _ContextoColeta {
+  const _ContextoColeta({
     required this.parcela,
     required this.talhaoLevantamento,
     required this.levantamento,

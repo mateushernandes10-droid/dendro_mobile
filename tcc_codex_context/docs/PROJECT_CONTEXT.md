@@ -1,6 +1,6 @@
 # Contexto atual — DENDRO Mobile
 
-Revisão em 13/09/2026. Esta documentação retrata o versão refatorada em português (base 82f29e2), escolhido pelo usuário como versão de encerramento do desenvolvimento do aplicativo.
+Revisão em 14/09/2026. Esta documentação retrata a versão v11 com IDs inteiros e a migração solicitada pelo usuário.
 
 ## Tema e objetivo
 

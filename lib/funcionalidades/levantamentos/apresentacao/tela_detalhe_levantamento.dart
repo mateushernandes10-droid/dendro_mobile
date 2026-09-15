@@ -57,7 +57,7 @@ class TelaDetalheLevantamento extends ConsumerWidget {
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (erro, pilhaTrace) => _CarregarErro(
+          error: (erro, pilhaTrace) => _ErroCarregamento(
             aoTentarNovamente: () =>
                 ref.invalidate(provedorLevantamentoDetalhe(levantamentoId)),
           ),
@@ -112,8 +112,8 @@ class TelaDetalheLevantamento extends ConsumerWidget {
           .read(provedorRepositorioLevantamentos)
           .concluirLevantamento(resumo.levantamento.id);
       ref.invalidate(provedorLevantamentoDetalhe(resumo.levantamento.id));
-      ref.invalidate(provedorAtivoLevantamentos);
-      ref.invalidate(provedorAtivoLevantamento);
+      ref.invalidate(provedorLevantamentosAtivos);
+      ref.invalidate(provedorLevantamentoAtivo);
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -169,8 +169,8 @@ class TelaDetalheLevantamento extends ConsumerWidget {
           .excluirLevantamento(resumo.levantamento.id);
       ref.invalidate(provedorLevantamentoDetalhe(resumo.levantamento.id));
       ref.invalidate(provedorLevantamentos);
-      ref.invalidate(provedorAtivoLevantamentos);
-      ref.invalidate(provedorAtivoLevantamento);
+      ref.invalidate(provedorLevantamentosAtivos);
+      ref.invalidate(provedorLevantamentoAtivo);
 
       if (!context.mounted) return;
       navegador.pop();
@@ -289,12 +289,12 @@ class TelaDetalheLevantamento extends ConsumerWidget {
       provedorLevantamentoDetalhe(levantamentoResumo.levantamento.id),
     );
     ref.invalidate(provedorLevantamentos);
-    ref.invalidate(provedorAtivoLevantamentos);
-    ref.invalidate(provedorAtivoLevantamento);
+    ref.invalidate(provedorLevantamentosAtivos);
+    ref.invalidate(provedorLevantamentoAtivo);
     ref.invalidate(
-      provedorPropriedadeTalhoes(levantamentoResumo.propriedade.id),
+      provedorTalhoesDaPropriedade(levantamentoResumo.propriedade.id),
     );
-    ref.invalidate(provedorLevantamentoIniciarOpcoes);
+    ref.invalidate(provedorOpcoesNovoLevantamento);
   }
 }
 
@@ -359,7 +359,7 @@ class _LevantamentoCorpo extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Árvores medidas',
                 valor: resumo.arvoreQuantidade.toString(),
                 icone: Icons.park_outlined,
@@ -367,7 +367,7 @@ class _LevantamentoCorpo extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: IndicadorBloco(
+              child: BlocoIndicador(
                 rotulo: 'Área medida',
                 valor: _formatoArea(resumo.medidaAreaHa),
                 icone: Icons.area_chart_outlined,
@@ -376,9 +376,9 @@ class _LevantamentoCorpo extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 18),
-        SecaoTitulo(
+        TituloSecao(
           titulo: 'Talhões do levantamento',
-          complemento: SituacaoIndicador(
+          complemento: IndicadorSituacao(
             rotulo: '${resumo.talhoes.length} total',
           ),
         ),
@@ -429,7 +429,7 @@ class _LevantamentoResumoCartao extends StatelessWidget {
         children: [
           Row(
             children: [
-              SituacaoIndicador(
+              IndicadorSituacao(
                 rotulo: _situacaoRotulo(resumo.levantamento.situacao),
               ),
               const Spacer(),
@@ -540,7 +540,7 @@ class _LevantamentoTalhaoCartao extends StatelessWidget {
                     ],
                   ),
                 ),
-                SituacaoIndicador(
+                IndicadorSituacao(
                   rotulo:
                       '${resumo.coletadaParcelaQuantidade}/${resumo.parcelaQuantidade}',
                 ),
@@ -584,13 +584,13 @@ class _LevantamentoTalhaoCartao extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _EmLinhaInformacao(
+                  child: _InformacaoEmLinha(
                     rotulo: 'Árvores',
                     valor: resumo.arvoreQuantidade.toString(),
                   ),
                 ),
                 Expanded(
-                  child: _EmLinhaInformacao(
+                  child: _InformacaoEmLinha(
                     rotulo: 'Área medida',
                     valor: _formatoArea(resumo.medidaAreaHa),
                   ),
@@ -647,7 +647,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
   late final TextEditingController _parcelaLarguraControlador;
   late final TextEditingController _parcelaComprimentoControlador;
   late final TextEditingController _observacoesControlador;
-  LevantamentoModeloMatematicoSelecao? _modeloMatematicoSelecao;
+  SelecaoModeloLevantamento? _modeloMatematicoSelecao;
   int? _especieId;
   bool _salvando = false;
 
@@ -685,7 +685,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
       text: talhao.observacoes ?? '',
     );
     _especieId = widget.resumo.talhaoLevantamento.especieId;
-    _modeloMatematicoSelecao = LevantamentoModeloMatematicoSelecao(
+    _modeloMatematicoSelecao = SelecaoModeloLevantamento(
       modeloMatematicoId: widget.resumo.talhaoLevantamento.modeloMatematicoId,
       modeloMatematicoNome: widget.resumo.modeloMatematico.nome,
       coeficienteValoresPorSimbolo: {
@@ -710,7 +710,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
 
   @override
   Widget build(BuildContext context) {
-    final especies = ref.watch(provedorAtivoEspecie);
+    final especies = ref.watch(provedorEspeciesAtivas);
     final inferiorRecuo = MediaQuery.viewInsetsOf(context).bottom;
 
     return Padding(
@@ -751,7 +751,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
                   labelText: 'Identificação',
                   prefixIcon: Icon(Icons.label_outline),
                 ),
-                validator: _obrigatorioValidator,
+                validator: _validarCampoObrigatorio,
               ),
               const SizedBox(height: 12),
               especies.when(
@@ -828,7 +828,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
                         LengthLimitingTextInputFormatter(4),
                       ],
                       decoration: const InputDecoration(labelText: 'Ano'),
-                      validator: _plantioAnoValidator,
+                      validator: _validarAnoPlantio,
                     ),
                   ),
                 ],
@@ -852,15 +852,15 @@ class _LevantamentoTalhaoFormularioPainelEstado
                 ),
               ),
               const SizedBox(height: 12),
-              ParcelaDimensoesEntrada(
+              EntradaDimensoesParcela(
                 larguraControlador: _parcelaLarguraControlador,
                 comprimentoControlador: _parcelaComprimentoControlador,
-                larguraValidator: (valor) => _parcelaDimensaoValidator(
+                validadorLargura: (valor) => _validarDimensaoParcela(
                   valor,
                   _parcelaComprimentoControlador.text,
                   'primeira medida',
                 ),
-                comprimentoValidator: (valor) => _parcelaDimensaoValidator(
+                validadorComprimento: (valor) => _validarDimensaoParcela(
                   valor,
                   _parcelaLarguraControlador.text,
                   'segunda medida',
@@ -905,7 +905,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
     try {
       await ref
           .read(provedorRepositorioLevantamentos)
-          .atualizarTalhaoInLevantamento(
+          .atualizarTalhaoNoLevantamento(
             talhaoLevantamentoId: widget.resumo.talhaoLevantamento.id,
             identificacao: _identificacaoControlador.text,
             especieId: _especieId!,
@@ -927,12 +927,12 @@ class _LevantamentoTalhaoFormularioPainelEstado
 
       ref.invalidate(provedorLevantamentoDetalhe(widget.levantamentoId));
       ref.invalidate(provedorLevantamentos);
-      ref.invalidate(provedorAtivoLevantamentos);
-      ref.invalidate(provedorAtivoLevantamento);
+      ref.invalidate(provedorLevantamentosAtivos);
+      ref.invalidate(provedorLevantamentoAtivo);
       ref.invalidate(
-        provedorPropriedadeTalhoes(widget.resumo.talhao.propriedadeId),
+        provedorTalhoesDaPropriedade(widget.resumo.talhao.propriedadeId),
       );
-      ref.invalidate(provedorLevantamentoIniciarOpcoes);
+      ref.invalidate(provedorOpcoesNovoLevantamento);
 
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -979,7 +979,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
     }
   }
 
-  String? _obrigatorioValidator(String? valor) {
+  String? _validarCampoObrigatorio(String? valor) {
     if (valor == null || valor.trim().isEmpty) {
       return 'Campo obrigatório';
     }
@@ -993,7 +993,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
     return null;
   }
 
-  String? _plantioAnoValidator(String? valor) {
+  String? _validarAnoPlantio(String? valor) {
     if (valor == null || valor.trim().isEmpty) return null;
 
     final ano = int.tryParse(valor.trim());
@@ -1004,7 +1004,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
     return null;
   }
 
-  String? _parcelaDimensaoValidator(
+  String? _validarDimensaoParcela(
     String? valor,
     String pareadoValor,
     String rotulo,
@@ -1020,8 +1020,8 @@ class _LevantamentoTalhaoFormularioPainelEstado
   }
 }
 
-class _EmLinhaInformacao extends StatelessWidget {
-  const _EmLinhaInformacao({required this.rotulo, required this.valor});
+class _InformacaoEmLinha extends StatelessWidget {
+  const _InformacaoEmLinha({required this.rotulo, required this.valor});
 
   final String rotulo;
   final String valor;
@@ -1059,7 +1059,7 @@ class _LevantamentoModeloMatematicoAjusteCartao extends StatelessWidget {
     required this.aoPressionado,
   });
 
-  final LevantamentoModeloMatematicoSelecao? selecao;
+  final SelecaoModeloLevantamento? selecao;
   final VoidCallback? aoPressionado;
 
   @override
@@ -1132,8 +1132,8 @@ class _AusenteLevantamento extends StatelessWidget {
   }
 }
 
-class _CarregarErro extends StatelessWidget {
-  const _CarregarErro({required this.aoTentarNovamente});
+class _ErroCarregamento extends StatelessWidget {
+  const _ErroCarregamento({required this.aoTentarNovamente});
 
   final VoidCallback aoTentarNovamente;
 

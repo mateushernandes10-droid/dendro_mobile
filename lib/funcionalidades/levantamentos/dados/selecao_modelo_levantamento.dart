@@ -1,5 +1,5 @@
-class LevantamentoModeloMatematicoSelecao {
-  const LevantamentoModeloMatematicoSelecao({
+class SelecaoModeloLevantamento {
+  const SelecaoModeloLevantamento({
     required this.modeloMatematicoId,
     required this.coeficienteValoresPorSimbolo,
     this.modeloMatematicoNome,
@@ -10,8 +10,8 @@ class LevantamentoModeloMatematicoSelecao {
   final String? modeloMatematicoNome;
 }
 
-class LevantamentoModeloMatematicoCoeficienteValor {
-  const LevantamentoModeloMatematicoCoeficienteValor({
+class ValorCoeficienteModeloLevantamento {
+  const ValorCoeficienteModeloLevantamento({
     required this.simbolo,
     required this.rotulo,
     required this.valor,

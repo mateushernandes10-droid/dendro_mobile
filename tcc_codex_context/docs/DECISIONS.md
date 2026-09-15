@@ -1,6 +1,15 @@
 # DECISIONS.md
 
-## D-045 — IDs inteiros autoincrementados, schema v11 (13/09/2026)
+## D-046 — Revisão dos nomes próprios em português (14/09/2026)
+
+O usuário autorizou apenas a revisão dos nomes que ficaram pouco naturais após a tradução. Foram ajustados 126 identificadores em 30 arquivos: métodos, classes auxiliares, provedores e callbacks. Exemplos: criarPlanejadoParcela → criarParcelaPlanejada; atualizarTalhaoInLevantamento → atualizarTalhaoNoLevantamento; carregarEscuroModo → carregarModoEscuro; GeradoExportacaoDadosArquivo → ArquivoExportacaoGerado.
+
+O schema permanece 11. Tabelas, colunas, enums persistidos, códigos de catálogo, dados, cálculos e textos da interface não foram alterados. APIs externas mantêm seus nomes. Não houve reorganização de arquivos, separação do catálogo ou criação de camadas. As referências nos testes foram atualizadas.
+
+Uma comparação dos tokens Dart, desconsiderando formatação e vírgulas opcionais, confirmou que as alterações de código se limitam aos nomes selecionados. Os arquivos do banco permaneceram idênticos. REVISAO_NOMES.md contém o mapa completo de nomes e os arquivos envolvidos.
+
+
+## D-045 — IDs inteiros autoincrementados, schema v11 (14/09/2026)
 
 Por solicitação do usuário, as 14 PKs simples textuais passaram para INTEGER PRIMARY KEY AUTOINCREMENT; especies_modelos mantém PK composta com FKs inteiras. Não foram criadas entidades ou camadas apenas para os diagramas.
 

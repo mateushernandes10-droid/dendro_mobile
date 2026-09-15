@@ -143,7 +143,7 @@ VALUES (?, ?, ?, ?, ?, ?)
     _alteracoes.add(null);
   }
 
-  Future<void> registroExportacao({
+  Future<void> registrarExportacao({
     required String formato,
     required String propriedadeNome,
     int? entidadeId,
