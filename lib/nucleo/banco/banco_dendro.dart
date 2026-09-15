@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'catalogos_iniciais.dart';
+import 'migracao_ids_inteiros.dart';
 part 'banco_dendro.g.dart';
 
 enum SituacaoLevantamento { planejamento, emAndamento, concluido }
@@ -292,13 +293,14 @@ class BancoDendro extends _$BancoDendro {
   BancoDendro([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'dendro_mobile'));
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 12;
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await carregarCatalogosIniciais();
     },
+    onUpgrade: (m, de, para) => migrarParaIdsInteiros(this, m, de),
   );
   Future<void> carregarCatalogosIniciais() => inserirCatalogosIniciais(this);
   Future<String?> codigoModeloPorId(int id) async => (await (select(
