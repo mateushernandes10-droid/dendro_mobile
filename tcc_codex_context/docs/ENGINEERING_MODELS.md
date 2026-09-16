@@ -1,6 +1,6 @@
 # Modelos de engenharia da versão implementada
 
-Revisão em 14/09/2026. Fontes editáveis estão em diagrams/. Os diagramas representam código e persistência atuais; não certificam validação científica ou ensaios com usuários.
+Revisão em 16/09/2026. Fontes editáveis estão em diagrams/. Os diagramas representam código e persistência atuais; não certificam validação científica ou ensaios com usuários. A separação acadêmica entre modelo conceitual, lógico e físico está em MODELO_BANCO_DADOS.md.
 
 ## 1. Atores e funções
 
@@ -209,9 +209,9 @@ erDiagram
     modelos_matematicos ||--o{ coeficientes_especie_modelo : parametriza
     talhao_levantamentos ||--o{ coeficientes_talhao_levantamento : preserva
     registros_atividade {
-        text id PK
+        integer id PK
         text tipo_entidade
-        text entidade_id
+        integer entidade_id
     }
 ```
 

@@ -1,0 +1,89 @@
+erDiagram
+    PROPRIEDADE ||--o{ TALHAO : possui
+    PROPRIEDADE ||--o{ LEVANTAMENTO : realiza
+    ESPECIE ||--o{ TALHAO : classifica
+    LEVANTAMENTO ||--o{ TALHAO_NO_LEVANTAMENTO : inclui
+    TALHAO ||--o{ TALHAO_NO_LEVANTAMENTO : participa
+    ESPECIE ||--o{ TALHAO_NO_LEVANTAMENTO : identifica
+    MODELO_MATEMATICO ||--o{ TALHAO_NO_LEVANTAMENTO : calcula
+    TALHAO_NO_LEVANTAMENTO ||--o{ PARCELA : contem
+    PARCELA ||--o{ ARVORE : registra
+    PARCELA ||--o{ PONTO_GEOGRAFICO : localiza
+    ESPECIE }o--o{ MODELO_MATEMATICO : utiliza
+    MODELO_MATEMATICO ||--o{ VARIAVEL_MODELO : declara
+    MODELO_MATEMATICO ||--o{ COEFICIENTE_MODELO : define
+    ESPECIE ||--o{ COEFICIENTE_ESPECIE_MODELO : particulariza
+    MODELO_MATEMATICO ||--o{ COEFICIENTE_ESPECIE_MODELO : recebe
+    TALHAO_NO_LEVANTAMENTO ||--o{ COEFICIENTE_DA_COLETA : preserva
+
+    PROPRIEDADE {
+        identificador id
+        texto nome
+        texto municipio
+        texto estado
+        decimal area_total
+    }
+    TALHAO {
+        identificador id
+        texto identificacao
+        decimal area
+        inteiro ano_plantio
+        texto manejo
+    }
+    ESPECIE {
+        identificador id
+        texto nome
+        texto nome_cientifico
+    }
+    LEVANTAMENTO {
+        identificador id
+        estado situacao
+        data inicio
+        data conclusao
+    }
+    TALHAO_NO_LEVANTAMENTO {
+        identificador id
+        decimal area_padrao_parcela
+    }
+    PARCELA {
+        identificador id
+        texto identificacao
+        estado situacao
+        decimal area
+    }
+    ARVORE {
+        identificador id
+        inteiro numero
+        decimal dap_cm
+        decimal altura_m
+        booleano tronco_tortuoso
+        coordenada localizacao_opcional
+    }
+    PONTO_GEOGRAFICO {
+        identificador id
+        inteiro ordem
+        coordenada latitude_longitude
+    }
+    MODELO_MATEMATICO {
+        identificador id
+        texto nome
+        texto expressao
+    }
+    VARIAVEL_MODELO {
+        texto simbolo
+        texto significado
+        texto unidade
+    }
+    COEFICIENTE_MODELO {
+        texto simbolo
+        texto significado
+        decimal valor_opcional
+    }
+    COEFICIENTE_ESPECIE_MODELO {
+        texto simbolo
+        decimal valor_opcional
+    }
+    COEFICIENTE_DA_COLETA {
+        texto simbolo
+        decimal valor_opcional
+    }
