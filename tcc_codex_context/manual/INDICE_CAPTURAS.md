@@ -43,6 +43,10 @@
 | [31_atalho_inicio.png](screenshots/31_atalho_inicio.png) | Novo levantamento acessado pelo Início, após o primeiro evento. |
 | [32_opcoes_exportacao.png](screenshots/32_opcoes_exportacao.png) | Exportação após rolagem: KML, seleção e ações de salvar/compartilhar. |
 
+## Versão do material
+
+As capturas foram preservadas da sessão anterior à restauração do schema 1. O catálogo mostrado nas imagens 08/09/12 possui dois modelos; a instalação nova também inclui Fator de Forma. Ver o relatório de verificação para a origem dos dados e a validação atual.
+
 ## Evidência separada
 
 [diagnostico/01_abertura_erro.png](diagnostico/01_abertura_erro.png) documenta a falha anterior à correção. Não usar como tela normal de abertura no manual.

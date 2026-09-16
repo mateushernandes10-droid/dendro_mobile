@@ -10,31 +10,26 @@ Data: 15/09/2026.
 - Inventário fictício realizado: Fazenda Modelo, Talhao 01, Pinus, duas parcelas de 0,04 ha, seis árvores; parcelas e levantamento concluídos.
 - Relatório PDF salvo pelo seletor nativo do Android, copiado sem alteração para esta pasta e conferido em suas duas páginas.
 
-## Problema de inicialização e correção autorizada
+## Inicialização e decisão vigente do banco
 
-A estrutura atual usa nomes em português e IDs inteiros, mas `schemaVersion` havia sido reduzido para **1** e a estratégia de atualização removida. O emulador ainda possuía um banco **versão 7**, com nomes legados em inglês e IDs textuais. A abertura não convertia esse banco para o esquema esperado e permanecia em **Tentar novamente**.
+A versão vigente é **schema 1**, com IDs inteiros, 15 tabelas declaradas no Drift e criação por `onCreate`. Não há migração de bancos das versões experimentais anteriores.
 
-A correção eleva a versão para **12** e restabelece a migração de nomenclatura e identificadores. Ela copia os registros em ordem de dependência, remapeia as referências e verifica contagens e integridade referencial dentro de transação. Bancos que já possuem os IDs inteiros são reconhecidos para evitar conversão duplicada. Referências de atividades a entidades já excluídas ficam preservadas em um metadado legado.
+A falha inicial ocorreu porque o emulador mantinha um banco antigo, versão 7, incompatível com essa estrutura. Durante a produção das imagens foi introduzido indevidamente um schema 12 com migrações. Essa alteração foi revertida para respeitar a decisão anterior do projeto. Os arquivos de migração, seus testes e a fixture antiga foram removidos.
 
-Não foi necessário limpar os dados nem desinstalar o aplicativo. Uma cópia do banco anterior foi mantida fora do repositório, em `C:\Users\Hernandes\AppData\Local\Temp\dendro_manual_diagnostico\banco_original.sqlite`. Não foram alterados interface, cálculos ou coeficientes para produzir as imagens. A alteração de persistência se limita à correção de inicialização solicitada posteriormente pelo usuário.
+Para verificar a instalação atual, o banco de demonstração foi preservado em `C:\Users\Hernandes\AppData\Local\DendroBackups\schema12-antes-restaurar-schema1\dendro_mobile.sqlite`, com integridade SQLite conferida e seis árvores. Também permanece separado no armazenamento do aplicativo como `app_flutter/dendro_mobile_schema12_backup.sqlite`. O aplicativo cria um banco novo no caminho normal, sem converter ou sobrescrever esse backup. Não se deve reapresentar o schema 12 como versão vigente no TCC.
 
-### Arquivos de código e teste
+### Validação após restaurar o combinado
 
-- `lib/nucleo/banco/banco_dendro.dart`: versão e ligação da migração.
-- `lib/nucleo/banco/migracao_nomenclatura.dart`: tradução de tabelas, colunas e valores legados.
-- `lib/nucleo/banco/migracao_ids_inteiros.dart`: conversão e preservação das relações.
-- `test/nucleo/banco/migracao_inicializacao_test.dart`: regressão da atualização/reabertura.
-- `test/nucleo/banco/fixtures/esquema_v7.sql`: estrutura antiga, sem dados pessoais.
-
-### Evidências de validação
-
-- `flutter test`: **39 testes aprovados** na suíte completa.
+- `flutter test`: **36 testes aprovados**.
 - `flutter analyze`: **nenhum problema encontrado**.
-- Teste adicional com `DENDRO_BANCO_DIAGNOSTICO`: abertura de uma cópia do banco real anterior e verificação das chaves estrangeiras, aprovado.
-- Testes de banco: migração de esquema v7 com registros fictícios e preservação de medidas/relações/histórico; abertura do esquema inteiro marcado como versões 1 e 11; reabertura após migração.
-- Execução real: cadastro → coleta → conclusão → resultados → exportação PDF; encerramento do processo e nova abertura com os dados preservados.
+- Compilação e abertura no emulador com um banco novo: conferidas após a restauração do schema 1.
+- A suíte existente verifica criação/integridade do banco, cálculos, exportação e fluxos de interface.
 
-Essas verificações cobrem os cenários descritos, não todos os possíveis bancos de versões históricas nem todos os dispositivos Android.
+### Proveniência do material visual
+
+As 38 capturas e o PDF abaixo foram produzidos antes desta reversão, usando os dados fictícios do banco de demonstração. Foram preservados como material do fluxo observado; não são evidência de uma nova execução completa no schema 1. A interface e os cálculos não foram alterados nesta reversão.
+
+O catálogo dessas imagens contém somente Spurr e Schumacher-Hall; uma instalação nova do schema 1 também inclui Fator de Forma. Essa diferença deve ser considerada ao montar o manual. O emulador passa a abrir com banco novo; os dados anteriores estão nos backups, não no banco ativo.
 
 ## Resultado observado
 

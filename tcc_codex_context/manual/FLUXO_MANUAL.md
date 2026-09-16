@@ -4,11 +4,15 @@ Verificação: 15/09/2026. Base: código atual de `lib/`. Material para elabora�
 
 ## Situação da validação
 
-O aplicativo foi compilado e executado no emulador Android Dendro_API_36, em orientação vertical, com capturas PNG de 1080 × 1920. Após a correção da migração do banco, solicitada pelo usuário, foram cadastrados propriedade, talhão, levantamento, duas parcelas e seis árvores. As parcelas e o levantamento foram concluídos; resultados e salvamento de PDF foram conferidos. O aplicativo também foi reaberto com os dados preservados.
+O aplicativo foi compilado e executado no emulador Android Dendro_API_36, em orientação vertical, com capturas PNG de 1080 × 1920. Na sessão original de capturas foram cadastrados propriedade, talhão, levantamento, duas parcelas e seis árvores. As parcelas e o levantamento foram concluídos; resultados e salvamento de PDF foram conferidos. O aplicativo também foi reaberto com os dados preservados.
 
 As imagens são capturas reais, sem montagem ou alteração da interface. A numeração identifica as telas; a ordem didática é a das etapas abaixo. Telas extensas têm capturas complementares após rolagem. O índice completo está em [INDICE_CAPTURAS.md](INDICE_CAPTURAS.md). A falha anterior foi separada em `diagnostico/01_abertura_erro.png`.
 
 GPS: a interface foi capturada, mas a obtenção de coordenada não teve sucesso no emulador utilizado. Ver [SCREENSHOTS_PENDENTES.md](SCREENSHOTS_PENDENTES.md). Formulários opcionais de espécie/fórmula e menus de edição/exclusão foram inspecionados; isso não representa teste de todas as operações disponíveis.
+
+## Versão vigente e origem das capturas
+
+O projeto utiliza **schema 1, sem migrações legadas**. A alteração temporária para schema 12 foi revertida conforme o combinado. As imagens e o PDF foram preservados da sessão anterior; a interface e os cálculos permanecem iguais, mas uma instalação nova inclui também Fator de Forma no catálogo. O banco de demonstração está em backup e o emulador foi preparado com banco novo. Ver [RELATORIO_VERIFICACAO.md](RELATORIO_VERIFICACAO.md).
 
 ## Dados fictícios utilizados
 
@@ -295,7 +299,7 @@ A lista de talhões está incorporada ao detalhe da propriedade e ao detalhe do 
 - Há valores padrão no calculador para Spurr/Schumacher-Hall e estimativa de altura; a coleta exige medidas válidas. Os padrões existentes não comprovam adequação à espécie/região. Não foram alterados coeficientes nem fórmulas.
 - A expressão implementada de Fator de Forma é `pi * (D / 100)^2 * H * ff`; o manual não deve substituí-la por outra equação. Adequação técnica do fator não foi validada nesta tarefa.
 - Exportações disponíveis: Relatório PDF; Dados e resultados (CSV); Dados brutos (CSV); Dados brutos (XLSX); Planilha (Excel); Coordenadas (Google Earth/KML). KMZ e estimativa econômica não estão implementados.
-- O catálogo migrado desta execução contém Spurr e Schumacher-Hall. O código de instalação nova também inclui Fator de Forma; esse terceiro modelo não foi inserido no catálogo legado durante a correção.
+- O catálogo das capturas anteriores contém Spurr e Schumacher-Hall. A instalação nova do schema 1 inclui também Fator de Forma. Não usar essas imagens como lista completa do catálogo inicial atual.
 - GPS depende de serviço de localização e permissão; pontos são documentação geográfica, não medição topográfica validada. A substituição de referência ocupada exige confirmação.
 - Menus permitem exclusões com confirmação. Excluir parcela remove árvores/coordenadas vinculadas; remover talhão do levantamento remove seus dados naquele evento, preservando o cadastro do talhão na propriedade.
 
