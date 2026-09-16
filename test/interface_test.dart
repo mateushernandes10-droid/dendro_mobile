@@ -584,11 +584,37 @@ void main() {
 
     await testador.runAsync(() async {
       final repositorioPropriedades = RepositorioPropriedades(bancoDados);
+      final repositorioTalhoes = RepositorioTalhoes(bancoDados);
+      final repositorioParcelas = RepositorioParcelas(bancoDados);
+      final repositorioArvores = RepositorioArvores(bancoDados);
 
-      await repositorioPropriedades.criar(
+      final propriedadeId = await repositorioPropriedades.criar(
         nome: 'Fazenda Resultado',
         municipio: 'Vacaria',
         areaTotalHa: 42,
+      );
+      final especie =
+          (await repositorioTalhoes.observarEspeciesAtivas().first).first;
+      final talhaoId = await repositorioTalhoes.criar(
+        propriedadeId: propriedadeId,
+        identificacao: 'T-01',
+        especieId: especie.id,
+        areaHa: 10,
+      );
+      final talhaoLevantamento = await repositorioParcelas
+          .iniciarNovoLevantamentoParaTalhao(talhaoId);
+      final parcelaId = await repositorioParcelas
+          .criarParcelaParaTalhaoLevantamento(
+            talhaoLevantamentoId: talhaoLevantamento.id,
+            areaHa: 0.04,
+          );
+      await repositorioArvores.criarArvore(
+        parcelaId: parcelaId,
+        rascunho: const RascunhoArvore(
+          dapCm: 25,
+          alturaM: 18,
+          possuiTroncoTortuoso: true,
+        ),
       );
     });
 
@@ -617,6 +643,8 @@ void main() {
     expect(navegacaoBarra.selectedIndex, 3);
     expect(find.text('Filtros'), findsOneWidget);
     expect(find.text('Fazenda Resultado'), findsWidgets);
+    expect(find.text('Árvores com tronco tortuoso'), findsOneWidget);
+    expect(find.text('1 (100,0%)'), findsOneWidget);
 
     await testador.pumpWidget(const SizedBox.shrink());
     await testador.pump(const Duration(milliseconds: 1));

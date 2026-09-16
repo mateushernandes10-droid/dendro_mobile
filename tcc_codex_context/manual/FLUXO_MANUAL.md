@@ -39,7 +39,8 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 
 - **Objetivo:** Conhecer a navegação.
 - **Tela:** Início.
-- **Screenshot:** `screenshots/02_inicio.png`.
+- **Screenshots:** `screenshots/02_inicio.png` (sem levantamento aberto) e `screenshots/02b_inicio_levantamento_aberto.png` (com levantamento em andamento).
+- **Estados do Início:** sem coleta aberta, iniciar em Novo Levantamento; com levantamento aberto, usar Continuar Coleta para retomar. Novo Levantamento continua disponível nos dois estados. A imagem 02b foi capturada no schema 1, com um levantamento recém-iniciado e ainda sem árvores medidas.
 - **Ações:** Usar as abas Início, Levant., Propr., Result. e Ajustes. Para retomar, usar Continuar Coleta.
 - **Resultado esperado:** Retomar o levantamento ativo sugerido ou navegar entre os módulos.
 

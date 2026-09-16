@@ -5,7 +5,7 @@ Data: 15/09/2026.
 ## Entrega
 
 - Aplicativo compilado, instalado e executado no emulador **Dendro_API_36**, Android API 36.
-- **38 screenshots do fluxo**, em PNG, 1080 × 1920, orientação vertical; mais **1 screenshot de diagnóstico** anterior à correção, separado do fluxo.
+- **39 screenshots do fluxo**, em PNG, 1080 × 1920, orientação vertical; mais **1 screenshot de diagnóstico** anterior à correção, separado do fluxo.
 - Todas as 25 telas principais da solicitação estão representadas. Algumas são painéis ou partes de outras telas, conforme explicado no roteiro.
 - Inventário fictício realizado: Fazenda Modelo, Talhao 01, Pinus, duas parcelas de 0,04 ha, seis árvores; parcelas e levantamento concluídos.
 - Relatório PDF salvo pelo seletor nativo do Android, copiado sem alteração para esta pasta e conferido em suas duas páginas.
@@ -77,7 +77,7 @@ Os números reproduzem os dados fictícios e os coeficientes já cadastrados; n�
 ## Arquivos do material
 
 - `FLUXO_MANUAL.md`: roteiro em 32 etapas, dados fictícios, cuidados e fluxo resumido.
-- `INDICE_CAPTURAS.md`: lista completa e links das 38 imagens, com seus estados.
+- `INDICE_CAPTURAS.md`: lista completa e links das 39 imagens, com seus estados.
 - `SCREENSHOTS_PENDENTES.md`: instruções exatas para complementar o GPS.
 - `RELATORIO_VERIFICACAO.md`: este relatório.
 - `screenshots/*.png`: capturas reais do aplicativo e do seletor de salvamento.
@@ -89,3 +89,7 @@ A documentação geral do TCC não foi alterada. Este material é a base visual 
 ## Atualização das imagens do catálogo
 
 As capturas `09_modelos_matematicos.png` e `08b_modelos_especie.png` foram substituídas por novas imagens reais do schema 1, em 1080 × 1920. Agora mostram Fator de Forma, Modelo de Spurr e Schumacher-Hall. No cadastro de Pinus, os três aparecem vinculados e Spurr permanece como padrão. Nenhuma configuração ou código foi alterado para a captura. As observações anteriores sobre catálogo incompleto aplicam-se às imagens históricas ainda não substituídas, especialmente a imagem 12 da seleção no levantamento.
+
+## Complemento: Início com levantamento aberto
+
+Adicionada `screenshots/02b_inicio_levantamento_aberto.png`, captura real no schema 1 em 1080 × 1920. Foram cadastrados pela interface Fazenda Modelo (50 ha), Talhao 01 (Pinus, 10 ha, parcelas de referência 20 × 20 m) e um levantamento em andamento, sem árvores medidas. A imagem mostra Novo Levantamento e Continuar Coleta. A imagem 02 anterior, sem coleta aberta, foi mantida para comparação. Não houve alteração de código ou do esquema do banco.

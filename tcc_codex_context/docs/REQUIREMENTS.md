@@ -15,7 +15,7 @@ Revisão em 14/09/2026. “Implementado” indica existência no código, não v
 | RF-007 | Configurar fórmulas/modelos | Parcial: cadastro de nome, expressão, descrição, variáveis e coeficientes existe; avaliação de expressões arbitrárias e validação por parser não foram implementadas. |
 | RF-008 | Configurar coeficientes | Implementado: definições globais, valores por espécie/fórmula e valores por talhão do levantamento; inclui ff informado pelo usuário. Não há ajuste estatístico. |
 | RF-009 | Calcular volume | Implementado para Spurr, Schumacher-Hall e Fator de Forma. Ver equações, seleção interna e valores alternativos em BUSINESS_RULES.md. A adequação científica ainda depende de validação. |
-| RF-010 | Apresentar resultados | Implementado: contagens, área medida, médias, distribuição diamétrica, volume amostrado, por hectare, extrapolado e conversões por espécie; relatórios contêm indicadores adicionais. |
+| RF-010 | Apresentar resultados | Implementado: contagens, área medida, médias, distribuição diamétrica, quantidade e percentual de árvores com tronco tortuoso, volume amostrado, por hectare, extrapolado e conversões por espécie; relatórios contêm indicadores adicionais. |
 | RF-011 | Estimar valor econômico bruto | Não implementado: objetivo original do TCC, sem fluxo de preço da madeira ou cálculo monetário no código atual. Não incluir como caso de uso entregue. |
 | RF-012 | Corrigir dados coletados | Implementado: edição de cadastros e medições. Datas e atividades apoiam organização; não constituem auditoria completa de versões. |
 | RF-013 | Operar offline | Implementado para os fluxos locais de coleta, consulta e cálculo; não há backend. |

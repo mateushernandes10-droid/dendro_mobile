@@ -453,6 +453,13 @@ class _VistaPainelResultados extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 10),
+        BlocoIndicador(
+          rotulo: 'Árvores com tronco tortuoso',
+          valor:
+              '${painel.troncoTortuosoQuantidade} (${_formatoPercentual(painel.troncoTortuosoPercentual)})',
+          icone: Icons.nature_outlined,
+        ),
         const SizedBox(height: 20),
         const TituloSecao(titulo: 'Distribuição diamétrica'),
         _DiametroDistribuicaoCartao(classes: painel.diametroClasses),
@@ -668,6 +675,9 @@ class _TalhaoResultadoLinha extends StatelessWidget {
                   '${resumo.coletadaParcelaQuantidade}/${resumo.parcelaQuantidade} parcelas',
                 ),
                 _IndicadorEmLinha(
+                  'Tronco tortuoso: ${resumo.troncoTortuosoQuantidade} (${_formatoPercentual(resumo.troncoTortuosoPercentual)})',
+                ),
+                _IndicadorEmLinha(
                   'DAP ${_formatoOpcionalMedicao(resumo.mediaDapCm, 'cm')}',
                 ),
                 _IndicadorEmLinha(
@@ -815,4 +825,8 @@ String _formatoOpcionalVolume(double? valor) {
 String _formatoOpcionalNumero(double? valor) {
   if (valor == null) return '-';
   return valor.toStringAsFixed(1).replaceAll('.', ',');
+}
+
+String _formatoPercentual(double valor) {
+  return '${valor.toStringAsFixed(1).replaceAll('.', ',')}%';
 }

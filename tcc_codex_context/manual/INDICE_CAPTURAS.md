@@ -1,11 +1,12 @@
 # Índice das capturas — DENDRO Mobile
 
-38 imagens PNG reais, 1080 × 1920, em orientação vertical. A numeração acompanha a lista de telas solicitadas; para a sequência didática, seguir [FLUXO_MANUAL.md](FLUXO_MANUAL.md). As letras identificam complementos após rolagem ou estados adicionais.
+39 imagens PNG reais, 1080 × 1920, em orientação vertical. A numeração acompanha a lista de telas solicitadas; para a sequência didática, seguir [FLUXO_MANUAL.md](FLUXO_MANUAL.md). As letras identificam complementos após rolagem ou estados adicionais.
 
 | Arquivo | Tela / estado documentado |
 |---|---|
 | [01_abertura.png](screenshots/01_abertura.png) | Abertura com floresta e carregamento, após a correção. |
 | [02_inicio.png](screenshots/02_inicio.png) | Início após concluir o levantamento; sem coleta aberta e com atividades recentes. |
+| [02b_inicio_levantamento_aberto.png](screenshots/02b_inicio_levantamento_aberto.png) | Início com levantamento aberto no schema 1: Fazenda Modelo / Talhao 01 e botão Continuar Coleta, antes de registrar árvores. |
 | [03_propriedades.png](screenshots/03_propriedades.png) | Lista com Fazenda Modelo, busca e filtros. |
 | [04_nova_propriedade.png](screenshots/04_nova_propriedade.png) | Formulário preenchido; recapturado sem salvar uma duplicata. |
 | [05_detalhe_propriedade.png](screenshots/05_detalhe_propriedade.png) | Fazenda Modelo e seu talhão cadastrado. |

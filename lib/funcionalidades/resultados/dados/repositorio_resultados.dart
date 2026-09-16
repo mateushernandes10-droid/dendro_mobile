@@ -101,6 +101,7 @@ class PainelResultados {
     required this.coletadaParcelaQuantidade,
     required this.medidaParcelaQuantidade,
     required this.arvoreQuantidade,
+    required this.troncoTortuosoQuantidade,
     required this.medidaAreaHa,
     required this.mediaDapCm,
     required this.mediaAlturaM,
@@ -116,6 +117,7 @@ class PainelResultados {
   final int coletadaParcelaQuantidade;
   final int medidaParcelaQuantidade;
   final int arvoreQuantidade;
+  final int troncoTortuosoQuantidade;
   final double medidaAreaHa;
   final double? mediaDapCm;
   final double? mediaAlturaM;
@@ -128,12 +130,17 @@ class PainelResultados {
 
   bool get possuiMedicoes => arvoreQuantidade > 0;
 
+  double get troncoTortuosoPercentual => arvoreQuantidade == 0
+      ? 0
+      : troncoTortuosoQuantidade / arvoreQuantidade * 100;
+
   factory PainelResultados.vazio() {
     return const PainelResultados(
       parcelaQuantidade: 0,
       coletadaParcelaQuantidade: 0,
       medidaParcelaQuantidade: 0,
       arvoreQuantidade: 0,
+      troncoTortuosoQuantidade: 0,
       medidaAreaHa: 0,
       mediaDapCm: null,
       mediaAlturaM: null,
@@ -169,6 +176,7 @@ class ResumoResultadosTalhao {
     required this.coletadaParcelaQuantidade,
     required this.medidaParcelaQuantidade,
     required this.arvoreQuantidade,
+    required this.troncoTortuosoQuantidade,
     required this.medidaAreaHa,
     required this.mediaDapCm,
     required this.mediaAlturaM,
@@ -187,6 +195,7 @@ class ResumoResultadosTalhao {
   final int coletadaParcelaQuantidade;
   final int medidaParcelaQuantidade;
   final int arvoreQuantidade;
+  final int troncoTortuosoQuantidade;
   final double medidaAreaHa;
   final double? mediaDapCm;
   final double? mediaAlturaM;
@@ -197,6 +206,10 @@ class ResumoResultadosTalhao {
   final double? convertidoVolumePorHa;
   final String convertidoUnidade;
   final double? arvoresPorHa;
+
+  double get troncoTortuosoPercentual => arvoreQuantidade == 0
+      ? 0
+      : troncoTortuosoQuantidade / arvoreQuantidade * 100;
 }
 
 class RepositorioResultados {
@@ -345,6 +358,7 @@ class RepositorioResultados {
     var coletadaParcelaQuantidade = 0;
     var medidaParcelaQuantidade = 0;
     var arvoreQuantidade = 0;
+    var troncoTortuosoQuantidade = 0;
     var medidaAreaHa = 0.0;
     var dapSoma = 0.0;
     var alturaSoma = 0.0;
@@ -386,6 +400,7 @@ class RepositorioResultados {
       if (arvore == null || !vistosArvores.add(arvore.id)) continue;
 
       arvoreQuantidade++;
+      if (arvore.possuiTroncoTortuoso) troncoTortuosoQuantidade++;
       dapSoma += arvore.dapCm;
       alturaSoma += arvore.alturaM;
       final coeficientes = coeficienteCache.putIfAbsent(
@@ -438,6 +453,7 @@ class RepositorioResultados {
       coletadaParcelaQuantidade: coletadaParcelaQuantidade,
       medidaParcelaQuantidade: medidaParcelaQuantidade,
       arvoreQuantidade: arvoreQuantidade,
+      troncoTortuosoQuantidade: troncoTortuosoQuantidade,
       medidaAreaHa: medidaAreaHa,
       mediaDapCm: arvoreQuantidade == 0 ? null : dapSoma / arvoreQuantidade,
       mediaAlturaM: arvoreQuantidade == 0
@@ -522,6 +538,7 @@ class _TalhaoResultadosAcumulador {
   int coletadaParcelaQuantidade = 0;
   int medidaParcelaQuantidade = 0;
   int arvoreQuantidade = 0;
+  int troncoTortuosoQuantidade = 0;
   double medidaAreaHa = 0;
   double dapSoma = 0;
   double alturaSoma = 0;
@@ -540,6 +557,7 @@ class _TalhaoResultadosAcumulador {
 
   void adicionarArvore(Arvore arvore, double volumeM3) {
     arvoreQuantidade++;
+    if (arvore.possuiTroncoTortuoso) troncoTortuosoQuantidade++;
     dapSoma += arvore.dapCm;
     alturaSoma += arvore.alturaM;
     amostraVolumeM3 += volumeM3;
@@ -562,6 +580,7 @@ class _TalhaoResultadosAcumulador {
       coletadaParcelaQuantidade: coletadaParcelaQuantidade,
       medidaParcelaQuantidade: medidaParcelaQuantidade,
       arvoreQuantidade: arvoreQuantidade,
+      troncoTortuosoQuantidade: troncoTortuosoQuantidade,
       medidaAreaHa: medidaAreaHa,
       mediaDapCm: arvoreQuantidade == 0 ? null : dapSoma / arvoreQuantidade,
       mediaAlturaM: arvoreQuantidade == 0

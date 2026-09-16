@@ -1071,7 +1071,7 @@ ORDER BY simbolo
       rascunho: const RascunhoArvore(
         dapCm: 25,
         alturaM: 14,
-        possuiTroncoTortuoso: false,
+        possuiTroncoTortuoso: true,
       ),
     );
     await repositorioArvores.marcarParcelaColetada(pinusParcelaId);
@@ -1116,6 +1116,8 @@ ORDER BY simbolo
         .first;
 
     expect(semFiltro.arvoreQuantidade, 0);
+    expect(semFiltro.troncoTortuosoQuantidade, 0);
+    expect(semFiltro.troncoTortuosoPercentual, 0);
     expect(semFiltro.talhoes, isEmpty);
 
     final painel = await repositorioResultados
@@ -1129,6 +1131,8 @@ ORDER BY simbolo
         .first;
 
     expect(painel.arvoreQuantidade, 3);
+    expect(painel.troncoTortuosoQuantidade, 1);
+    expect(painel.troncoTortuosoPercentual, closeTo(100 / 3, 0.0001));
     expect(painel.parcelaQuantidade, 2);
     expect(painel.coletadaParcelaQuantidade, 1);
     expect(painel.medidaParcelaQuantidade, 2);
@@ -1151,6 +1155,13 @@ ORDER BY simbolo
         .first;
 
     expect(pinusSomente.arvoreQuantidade, 2);
+    expect(pinusSomente.troncoTortuosoQuantidade, 1);
+    expect(pinusSomente.troncoTortuosoPercentual, closeTo(50, 0.0001));
+    expect(pinusSomente.talhoes.single.troncoTortuosoQuantidade, 1);
+    expect(
+      pinusSomente.talhoes.single.troncoTortuosoPercentual,
+      closeTo(50, 0.0001),
+    );
     expect(pinusSomente.talhoes.single.talhao.identificacao, 'P-01');
     expect(pinusSomente.mediaDapCm, closeTo(22.5, 0.0001));
 
