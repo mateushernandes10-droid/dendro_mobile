@@ -12,8 +12,8 @@
 | [06_novo_talhao.png](screenshots/06_novo_talhao.png) | Talhao 01, Pinus, 10 ha, referência de parcela 20 × 20 m. |
 | [07_talhoes.png](screenshots/07_talhoes.png) | Menu Editar/Excluir do talhão no detalhe da propriedade. |
 | [08_especies.png](screenshots/08_especies.png) | Lista de Eucalyptus e Pinus. |
-| [08b_modelos_especie.png](screenshots/08b_modelos_especie.png) | Pinus expandido, vínculos, modelo padrão e coeficientes de Spurr. |
-| [09_modelos_matematicos.png](screenshots/09_modelos_matematicos.png) | Catálogo legado preservado: Spurr e Schumacher-Hall. |
+| [08b_modelos_especie.png](screenshots/08b_modelos_especie.png) | Pinus expandido no schema 1: três modelos vinculados, com Spurr como padrão. |
+| [09_modelos_matematicos.png](screenshots/09_modelos_matematicos.png) | Catálogo atual do schema 1: Fator de Forma, Spurr e Schumacher-Hall. |
 | [10_levantamentos.png](screenshots/10_levantamentos.png) | Levantamento ainda em andamento, com seis árvores e duas parcelas coletadas. |
 | [11_novo_levantamento.png](screenshots/11_novo_levantamento.png) | Seleção de propriedade/talhão, antes do primeiro levantamento. |
 | [12_configuracao_modelo.png](screenshots/12_configuracao_modelo.png) | Painel de escolha do modelo e coeficientes antes de iniciar. |
@@ -45,7 +45,7 @@
 
 ## Versão do material
 
-As capturas foram preservadas da sessão anterior à restauração do schema 1. O catálogo mostrado nas imagens 08/09/12 possui dois modelos; a instalação nova também inclui Fator de Forma. Ver o relatório de verificação para a origem dos dados e a validação atual.
+As imagens 08b e 09 foram recapturadas no schema 1 e mostram os três modelos do catálogo atual. As demais capturas permanecem da demonstração anterior; a imagem 12 registra a seleção histórica de Spurr, com somente dois modelos naquele catálogo. Ver o relatório de verificação para a origem dos dados.
 
 ## Evidência separada
 

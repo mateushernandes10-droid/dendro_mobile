@@ -308,3 +308,7 @@ A lista de talhões está incorporada ao detalhe da propriedade e ao detalhe do 
 Abertura → Início → conferir espécies/modelos em Ajustes → Propriedade → Talhão → Novo levantamento → ajustar modelo/coeficientes → iniciar e vincular talhão → Parcelas → Coleta de árvores (+ GPS opcional) → conferir/editar registros → encerrar parcelas → encerrar levantamento → consultar Resultados com filtros → Exportar → consultar Histórico.
 
 Alternativa: Propriedade → Talhão → planejar parcelas → iniciar levantamento e aproveitar planejamento. O atalho Novo Levantamento do Início também permite selecionar propriedade/talhão.
+
+## Atualização das imagens do catálogo
+
+As capturas `09_modelos_matematicos.png` e `08b_modelos_especie.png` foram substituídas por novas imagens reais do schema 1, em 1080 × 1920. Agora mostram Fator de Forma, Modelo de Spurr e Schumacher-Hall. No cadastro de Pinus, os três aparecem vinculados e Spurr permanece como padrão. Nenhuma configuração ou código foi alterado para a captura. As observações anteriores sobre catálogo incompleto aplicam-se às imagens históricas ainda não substituídas, especialmente a imagem 12 da seleção no levantamento.
