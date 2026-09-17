@@ -156,4 +156,127 @@ void main() {
       }
     },
   );
+
+  test(
+    'exporta coordenadas das arvores e referencias P1 a P4 em KML CSV e XLSX',
+    () async {
+      final bancoDados = BancoDendro(NativeDatabase.memory());
+      final diretorio = await Directory.systemTemp.createTemp(
+        'dendro_coordinate_export_',
+      );
+      const canal = MethodChannel('plugins.flutter.io/path_provider');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(canal, (_) async => diretorio.path);
+
+      try {
+        final propriedadeId = await RepositorioPropriedades(bancoDados).criar(
+          nome: 'Fazenda Coordenadas',
+          municipio: 'Vacaria',
+          areaTotalHa: 20,
+        );
+        final especieId = (await bancoDados.select(bancoDados.especies).get())
+            .singleWhere((especie) => especie.codigo == 'species_pinus')
+            .id;
+        final talhaoId = await RepositorioTalhoes(bancoDados).criar(
+          propriedadeId: propriedadeId,
+          identificacao: 'T-GPS',
+          especieId: especieId,
+          areaHa: 8,
+        );
+        final repositorioParcelas = RepositorioParcelas(bancoDados);
+        final talhaoLevantamento = await repositorioParcelas
+            .iniciarNovoLevantamentoParaTalhao(talhaoId);
+        final parcelaId = await repositorioParcelas
+            .criarParcelaParaTalhaoLevantamento(
+              talhaoLevantamentoId: talhaoLevantamento.id,
+              areaHa: 0.04,
+            );
+        final repositorioArvores = RepositorioArvores(bancoDados);
+        final referencias = PosicaoReferenciaParcela.values;
+        final coordenadas = [
+          (latitude: -28.5000, longitude: -50.9000),
+          (latitude: -28.5000, longitude: -50.8990),
+          (latitude: -28.4990, longitude: -50.8990),
+          (latitude: -28.4990, longitude: -50.9000),
+        ];
+
+        for (var indice = 0; indice < referencias.length; indice++) {
+          await repositorioArvores.criarArvore(
+            parcelaId: parcelaId,
+            rascunho: RascunhoArvore(
+              dapCm: 20 + indice.toDouble(),
+              alturaM: 15 + indice.toDouble(),
+              possuiTroncoTortuoso: false,
+              latitude: coordenadas[indice].latitude,
+              longitude: coordenadas[indice].longitude,
+              precisaoMetros: 3.5,
+              localizacaoCapturadaEm: DateTime(2026, 9, 16, 10, indice),
+              posicaoReferenciaParcela: referencias[indice],
+            ),
+          );
+        }
+
+        final repositorio = RepositorioExportacaoDados(bancoDados);
+        final solicitacao = SolicitacaoExportacaoDados(
+          levantamentoId: talhaoLevantamento.levantamentoId,
+        );
+        final estado = await repositorio.carregar(solicitacao);
+        expect(estado.talhoes.single.coordenadaQuantidade, 4);
+
+        final kml = await repositorio.gerarArquivo(
+          solicitacao: solicitacao,
+          formato: FormatoExportacaoDados.kml,
+          talhaoLevantamentoIds: {talhaoLevantamento.id},
+        );
+        final textoKml = await File(kml.caminho).readAsString();
+        expect(kml.nomeArquivo, endsWith('.kml'));
+        expect(kml.tipoMime, 'application/vnd.google-earth.kml+xml');
+        expect(textoKml, contains('<Polygon>'));
+        expect(textoKml, contains('T-GPS - P01 - P1'));
+        expect(textoKml, contains('T-GPS - P01 - P2'));
+        expect(textoKml, contains('T-GPS - P01 - P3'));
+        expect(textoKml, contains('T-GPS - P01 - P4'));
+        expect(textoKml, contains('-50.90000000,-28.50000000,0'));
+        expect(textoKml, contains('-50.89900000,-28.49900000,0'));
+        expect(
+          textoKml,
+          isNot(contains('Nenhuma coordenada GPS foi registrada')),
+        );
+
+        final csv = await repositorio.gerarArquivo(
+          solicitacao: solicitacao,
+          formato: FormatoExportacaoDados.csv,
+          talhaoLevantamentoIds: {talhaoLevantamento.id},
+        );
+        final textoCsv = await File(csv.caminho).readAsString();
+        expect(textoCsv, contains('Latitude árvore;Longitude árvore'));
+        expect(textoCsv, contains('-28.50000000;-50.90000000;3,50;P1'));
+        expect(textoCsv, contains('-28.49900000;-50.89900000;3,50;P3'));
+
+        final xlsx = await repositorio.gerarArquivo(
+          solicitacao: solicitacao,
+          formato: FormatoExportacaoDados.xls,
+          talhaoLevantamentoIds: {talhaoLevantamento.id},
+        );
+        final planilha = Excel.decodeBytes(
+          await File(xlsx.caminho).readAsBytes(),
+        );
+        expect(planilha.tables.keys, contains('Coordenadas'));
+        final abaCoordenadas = planilha['Coordenadas'];
+        CellValue? coordenadaCelula(String endereco) =>
+            abaCoordenadas.cell(CellIndex.indexByString(endereco)).value;
+        expect(coordenadaCelula('D2'), TextCellValue('Árvore'));
+        expect(coordenadaCelula('E2'), TextCellValue('P1'));
+        expect(coordenadaCelula('F2'), DoubleCellValue(-28.5));
+        expect(coordenadaCelula('G2'), DoubleCellValue(-50.9));
+        expect(coordenadaCelula('E5'), TextCellValue('P4'));
+        expect(abaCoordenadas.maxRows, 5);
+      } finally {
+        await bancoDados.close();
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(canal, null);
+        await diretorio.delete(recursive: true);
+      }
+    },
+  );
 }
