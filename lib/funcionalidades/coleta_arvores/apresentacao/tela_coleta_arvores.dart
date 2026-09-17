@@ -541,7 +541,7 @@ class _CabecalhoParcela extends StatelessWidget {
                 child: _CabecalhoIndicador(
                   icone: Icons.add_location_alt,
                   rotulo: 'Pontos GPS',
-                  valor: estado.geograficoPontos.length.toString(),
+                  valor: estado.pontosReferencia.length.toString(),
                 ),
               ),
             ],

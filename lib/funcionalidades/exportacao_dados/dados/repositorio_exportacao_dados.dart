@@ -109,7 +109,7 @@ class OpcaoTalhaoExportacao {
     required this.coletadaParcelaQuantidade,
     required this.arvoreQuantidade,
     required this.medidaAreaHa,
-    required this.geograficoPontoQuantidade,
+    required this.coordenadaQuantidade,
   });
 
   final TalhaoLevantamento talhaoLevantamento;
@@ -119,12 +119,10 @@ class OpcaoTalhaoExportacao {
   final int coletadaParcelaQuantidade;
   final int arvoreQuantidade;
   final double medidaAreaHa;
-  final int geograficoPontoQuantidade;
+  final int coordenadaQuantidade;
 
   bool get possuiDados =>
-      parcelaQuantidade > 0 ||
-      arvoreQuantidade > 0 ||
-      geograficoPontoQuantidade > 0;
+      parcelaQuantidade > 0 || arvoreQuantidade > 0 || coordenadaQuantidade > 0;
 }
 
 class ArquivoExportacaoGerado {
@@ -343,15 +341,25 @@ class CoeficienteExportacao {
 }
 
 class DadosParcelaExportacao {
-  const DadosParcelaExportacao({
-    required this.parcela,
-    required this.arvores,
-    required this.geograficoPontos,
-  });
+  const DadosParcelaExportacao({required this.parcela, required this.arvores});
 
   final Parcela parcela;
   final List<Arvore> arvores;
-  final List<PontoGeograficoParcela> geograficoPontos;
+
+  List<Arvore> get pontosReferencia =>
+      arvores
+          .where(
+            (arvore) =>
+                arvore.latitude != null &&
+                arvore.longitude != null &&
+                arvore.posicaoReferenciaParcela != null,
+          )
+          .toList()
+        ..sort(
+          (a, b) => a.posicaoReferenciaParcela!.index.compareTo(
+            b.posicaoReferenciaParcela!.index,
+          ),
+        );
 }
 
 class RepositorioExportacaoDados {
@@ -489,7 +497,6 @@ class RepositorioExportacaoDados {
               DadosParcelaExportacao(
                 parcela: parcela,
                 arvores: await _arvoresParaParcela(parcela.id),
-                geograficoPontos: await _pontosGeograficosDaParcela(parcela.id),
               ),
           ],
         ),
@@ -748,7 +755,7 @@ ORDER BY simbolo
           ),
           arvoreQuantidade: await _quantidadeArvores(talhaoLevantamento.id),
           medidaAreaHa: await _somarAreaMedida(talhaoLevantamento.id),
-          geograficoPontoQuantidade: await _quantidadePontosGeograficos(
+          coordenadaQuantidade: await _quantidadeCoordenadasArvores(
             talhaoLevantamento.id,
           ),
         ),
@@ -835,19 +842,8 @@ WHERE talhao_levantamento_id = ?
     return linha.read<double>('area');
   }
 
-  Future<int> _quantidadePontosGeograficos(int talhaoLevantamentoId) async {
-    final parcelaPontoLinhas = await _bancoDados
-        .customSelect(
-          '''
-SELECT COUNT(*) AS count
-FROM pontos_geograficos_parcela point
-INNER JOIN parcelas plot ON plot.id = point.parcela_id
-WHERE plot.talhao_levantamento_id = ?
-''',
-          variables: [Variable<int>(talhaoLevantamentoId)],
-        )
-        .getSingle();
-    final arvorePontoLinhas = await _bancoDados
+  Future<int> _quantidadeCoordenadasArvores(int talhaoLevantamentoId) async {
+    final linha = await _bancoDados
         .customSelect(
           '''
 SELECT COUNT(*) AS count
@@ -861,8 +857,7 @@ WHERE plot.talhao_levantamento_id = ?
         )
         .getSingle();
 
-    return (parcelaPontoLinhas.read<int>('count')) +
-        (arvorePontoLinhas.read<int>('count'));
+    return linha.read<int>('count');
   }
 
   Future<List<Parcela>> _parcelasParaTalhao(int talhaoLevantamentoId) {
@@ -882,18 +877,6 @@ WHERE plot.talhao_levantamento_id = ?
     return (_bancoDados.select(_bancoDados.arvores)
           ..where((tabela) => tabela.parcelaId.equals(parcelaId))
           ..orderBy([(tabela) => OrderingTerm.asc(tabela.numero)]))
-        .get();
-  }
-
-  Future<List<PontoGeograficoParcela>> _pontosGeograficosDaParcela(
-    int parcelaId,
-  ) {
-    return (_bancoDados.select(_bancoDados.pontosGeograficosParcela)
-          ..where((tabela) => tabela.parcelaId.equals(parcelaId))
-          ..orderBy([
-            (tabela) => OrderingTerm.asc(tabela.ordemPonto),
-            (tabela) => OrderingTerm.asc(tabela.capturadoEm),
-          ]))
         .get();
   }
 }
@@ -1051,7 +1034,7 @@ Future<List<int>> _pdfBytes(DadosExportacao conjuntoDados) async {
                       _mediaAltura(parcela.arvores),
                       sufixo: ' m',
                     ),
-                    parcela.geograficoPontos.length.toString(),
+                    parcela.pontosReferencia.length.toString(),
                   ],
               ],
             ),
@@ -1248,9 +1231,9 @@ List<int> _csvBytes(DadosExportacao conjuntoDados) {
 
   for (final talhao in conjuntoDados.talhoes) {
     for (final parcela in talhao.parcelas) {
-      final primeiroPonto = parcela.geograficoPontos.isEmpty
+      final primeiroPonto = parcela.pontosReferencia.isEmpty
           ? null
-          : parcela.geograficoPontos.first;
+          : parcela.pontosReferencia.first;
       if (parcela.arvores.isEmpty) {
         buffer.writeln(
           _csvLinha([
@@ -1291,7 +1274,7 @@ List<int> _csvBytes(DadosExportacao conjuntoDados) {
             '',
             '',
             '',
-            _referenciaRotulo(primeiroPonto?.posicaoReferencia),
+            _referenciaRotulo(primeiroPonto?.posicaoReferenciaParcela),
             _coordenadaOpcional(primeiroPonto?.latitude),
             _coordenadaOpcional(primeiroPonto?.longitude),
             _opcionalDecimal(primeiroPonto?.precisaoMetros),
@@ -1537,24 +1520,6 @@ List<int> _xlsxBytes(DadosExportacao conjuntoDados) {
           );
         }
       }
-
-      for (final ponto in parcela.geograficoPontos) {
-        coordenadas.appendRow(
-          _excelLinha([
-            conjuntoDados.propriedade.nome,
-            talhao.opcao.talhao.identificacao,
-            parcela.parcela.identificacao,
-            'Parcela',
-            _referenciaRotulo(ponto.posicaoReferencia).isEmpty
-                ? 'P${ponto.ordemPonto}'
-                : _referenciaRotulo(ponto.posicaoReferencia),
-            ponto.latitude,
-            ponto.longitude,
-            ponto.precisaoMetros,
-            _dataHora(ponto.capturadoEm),
-          ]),
-        );
-      }
     }
   }
 
@@ -1589,8 +1554,7 @@ List<int> _kmlBytes(DadosExportacao conjuntoDados) {
   var possuiCoordinates = false;
   for (final talhao in conjuntoDados.talhoes) {
     for (final parcela in talhao.parcelas) {
-      final orderedPontos = [...parcela.geograficoPontos]
-        ..sort((a, b) => a.ordemPonto.compareTo(b.ordemPonto));
+      final orderedPontos = parcela.pontosReferencia;
 
       if (orderedPontos.length >= 3) {
         possuiCoordinates = true;
@@ -1616,9 +1580,7 @@ List<int> _kmlBytes(DadosExportacao conjuntoDados) {
 
       for (final ponto in orderedPontos) {
         possuiCoordinates = true;
-        final pontoRotulo = _referenciaRotulo(ponto.posicaoReferencia).isEmpty
-            ? 'P${ponto.ordemPonto}'
-            : _referenciaRotulo(ponto.posicaoReferencia);
+        final pontoRotulo = _referenciaRotulo(ponto.posicaoReferenciaParcela);
         buffer.writeln('''
 <Placemark>
   <name>${_xml('${talhao.opcao.talhao.identificacao} - ${parcela.parcela.identificacao} - $pontoRotulo')}</name>
@@ -1926,21 +1888,21 @@ String _csvValor(Object? valor) {
   return deveAspas ? '"$escapado"' : escapado;
 }
 
-PontoGeograficoParcela? _correspondenteParcelaPonto(
+Arvore? _correspondenteParcelaPonto(
   DadosParcelaExportacao parcela,
   Arvore arvore,
 ) {
   if (arvore.posicaoReferenciaParcela == null) return null;
-  for (final ponto in parcela.geograficoPontos) {
-    if (ponto.posicaoReferencia == arvore.posicaoReferenciaParcela) {
+  for (final ponto in parcela.pontosReferencia) {
+    if (ponto.posicaoReferenciaParcela == arvore.posicaoReferenciaParcela) {
       return ponto;
     }
   }
   return null;
 }
 
-String _coordenadaKml(PontoGeograficoParcela ponto) {
-  return '${_valorCoordenada(ponto.longitude)},${_valorCoordenada(ponto.latitude)},0';
+String _coordenadaKml(Arvore ponto) {
+  return '${_valorCoordenada(ponto.longitude!)},${_valorCoordenada(ponto.latitude!)},0';
 }
 
 String _xml(String valor) {

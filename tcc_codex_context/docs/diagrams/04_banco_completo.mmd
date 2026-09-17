@@ -8,7 +8,6 @@ erDiagram
     modelos_matematicos ||--o{ talhao_levantamentos : selecionada
     talhao_levantamentos ||--o{ parcelas : contem
     parcelas ||--o{ arvores : possui
-    parcelas ||--o{ pontos_geograficos_parcela : documenta
     modelos_matematicos ||--o{ variaveis_modelo : declara
     modelos_matematicos ||--o{ coeficientes_modelo : define
     especies ||--o{ especies_modelos : associa
@@ -122,19 +121,8 @@ erDiagram
         text identificacao
         text situacao
         real area_ha "nullable"
-        text posicao_referencia "nullable"
         integer criado_em
         integer atualizado_em
-    }
-    pontos_geograficos_parcela {
-        integer id PK
-        integer parcela_id FK
-        integer ordem_ponto
-        text posicao_referencia "nullable"
-        real latitude
-        real longitude
-        real precisao_metros "nullable"
-        integer capturado_em
     }
     arvores {
         integer id PK

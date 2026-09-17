@@ -34,7 +34,7 @@ Não estão instaladas math_expressions, fl_chart, printing ou csv. CSV e KML s�
 
 ## Banco de dados
 
-O esquema é versão 1. As 15 tabelas da aplicação são declaradas em banco_dendro.dart e registradas em @DriftDatabase. O Drift cria a estrutura física do SQLite e gera as classes de dados correspondentes.
+O esquema é versão 1. As 14 tabelas da aplicação são declaradas em banco_dendro.dart e registradas em @DriftDatabase. O Drift cria a estrutura física do SQLite e gera as classes de dados correspondentes.
 
 Propriedade e talhão são cadastros permanentes. Levantamento representa o levantamento; TalhaoLevantamentos associa um talhão a um levantamento, com espécie e fórmula selecionadas. Parcelas pertencem a essa associação, e árvores pertencem às parcelas.
 
@@ -66,4 +66,4 @@ Build Android e uso de emulador não comprovam validação científica, usabilid
 
 ## Identificadores
 
-As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional para identificar itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional, sem chave estrangeira, porque registra tipos diferentes de entidade. São 15 tabelas e 114 colunas.
+As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional para identificar itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional, sem chave estrangeira, porque registra tipos diferentes de entidade. São 14 tabelas e 105 colunas.

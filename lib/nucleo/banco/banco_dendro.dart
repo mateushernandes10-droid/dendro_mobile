@@ -218,8 +218,6 @@ class Parcelas extends Table {
   TextColumn get identificacao => text()();
   TextColumn get situacao => textEnum<SituacaoParcela>()();
   RealColumn get areaHa => real().nullable()();
-  TextColumn get posicaoReferencia =>
-      textEnum<PosicaoReferenciaParcela>().nullable()();
   DateTimeColumn get criadoEm => dateTime()();
   DateTimeColumn get atualizadoEm => dateTime()();
 
@@ -227,23 +225,6 @@ class Parcelas extends Table {
   List<String> get customConstraints => [
     'UNIQUE(talhao_levantamento_id, identificacao)',
   ];
-}
-
-@DataClassName('PontoGeograficoParcela')
-class PontosGeograficosParcela extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  IntColumn get parcelaId =>
-      integer().references(Parcelas, #id, onDelete: KeyAction.cascade)();
-  IntColumn get ordemPonto => integer()();
-  TextColumn get posicaoReferencia =>
-      textEnum<PosicaoReferenciaParcela>().nullable()();
-  RealColumn get latitude => real()();
-  RealColumn get longitude => real()();
-  RealColumn get precisaoMetros => real().nullable()();
-  DateTimeColumn get capturadoEm => dateTime()();
-
-  @override
-  List<String> get customConstraints => ['UNIQUE(parcela_id, ordem_ponto)'];
 }
 
 @DataClassName('Arvore')
@@ -283,7 +264,6 @@ class Arvores extends Table {
     TalhaoLevantamentos,
     CoeficientesTalhaoLevantamento,
     Parcelas,
-    PontosGeograficosParcela,
     Arvores,
     RegistrosAtividade,
   ],

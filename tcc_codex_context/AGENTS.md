@@ -5,7 +5,7 @@ Aplicação mobile para apoio à coleta, armazenamento e análise de dados de in
 
 ## Estado vigente — revisão de 14/09/2026
 
-O banco usa chaves inteiras autoincrementadas e possui 15 tabelas com nomes de domínio em português. Cálculos implementados: Spurr, Schumacher-Hall e Fator de Forma. Cadastro de expressões existe, mas não há parser genérico. Estimativa econômica e KMZ não foram implementados. Não acrescentar esses itens aos diagramas como entregues.
+O banco usa chaves inteiras autoincrementadas e possui 14 tabelas com nomes de domínio em português. Cálculos implementados: Spurr, Schumacher-Hall e Fator de Forma. Cadastro de expressões existe, mas não há parser genérico. Estimativa econômica e KMZ não foram implementados. Não acrescentar esses itens aos diagramas como entregues.
 
 Antes de alterar código, leia nesta ordem:
 1. `docs/PROJECT_CONTEXT.md`
@@ -44,8 +44,7 @@ Antes de alterar código, leia nesta ordem:
 - Unidades oficiais iniciais: DAP em **cm**, altura em **m**, volume em **m³** e área em **ha**.
 - Método de amostragem definido: **amostragem sistemática com parcelas de área fixa**, preferencialmente retangulares.
 - Extrapolação parcela -> talhão deve usar volume por unidade de área amostrada, extrapolado para hectare/talhão, exigindo área amostrada disponível.
-- Parcelas podem receber pontos de geolocalização capturados pelo dispositivo durante o levantamento. Esses pontos servem para documentação/georreferenciamento e não devem ser usados como medição topográfica precisa sem validação técnica.
-- Árvores devem possuir identificação sequencial automática dentro da parcela e podem receber coordenada opcional capturada pelo dispositivo.
+- Árvores devem possuir identificação sequencial automática dentro da parcela e podem receber coordenada opcional capturada pelo dispositivo. Uma coordenada pode ser identificada como P1–P4 para servir como referência da parcela, sem duplicação em outra tabela.
 - Exportação geográfica **KML** está implementada; **KMZ** permanece fora da entrega.
 - Relatórios/exportações futuras devem considerar como referência o inventário técnico salvo em `tcc_codex_context/assets/references/inventario_referencia_engenheiro_outubro_2025.png`.
 - Se uma fórmula, coeficiente, unidade, método de amostragem ou regra florestal não estiver documentada, **não inventar**. Marcar como pendência e solicitar definição.

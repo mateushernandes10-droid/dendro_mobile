@@ -17,7 +17,7 @@ void main() {
               "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
             )
             .get();
-        expect(tabelas, hasLength(15));
+        expect(tabelas, hasLength(14));
         var total = 0;
         for (final linha in tabelas) {
           final tabela = linha.read<String>('name');
@@ -52,14 +52,14 @@ void main() {
             total++;
           }
         }
-        expect(total, 114);
+        expect(total, 105);
         final documento = File(
           'tcc_codex_context/docs/ENGINEERING_MODELS.md',
         ).readAsStringSync().replaceAll('\r', '');
         final fontes = Directory(
           'tcc_codex_context/docs/diagrams',
         ).listSync().whereType<File>().where((f) => f.path.endsWith('.mmd'));
-        expect(fontes, hasLength(8));
+        expect(fontes, hasLength(9));
         for (final fonte in fontes) {
           expect(
             documento,

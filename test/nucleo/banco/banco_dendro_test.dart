@@ -658,9 +658,9 @@ ORDER BY simbolo
     expect(estado.arvores.single.numero, 1);
     expect(estado.arvores.single.dapCm, 31.5);
     expect(estado.parcela.situacao, SituacaoParcela.emAndamento);
-    expect(estado.geograficoPontos, hasLength(1));
+    expect(estado.pontosReferencia, hasLength(1));
     expect(
-      estado.geograficoPontos.single.posicaoReferencia,
+      estado.pontosReferencia.single.posicaoReferenciaParcela,
       PosicaoReferenciaParcela.p1,
     );
 
@@ -692,10 +692,10 @@ ORDER BY simbolo
       substituicaoArvore.posicaoReferenciaParcela,
       PosicaoReferenciaParcela.p1,
     );
-    expect(estado.geograficoPontos, hasLength(1));
-    expect(estado.geograficoPontos.single.latitude, closeTo(-28.6123, 0.00001));
+    expect(estado.pontosReferencia, hasLength(1));
+    expect(estado.pontosReferencia.single.latitude, closeTo(-28.6123, 0.00001));
     expect(
-      estado.geograficoPontos.single.longitude,
+      estado.pontosReferencia.single.longitude,
       closeTo(-50.8123, 0.00001),
     );
 
@@ -891,9 +891,11 @@ ORDER BY simbolo
     );
     expect(await bancoDados.select(bancoDados.parcelas).get(), hasLength(1));
     expect(await bancoDados.select(bancoDados.arvores).get(), hasLength(1));
+    final arvoreComReferencia =
+        (await bancoDados.select(bancoDados.arvores).get()).single;
     expect(
-      await bancoDados.select(bancoDados.pontosGeograficosParcela).get(),
-      hasLength(1),
+      arvoreComReferencia.posicaoReferenciaParcela,
+      PosicaoReferenciaParcela.p1,
     );
 
     await repositorioLevantamentos.excluirLevantamento(
@@ -907,10 +909,6 @@ ORDER BY simbolo
     );
     expect(await bancoDados.select(bancoDados.parcelas).get(), isEmpty);
     expect(await bancoDados.select(bancoDados.arvores).get(), isEmpty);
-    expect(
-      await bancoDados.select(bancoDados.pontosGeograficosParcela).get(),
-      isEmpty,
-    );
     expect(
       await bancoDados.select(bancoDados.propriedades).get(),
       hasLength(1),
@@ -1015,10 +1013,6 @@ ORDER BY simbolo
     );
     expect(await bancoDados.select(bancoDados.parcelas).get(), isEmpty);
     expect(await bancoDados.select(bancoDados.arvores).get(), isEmpty);
-    expect(
-      await bancoDados.select(bancoDados.pontosGeograficosParcela).get(),
-      isEmpty,
-    );
     expect(await bancoDados.select(bancoDados.talhoes).get(), hasLength(2));
   });
 

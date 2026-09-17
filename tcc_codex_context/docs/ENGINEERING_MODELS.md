@@ -65,8 +65,8 @@ flowchart TB
     RP["Provedores Riverpod<br/>estado e acesso aos repositórios"]
     REPO["Repositórios por funcionalidade<br/>persistência, orquestração e agregações"]
     CALC["CalculadoraVolumeFlorestal<br/>equações por árvore e conversões"]
-    DB["BancoDendro / Drift<br/>15 tabelas declaradas"]
-    SQL[("SQLite local — 15 tabelas")]
+    DB["BancoDendro / Drift<br/>14 tabelas declaradas"]
+    SQL[("SQLite local — 14 tabelas")]
     GEO["Geolocator<br/>permissão e posição do dispositivo"]
     EXPORT["RepositorioExportacaoDados<br/>PDF, CSV, XLSX e KML"]
     FILE["Salvamento Android / share_plus"]
@@ -99,7 +99,6 @@ classDiagram
     ModeloMatematico "1" --> "0..*" TalhaoLevantamento
     TalhaoLevantamento "1" --> "0..*" Parcela
     Parcela "1" --> "0..*" Arvore
-    Parcela "1" --> "0..*" PontoGeograficoParcela
     ModeloMatematico "1" --> "0..*" VariavelModelo
     ModeloMatematico "1" --> "0..*" CoeficienteModelo
     Especie "1" --> "0..*" EspecieModelo
@@ -113,6 +112,9 @@ classDiagram
         double dapCm
         double alturaM
         bool possuiTroncoTortuoso
+        double latitude
+        double longitude
+        PosicaoReferenciaParcela posicaoReferenciaParcela
     }
     class TalhaoLevantamento {
         int id
@@ -144,10 +146,6 @@ classDiagram
     class Parcela {
         int id
         int talhaoLevantamentoId
-    }
-    class PontoGeograficoParcela {
-        int id
-        int parcelaId
     }
     class VariavelModelo {
         int id
@@ -200,7 +198,6 @@ erDiagram
     modelos_matematicos ||--o{ talhao_levantamentos : selecionada
     talhao_levantamentos ||--o{ parcelas : contem
     parcelas ||--o{ arvores : possui
-    parcelas ||--o{ pontos_geograficos_parcela : documenta
     modelos_matematicos ||--o{ variaveis_modelo : declara
     modelos_matematicos ||--o{ coeficientes_modelo : define
     especies ||--o{ especies_modelos : associa
@@ -219,7 +216,7 @@ Cada filho das ligações acima possui uma chave estrangeira obrigatória para e
 
 registros_atividade é independente: tipo_entidade/entidade_id são referências lógicas opcionais, sem FK. Não desenhar uma FK inexistente. coeficientes_especie_modelo possui FKs independentes para especies e modelos_matematicos, não uma FK composta para especies_modelos.
 
-## 5. Modelo físico completo — 15 tabelas
+## 5. Modelo físico completo — 14 tabelas
 
 Fonte: classes Table e comandos CREATE TABLE em banco_dendro.dart. IDs inteiros autoincrementados; FKs inteiras, números reais, booleanos armazenados como inteiros, enums como texto e datas no armazenamento inteiro padrão do Drift. “nullable” identifica campo opcional.
 
@@ -234,7 +231,6 @@ erDiagram
     modelos_matematicos ||--o{ talhao_levantamentos : selecionada
     talhao_levantamentos ||--o{ parcelas : contem
     parcelas ||--o{ arvores : possui
-    parcelas ||--o{ pontos_geograficos_parcela : documenta
     modelos_matematicos ||--o{ variaveis_modelo : declara
     modelos_matematicos ||--o{ coeficientes_modelo : define
     especies ||--o{ especies_modelos : associa
@@ -348,19 +344,8 @@ erDiagram
         text identificacao
         text situacao
         real area_ha "nullable"
-        text posicao_referencia "nullable"
         integer criado_em
         integer atualizado_em
-    }
-    pontos_geograficos_parcela {
-        integer id PK
-        integer parcela_id FK
-        integer ordem_ponto
-        text posicao_referencia "nullable"
-        real latitude
-        real longitude
-        real precisao_metros "nullable"
-        integer capturado_em
     }
     arvores {
         integer id PK
@@ -397,7 +382,6 @@ erDiagram
 - talhao_levantamentos: UNIQUE(levantamento_id, talhao_id).
 - parcelas: UNIQUE(talhao_levantamento_id, identificacao).
 - arvores: UNIQUE(parcela_id, numero).
-- pontos_geograficos_parcela: UNIQUE(parcela_id, ordem_ponto).
 - variaveis_modelo e coeficientes_modelo: UNIQUE(modelo_matematico_id, simbolo).
 - coeficientes_especie_modelo: UNIQUE(especie_id, modelo_matematico_id, simbolo).
 - coeficientes_talhao_levantamento: UNIQUE(talhao_levantamento_id, simbolo).
@@ -405,7 +389,7 @@ erDiagram
 
 As FKs declaram CASCADE, exceto talhoes.especie_id e talhao_levantamentos.especie_id/modelo_matematico_id, que declaram RESTRICT. Essa descrição é do esquema; repositórios também executam exclusões explícitas. Não afirmar que constraints sozinhas cobrem toda regra de interface.
 
-As 15 tabelas são declaradas em banco_dendro.dart e registradas em @DriftDatabase. ResultadoInventario, Medicoes e VolumeModel não são tabelas adicionais. DAP/altura ficam em arvores; o catálogo volumétrico fica em modelos_matematicos.
+As 14 tabelas são declaradas em banco_dendro.dart e registradas em @DriftDatabase. ResultadoInventario, Medicoes e VolumeModel não são tabelas adicionais. DAP, altura, coordenadas e referências P1–P4 ficam em arvores; o catálogo volumétrico fica em modelos_matematicos.
 
 ## 6. Fluxo operacional
 
@@ -490,6 +474,95 @@ Para descrever resultados, observar as limitações em BUSINESS_RULES.md: fórmu
 
 No diagrama de classes, codigo de Especie/ModeloMatematico e entidadeId de RegistroAtividade são opcionais. A nulabilidade física está detalhada no diagrama completo. EspecieModelo conserva chave primária composta; RegistroAtividade não tem chave estrangeira para uma entidade única.
 
+## Modelo conceitual do banco
+
+```mermaid
+erDiagram
+    PROPRIEDADE ||--o{ TALHAO : possui
+    PROPRIEDADE ||--o{ LEVANTAMENTO : realiza
+    ESPECIE ||--o{ TALHAO : classifica
+    LEVANTAMENTO ||--o{ TALHAO_NO_LEVANTAMENTO : inclui
+    TALHAO ||--o{ TALHAO_NO_LEVANTAMENTO : participa
+    ESPECIE ||--o{ TALHAO_NO_LEVANTAMENTO : identifica
+    MODELO_MATEMATICO ||--o{ TALHAO_NO_LEVANTAMENTO : calcula
+    TALHAO_NO_LEVANTAMENTO ||--o{ PARCELA : contem
+    PARCELA ||--o{ ARVORE : registra
+    ESPECIE }o--o{ MODELO_MATEMATICO : utiliza
+    MODELO_MATEMATICO ||--o{ VARIAVEL_MODELO : declara
+    MODELO_MATEMATICO ||--o{ COEFICIENTE_MODELO : define
+    ESPECIE ||--o{ COEFICIENTE_ESPECIE_MODELO : particulariza
+    MODELO_MATEMATICO ||--o{ COEFICIENTE_ESPECIE_MODELO : recebe
+    TALHAO_NO_LEVANTAMENTO ||--o{ COEFICIENTE_DA_COLETA : preserva
+
+    PROPRIEDADE {
+        identificador id
+        texto nome
+        texto municipio
+        texto estado
+        decimal area_total
+    }
+    TALHAO {
+        identificador id
+        texto identificacao
+        decimal area
+        inteiro ano_plantio
+        texto manejo
+    }
+    ESPECIE {
+        identificador id
+        texto nome
+        texto nome_cientifico
+    }
+    LEVANTAMENTO {
+        identificador id
+        estado situacao
+        data inicio
+        data conclusao
+    }
+    TALHAO_NO_LEVANTAMENTO {
+        identificador id
+        decimal area_padrao_parcela
+    }
+    PARCELA {
+        identificador id
+        texto identificacao
+        estado situacao
+        decimal area
+    }
+    ARVORE {
+        identificador id
+        inteiro numero
+        decimal dap_cm
+        decimal altura_m
+        booleano tronco_tortuoso
+        coordenada localizacao_opcional
+        texto referencia_parcela_opcional
+    }
+    MODELO_MATEMATICO {
+        identificador id
+        texto nome
+        texto expressao
+    }
+    VARIAVEL_MODELO {
+        texto simbolo
+        texto significado
+        texto unidade
+    }
+    COEFICIENTE_MODELO {
+        texto simbolo
+        texto significado
+        decimal valor_opcional
+    }
+    COEFICIENTE_ESPECIE_MODELO {
+        texto simbolo
+        decimal valor_opcional
+    }
+    COEFICIENTE_DA_COLETA {
+        texto simbolo
+        decimal valor_opcional
+    }
+```
+
 ## Identificadores
 
-As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional para identificar itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional, sem chave estrangeira, porque representa diferentes tipos de entidade. São 15 tabelas e 114 colunas.
+As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional para identificar itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional, sem chave estrangeira, porque representa diferentes tipos de entidade. São 14 tabelas e 105 colunas.

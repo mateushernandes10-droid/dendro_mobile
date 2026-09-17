@@ -8,7 +8,6 @@ classDiagram
     ModeloMatematico "1" --> "0..*" TalhaoLevantamento
     TalhaoLevantamento "1" --> "0..*" Parcela
     Parcela "1" --> "0..*" Arvore
-    Parcela "1" --> "0..*" PontoGeograficoParcela
     ModeloMatematico "1" --> "0..*" VariavelModelo
     ModeloMatematico "1" --> "0..*" CoeficienteModelo
     Especie "1" --> "0..*" EspecieModelo
@@ -22,6 +21,9 @@ classDiagram
         double dapCm
         double alturaM
         bool possuiTroncoTortuoso
+        double latitude
+        double longitude
+        PosicaoReferenciaParcela posicaoReferenciaParcela
     }
     class TalhaoLevantamento {
         int id
@@ -53,10 +55,6 @@ classDiagram
     class Parcela {
         int id
         int talhaoLevantamentoId
-    }
-    class PontoGeograficoParcela {
-        int id
-        int parcelaId
     }
     class VariavelModelo {
         int id

@@ -52,7 +52,7 @@ Os formulários de árvore exigem DAP e altura positivos. Há obrigatoriedade de
 Cadastros, coleta, consultas, cálculos e geração de arquivos ocorrem localmente. Compartilhar arquivos depende dos aplicativos/destinos escolhidos pelo usuário.
 
 ## BR-014 — Persistência
-SQLite via Drift. Há 15 tabelas de aplicação declaradas no banco. Resultados calculados não têm tabela própria.
+SQLite via Drift. Há 14 tabelas de aplicação declaradas no banco. Resultados calculados não têm tabela própria.
 
 ## BR-015 — Histórico
 Datas, situacao e registros_atividade apoiam a organização. Coeficientes por talhão do levantamento são armazenados separadamente. A expressão da fórmula permanece vinculada ao catálogo por ID; não existe versionamento histórico completo nem trilha de todas as alterações.
@@ -108,4 +108,4 @@ Fontes: lib/nucleo/banco/banco_dendro.dart; lib/nucleo/floresta/calculadora_volu
 
 ## Identificadores
 
-As 14 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional e sem chave estrangeira porque pode apontar para diferentes tipos de cadastro. São 15 tabelas e 114 colunas.
+As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional e sem chave estrangeira porque pode apontar para diferentes tipos de cadastro. São 14 tabelas e 105 colunas.

@@ -71,18 +71,18 @@ class ParcelaResumo {
     required this.talhaoLevantamento,
     required this.levantamento,
     required this.arvoreQuantidade,
-    required this.geograficoPontoQuantidade,
-    this.primeiroGeograficoPonto,
+    required this.pontoReferenciaQuantidade,
+    this.primeiraArvoreComPontoReferencia,
   });
 
   final Parcela parcela;
   final TalhaoLevantamento talhaoLevantamento;
   final Levantamento levantamento;
   final int arvoreQuantidade;
-  final int geograficoPontoQuantidade;
-  final PontoGeograficoParcela? primeiroGeograficoPonto;
+  final int pontoReferenciaQuantidade;
+  final Arvore? primeiraArvoreComPontoReferencia;
 
-  bool get possuiCoordinates => primeiroGeograficoPonto != null;
+  bool get possuiCoordenadas => primeiraArvoreComPontoReferencia != null;
 }
 
 class _ContextoTalhao {
@@ -158,10 +158,11 @@ class RepositorioParcelas {
             talhaoLevantamento: talhaoLevantamento,
             levantamento: linha.readTable(_bancoDados.levantamentos),
             arvoreQuantidade: await _quantidadeArvores(parcela.id),
-            geograficoPontoQuantidade: await _quantidadePontosGeograficos(
+            pontoReferenciaQuantidade: await _quantidadePontosReferencia(
               parcela.id,
             ),
-            primeiroGeograficoPonto: await _primeiroPontoGeografico(parcela.id),
+            primeiraArvoreComPontoReferencia:
+                await _primeiraArvoreComPontoReferencia(parcela.id),
           ),
         );
       }
@@ -221,10 +222,11 @@ class RepositorioParcelas {
             ),
             levantamento: linha.readTable(_bancoDados.levantamentos),
             arvoreQuantidade: await _quantidadeArvores(parcela.id),
-            geograficoPontoQuantidade: await _quantidadePontosGeograficos(
+            pontoReferenciaQuantidade: await _quantidadePontosReferencia(
               parcela.id,
             ),
-            primeiroGeograficoPonto: await _primeiroPontoGeografico(parcela.id),
+            primeiraArvoreComPontoReferencia:
+                await _primeiraArvoreComPontoReferencia(parcela.id),
           ),
         );
       }
@@ -423,12 +425,18 @@ class RepositorioParcelas {
         .get();
   }
 
-  Future<List<PontoGeograficoParcela>> pontosGeograficosDaParcela(
-    int parcelaId,
-  ) {
-    return (_bancoDados.select(_bancoDados.pontosGeograficosParcela)
-          ..where((tabela) => tabela.parcelaId.equals(parcelaId))
-          ..orderBy([(tabela) => OrderingTerm.asc(tabela.ordemPonto)]))
+  Future<List<Arvore>> arvoresComPontoReferenciaDaParcela(int parcelaId) {
+    return (_bancoDados.select(_bancoDados.arvores)
+          ..where(
+            (tabela) =>
+                tabela.parcelaId.equals(parcelaId) &
+                tabela.posicaoReferenciaParcela.isNotNull() &
+                tabela.latitude.isNotNull() &
+                tabela.longitude.isNotNull(),
+          )
+          ..orderBy([
+            (tabela) => OrderingTerm.asc(tabela.posicaoReferenciaParcela),
+          ]))
         .get();
   }
 
@@ -933,26 +941,35 @@ VALUES (?, ?, ?, ?)
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<int> _quantidadePontosGeograficos(int parcelaId) async {
-    final quantidade = _bancoDados.pontosGeograficosParcela.id.count();
+  Future<int> _quantidadePontosReferencia(int parcelaId) async {
+    final quantidade = _bancoDados.arvores.id.count();
 
     final linha =
-        await (_bancoDados.selectOnly(_bancoDados.pontosGeograficosParcela)
+        await (_bancoDados.selectOnly(_bancoDados.arvores)
               ..addColumns([quantidade])
               ..where(
-                _bancoDados.pontosGeograficosParcela.parcelaId.equals(
-                  parcelaId,
-                ),
+                _bancoDados.arvores.parcelaId.equals(parcelaId) &
+                    _bancoDados.arvores.posicaoReferenciaParcela.isNotNull() &
+                    _bancoDados.arvores.latitude.isNotNull() &
+                    _bancoDados.arvores.longitude.isNotNull(),
               ))
             .getSingle();
 
     return linha.read(quantidade) ?? 0;
   }
 
-  Future<PontoGeograficoParcela?> _primeiroPontoGeografico(int parcelaId) {
-    return (_bancoDados.select(_bancoDados.pontosGeograficosParcela)
-          ..where((tabela) => tabela.parcelaId.equals(parcelaId))
-          ..orderBy([(tabela) => OrderingTerm.asc(tabela.ordemPonto)])
+  Future<Arvore?> _primeiraArvoreComPontoReferencia(int parcelaId) {
+    return (_bancoDados.select(_bancoDados.arvores)
+          ..where(
+            (tabela) =>
+                tabela.parcelaId.equals(parcelaId) &
+                tabela.posicaoReferenciaParcela.isNotNull() &
+                tabela.latitude.isNotNull() &
+                tabela.longitude.isNotNull(),
+          )
+          ..orderBy([
+            (tabela) => OrderingTerm.asc(tabela.posicaoReferenciaParcela),
+          ])
           ..limit(1))
         .getSingleOrNull();
   }

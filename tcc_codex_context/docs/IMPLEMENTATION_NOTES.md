@@ -23,7 +23,7 @@ A tela Novo levantamento reutiliza o formulário de propriedade. Ao salvar, a no
 
 ## Banco de dados
 
-O SQLite possui 15 tabelas e 114 colunas. As tabelas, colunas, enums e classes do domínio usam português. Quatorze tabelas usam `INTEGER PRIMARY KEY AUTOINCREMENT`; `especies_modelos` usa a chave composta `(especie_id, modelo_matematico_id)`.
+O SQLite possui 14 tabelas e 105 colunas. As tabelas, colunas, enums e classes do domínio usam português. Treze tabelas usam `INTEGER PRIMARY KEY AUTOINCREMENT`; `especies_modelos` usa a chave composta `(especie_id, modelo_matematico_id)`.
 
 O catálogo inicial é inserido por `catalogos_iniciais.dart` na primeira criação do banco. Ele inclui Pinus, Eucalyptus e os três modelos matemáticos disponíveis.
 
@@ -52,7 +52,7 @@ O catálogo inicial é inserido por `catalogos_iniciais.dart` na primeira criaç
 
 ## Verificação
 
-Os testes automatizados cobrem banco, cálculos, exportações brutas, tema e fluxos de interface. `diagrama_banco_test.dart` compara as 15 tabelas e suas 114 colunas com o diagrama completo em Mermaid.
+Os testes automatizados cobrem banco, cálculos, exportações brutas, tema e fluxos de interface. `diagrama_banco_test.dart` compara as 14 tabelas e suas 105 colunas com o diagrama completo em Mermaid.
 
 Na verificação de 14/09/2026, `flutter analyze` terminou sem apontamentos, os 36 testes passaram e o APK de depuração foi gerado em `build/app/outputs/flutter-apk/app-debug.apk`.
 

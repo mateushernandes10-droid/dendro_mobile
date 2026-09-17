@@ -230,7 +230,7 @@ class TelaParcelasTalhao extends ConsumerWidget {
   ) async {
     final repositorio = ref.read(provedorRepositorioParcelas);
     final arvores = await repositorio.arvoresParaParcela(resumo.parcela.id);
-    final pontos = await repositorio.pontosGeograficosDaParcela(
+    final pontos = await repositorio.arvoresComPontoReferenciaDaParcela(
       resumo.parcela.id,
     );
 
@@ -275,7 +275,7 @@ class TelaParcelasTalhao extends ConsumerWidget {
   ) async {
     final parcela = resumo.parcela;
     final possuiFilhos =
-        resumo.arvoreQuantidade > 0 || resumo.geograficoPontoQuantidade > 0;
+        resumo.arvoreQuantidade > 0 || resumo.pontoReferenciaQuantidade > 0;
     final mensagem = possuiFilhos
         ? 'A parcela ${parcela.identificacao} já contém dados armazenados. Se confirmar, árvores e coordenadas vinculadas serão apagadas. Deseja continuar?'
         : 'Deseja excluir a parcela ${parcela.identificacao}?';
@@ -984,7 +984,7 @@ class _ParcelaDetalhesPainel extends StatelessWidget {
 
   final ParcelaResumo resumo;
   final List<Arvore> arvores;
-  final List<PontoGeograficoParcela> pontos;
+  final List<Arvore> pontos;
 
   @override
   Widget build(BuildContext context) {
@@ -1137,11 +1137,11 @@ class _ItemConsultaArvore extends StatelessWidget {
 class _ItemConsultaPontoGeografico extends StatelessWidget {
   const _ItemConsultaPontoGeografico({required this.ponto});
 
-  final PontoGeograficoParcela ponto;
+  final Arvore ponto;
 
   @override
   Widget build(BuildContext context) {
-    final referencia = ponto.posicaoReferencia?.name.toUpperCase();
+    final referencia = ponto.posicaoReferenciaParcela?.name.toUpperCase();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1171,8 +1171,8 @@ class _ItemConsultaPontoGeografico extends StatelessWidget {
                 children: [
                   Text(
                     referencia == null
-                        ? 'Ponto ${ponto.ordemPonto}'
-                        : '$referencia • Ponto ${ponto.ordemPonto}',
+                        ? 'Árvore ${ponto.numero}'
+                        : '$referencia • Árvore ${ponto.numero}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -1291,8 +1291,8 @@ String _parcelaSubtitulo(ParcelaResumo resumo) {
 
   switch (parcela.situacao) {
     case SituacaoParcela.coletada:
-      final coordenada = resumo.possuiCoordinates
-          ? _formatarCoordenada(resumo.primeiroGeograficoPonto!)
+      final coordenada = resumo.possuiCoordenadas
+          ? _formatarCoordenada(resumo.primeiraArvoreComPontoReferencia!)
           : 'Sem coordenadas';
       return [
         '${resumo.arvoreQuantidade} árvores',
@@ -1349,8 +1349,8 @@ String _plural(int quantidade, String singular) {
   return '${singular}s';
 }
 
-String _formatarCoordenada(PontoGeograficoParcela ponto) {
-  return '${ponto.latitude.toStringAsFixed(5)}, ${ponto.longitude.toStringAsFixed(5)}';
+String _formatarCoordenada(Arvore ponto) {
+  return '${ponto.latitude!.toStringAsFixed(5)}, ${ponto.longitude!.toStringAsFixed(5)}';
 }
 
 String _formatoArea(double valor) {

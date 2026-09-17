@@ -22,7 +22,7 @@ class EstadoColetaArvores {
     required this.talhao,
     required this.especie,
     required this.arvores,
-    required this.geograficoPontos,
+    required this.pontosReferencia,
   });
 
   final Parcela parcela;
@@ -31,7 +31,7 @@ class EstadoColetaArvores {
   final Talhao talhao;
   final Especie especie;
   final List<Arvore> arvores;
-  final List<PontoGeograficoParcela> geograficoPontos;
+  final List<Arvore> pontosReferencia;
 
   int get arvoreQuantidade => arvores.length;
 
@@ -44,11 +44,7 @@ class EstadoColetaArvores {
   }
 
   Set<PosicaoReferenciaParcela> get capturadoReferenciaPosicoes => {
-    for (final arvore in arvores)
-      if (arvore.latitude != null &&
-          arvore.longitude != null &&
-          arvore.posicaoReferenciaParcela != null)
-        arvore.posicaoReferenciaParcela!,
+    for (final arvore in pontosReferencia) arvore.posicaoReferenciaParcela!,
   };
 }
 
@@ -89,11 +85,6 @@ class RepositorioArvores {
 
     return arvoresConsulta.watch().asyncMap((arvores) async {
       final context = await _lerContextoColeta(parcelaId);
-      final geograficoPontos =
-          await (_bancoDados.select(_bancoDados.pontosGeograficosParcela)
-                ..where((tabela) => tabela.parcelaId.equals(parcelaId))
-                ..orderBy([(tabela) => OrderingTerm.asc(tabela.ordemPonto)]))
-              .get();
 
       return EstadoColetaArvores(
         parcela: context.parcela,
@@ -102,7 +93,7 @@ class RepositorioArvores {
         talhao: context.talhao,
         especie: context.especie,
         arvores: arvores,
-        geograficoPontos: geograficoPontos,
+        pontosReferencia: _pontosReferenciaDasArvores(arvores),
       );
     });
   }
@@ -145,7 +136,6 @@ class RepositorioArvores {
           );
 
       await _atualizarParcela(parcelaId, situacao: SituacaoParcela.emAndamento);
-      await _reconstruirPontosGeograficosParcelaDeArvores(parcelaId);
     });
 
     return id;
@@ -182,7 +172,6 @@ class RepositorioArvores {
       );
 
       await _atualizarParcela(arvore.parcelaId);
-      await _reconstruirPontosGeograficosParcelaDeArvores(arvore.parcelaId);
     });
   }
 
@@ -202,7 +191,6 @@ class RepositorioArvores {
           : null;
 
       await _atualizarParcela(arvore.parcelaId, situacao: situacao);
-      await _reconstruirPontosGeograficosParcelaDeArvores(arvore.parcelaId);
     });
   }
 
@@ -308,46 +296,6 @@ class RepositorioArvores {
         .write(LevantamentosCompanion(atualizadoEm: Value(agora)));
   }
 
-  Future<void> _reconstruirPontosGeograficosParcelaDeArvores(
-    int parcelaId,
-  ) async {
-    await (_bancoDados.delete(
-      _bancoDados.pontosGeograficosParcela,
-    )..where((tabela) => tabela.parcelaId.equals(parcelaId))).go();
-
-    final arvores =
-        await (_bancoDados.select(_bancoDados.arvores)
-              ..where((tabela) => tabela.parcelaId.equals(parcelaId))
-              ..orderBy([(tabela) => OrderingTerm.asc(tabela.numero)]))
-            .get();
-
-    final utilizadoPosicoes = <PosicaoReferenciaParcela>{};
-    for (final arvore in arvores) {
-      final referencia = arvore.posicaoReferenciaParcela;
-      if (referencia == null ||
-          arvore.latitude == null ||
-          arvore.longitude == null ||
-          utilizadoPosicoes.contains(referencia)) {
-        continue;
-      }
-
-      utilizadoPosicoes.add(referencia);
-      await _bancoDados
-          .into(_bancoDados.pontosGeograficosParcela)
-          .insert(
-            PontosGeograficosParcelaCompanion.insert(
-              parcelaId: parcelaId,
-              ordemPonto: _ordemPonto(referencia),
-              posicaoReferencia: Value(referencia),
-              latitude: arvore.latitude!,
-              longitude: arvore.longitude!,
-              precisaoMetros: Value(arvore.precisaoMetros),
-              capturadoEm: arvore.localizacaoCapturadaEm ?? arvore.atualizadoEm,
-            ),
-          );
-    }
-  }
-
   Future<Arvore> _arvorePorId(int arvoreId) {
     return (_bancoDados.select(
       _bancoDados.arvores,
@@ -407,15 +355,18 @@ class _ContextoColeta {
   final Especie especie;
 }
 
-int _ordemPonto(PosicaoReferenciaParcela referencia) {
-  switch (referencia) {
-    case PosicaoReferenciaParcela.p1:
-      return 1;
-    case PosicaoReferenciaParcela.p2:
-      return 2;
-    case PosicaoReferenciaParcela.p3:
-      return 3;
-    case PosicaoReferenciaParcela.p4:
-      return 4;
-  }
+List<Arvore> _pontosReferenciaDasArvores(List<Arvore> arvores) {
+  return arvores
+      .where(
+        (arvore) =>
+            arvore.latitude != null &&
+            arvore.longitude != null &&
+            arvore.posicaoReferenciaParcela != null,
+      )
+      .toList()
+    ..sort(
+      (a, b) => a.posicaoReferenciaParcela!.index.compareTo(
+        b.posicaoReferenciaParcela!.index,
+      ),
+    );
 }

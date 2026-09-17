@@ -22,7 +22,7 @@ As medições principais são DAP em centímetros e altura em metros. A área da
 
 ## Banco de dados
 
-O banco possui 15 tabelas com nomes em português. Quatorze delas têm chave primária inteira autoincrementada; especies_modelos usa chave primária composta porque representa diretamente a associação entre espécie e modelo.
+O banco possui 14 tabelas com nomes em português. Treze delas têm chave primária inteira autoincrementada; especies_modelos usa chave primária composta porque representa diretamente a associação entre espécie e modelo.
 
 As chaves estrangeiras são inteiras e preservam a hierarquia do inventário. Exclusões em cascata são usadas quando o registro filho perde o sentido sem o pai. Referências a espécie e modelo em coletas usam restrição para evitar a remoção de uma configuração em uso.
 

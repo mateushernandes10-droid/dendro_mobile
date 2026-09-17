@@ -12,7 +12,7 @@ Data: 15/09/2026.
 
 ## Inicialização e decisão vigente do banco
 
-A versão vigente é **schema 1**, com IDs inteiros, 15 tabelas declaradas no Drift e criação por `onCreate`. Não há migração de bancos das versões experimentais anteriores.
+A versão vigente é **schema 1**, com IDs inteiros, 14 tabelas declaradas no Drift e criação por `onCreate`. Não há migração de bancos das versões experimentais anteriores.
 
 A falha inicial ocorreu porque o emulador mantinha um banco antigo, versão 7, incompatível com essa estrutura. Durante a produção das imagens foi introduzido indevidamente um schema 12 com migrações. Essa alteração foi revertida para respeitar a decisão anterior do projeto. Os arquivos de migração, seus testes e a fixture antiga foram removidos.
 

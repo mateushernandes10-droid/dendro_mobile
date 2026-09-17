@@ -638,10 +638,8 @@ class _ExportacaoTalhaoBloco extends StatelessWidget {
                       _TalhaoMetadados(
                         '${_formatoArea(opcao.medidaAreaHa)} ha',
                       ),
-                      if (opcao.geograficoPontoQuantidade > 0)
-                        _TalhaoMetadados(
-                          '${opcao.geograficoPontoQuantidade} GPS',
-                        ),
+                      if (opcao.coordenadaQuantidade > 0)
+                        _TalhaoMetadados('${opcao.coordenadaQuantidade} GPS'),
                     ],
                   ),
                 ],

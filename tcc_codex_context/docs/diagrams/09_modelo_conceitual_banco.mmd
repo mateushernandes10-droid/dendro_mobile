@@ -8,7 +8,6 @@ erDiagram
     MODELO_MATEMATICO ||--o{ TALHAO_NO_LEVANTAMENTO : calcula
     TALHAO_NO_LEVANTAMENTO ||--o{ PARCELA : contem
     PARCELA ||--o{ ARVORE : registra
-    PARCELA ||--o{ PONTO_GEOGRAFICO : localiza
     ESPECIE }o--o{ MODELO_MATEMATICO : utiliza
     MODELO_MATEMATICO ||--o{ VARIAVEL_MODELO : declara
     MODELO_MATEMATICO ||--o{ COEFICIENTE_MODELO : define
@@ -58,11 +57,7 @@ erDiagram
         decimal altura_m
         booleano tronco_tortuoso
         coordenada localizacao_opcional
-    }
-    PONTO_GEOGRAFICO {
-        identificador id
-        inteiro ordem
-        coordenada latitude_longitude
+        texto referencia_parcela_opcional
     }
     MODELO_MATEMATICO {
         identificador id

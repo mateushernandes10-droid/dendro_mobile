@@ -5335,18 +5335,6 @@ class $ParcelasTable extends Parcelas with TableInfo<$ParcelasTable, Parcela> {
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
-  @override
-  late final GeneratedColumnWithTypeConverter<PosicaoReferenciaParcela?, String>
-  posicaoReferencia =
-      GeneratedColumn<String>(
-        'posicao_referencia',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<PosicaoReferenciaParcela?>(
-        $ParcelasTable.$converterposicaoReferencian,
-      );
   static const VerificationMeta _criadoEmMeta = const VerificationMeta(
     'criadoEm',
   );
@@ -5376,7 +5364,6 @@ class $ParcelasTable extends Parcelas with TableInfo<$ParcelasTable, Parcela> {
     identificacao,
     situacao,
     areaHa,
-    posicaoReferencia,
     criadoEm,
     atualizadoEm,
   ];
@@ -5473,12 +5460,6 @@ class $ParcelasTable extends Parcelas with TableInfo<$ParcelasTable, Parcela> {
         DriftSqlType.double,
         data['${effectivePrefix}area_ha'],
       ),
-      posicaoReferencia: $ParcelasTable.$converterposicaoReferencian.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}posicao_referencia'],
-        ),
-      ),
       criadoEm: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}criado_em'],
@@ -5499,15 +5480,6 @@ class $ParcelasTable extends Parcelas with TableInfo<$ParcelasTable, Parcela> {
   $convertersituacao = const EnumNameConverter<SituacaoParcela>(
     SituacaoParcela.values,
   );
-  static JsonTypeConverter2<PosicaoReferenciaParcela, String, String>
-  $converterposicaoReferencia =
-      const EnumNameConverter<PosicaoReferenciaParcela>(
-        PosicaoReferenciaParcela.values,
-      );
-  static JsonTypeConverter2<PosicaoReferenciaParcela?, String?, String?>
-  $converterposicaoReferencian = JsonTypeConverter2.asNullable(
-    $converterposicaoReferencia,
-  );
 }
 
 class Parcela extends DataClass implements Insertable<Parcela> {
@@ -5516,7 +5488,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
   final String identificacao;
   final SituacaoParcela situacao;
   final double? areaHa;
-  final PosicaoReferenciaParcela? posicaoReferencia;
   final DateTime criadoEm;
   final DateTime atualizadoEm;
   const Parcela({
@@ -5525,7 +5496,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
     required this.identificacao,
     required this.situacao,
     this.areaHa,
-    this.posicaoReferencia,
     required this.criadoEm,
     required this.atualizadoEm,
   });
@@ -5543,11 +5513,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
     if (!nullToAbsent || areaHa != null) {
       map['area_ha'] = Variable<double>(areaHa);
     }
-    if (!nullToAbsent || posicaoReferencia != null) {
-      map['posicao_referencia'] = Variable<String>(
-        $ParcelasTable.$converterposicaoReferencian.toSql(posicaoReferencia),
-      );
-    }
     map['criado_em'] = Variable<DateTime>(criadoEm);
     map['atualizado_em'] = Variable<DateTime>(atualizadoEm);
     return map;
@@ -5562,9 +5527,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
       areaHa: areaHa == null && nullToAbsent
           ? const Value.absent()
           : Value(areaHa),
-      posicaoReferencia: posicaoReferencia == null && nullToAbsent
-          ? const Value.absent()
-          : Value(posicaoReferencia),
       criadoEm: Value(criadoEm),
       atualizadoEm: Value(atualizadoEm),
     );
@@ -5585,9 +5547,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
         serializer.fromJson<String>(json['situacao']),
       ),
       areaHa: serializer.fromJson<double?>(json['areaHa']),
-      posicaoReferencia: $ParcelasTable.$converterposicaoReferencian.fromJson(
-        serializer.fromJson<String?>(json['posicaoReferencia']),
-      ),
       criadoEm: serializer.fromJson<DateTime>(json['criadoEm']),
       atualizadoEm: serializer.fromJson<DateTime>(json['atualizadoEm']),
     );
@@ -5603,9 +5562,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
         $ParcelasTable.$convertersituacao.toJson(situacao),
       ),
       'areaHa': serializer.toJson<double?>(areaHa),
-      'posicaoReferencia': serializer.toJson<String?>(
-        $ParcelasTable.$converterposicaoReferencian.toJson(posicaoReferencia),
-      ),
       'criadoEm': serializer.toJson<DateTime>(criadoEm),
       'atualizadoEm': serializer.toJson<DateTime>(atualizadoEm),
     };
@@ -5617,7 +5573,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
     String? identificacao,
     SituacaoParcela? situacao,
     Value<double?> areaHa = const Value.absent(),
-    Value<PosicaoReferenciaParcela?> posicaoReferencia = const Value.absent(),
     DateTime? criadoEm,
     DateTime? atualizadoEm,
   }) => Parcela(
@@ -5626,9 +5581,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
     identificacao: identificacao ?? this.identificacao,
     situacao: situacao ?? this.situacao,
     areaHa: areaHa.present ? areaHa.value : this.areaHa,
-    posicaoReferencia: posicaoReferencia.present
-        ? posicaoReferencia.value
-        : this.posicaoReferencia,
     criadoEm: criadoEm ?? this.criadoEm,
     atualizadoEm: atualizadoEm ?? this.atualizadoEm,
   );
@@ -5643,9 +5595,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
           : this.identificacao,
       situacao: data.situacao.present ? data.situacao.value : this.situacao,
       areaHa: data.areaHa.present ? data.areaHa.value : this.areaHa,
-      posicaoReferencia: data.posicaoReferencia.present
-          ? data.posicaoReferencia.value
-          : this.posicaoReferencia,
       criadoEm: data.criadoEm.present ? data.criadoEm.value : this.criadoEm,
       atualizadoEm: data.atualizadoEm.present
           ? data.atualizadoEm.value
@@ -5661,7 +5610,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
           ..write('identificacao: $identificacao, ')
           ..write('situacao: $situacao, ')
           ..write('areaHa: $areaHa, ')
-          ..write('posicaoReferencia: $posicaoReferencia, ')
           ..write('criadoEm: $criadoEm, ')
           ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
@@ -5675,7 +5623,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
     identificacao,
     situacao,
     areaHa,
-    posicaoReferencia,
     criadoEm,
     atualizadoEm,
   );
@@ -5688,7 +5635,6 @@ class Parcela extends DataClass implements Insertable<Parcela> {
           other.identificacao == this.identificacao &&
           other.situacao == this.situacao &&
           other.areaHa == this.areaHa &&
-          other.posicaoReferencia == this.posicaoReferencia &&
           other.criadoEm == this.criadoEm &&
           other.atualizadoEm == this.atualizadoEm);
 }
@@ -5699,7 +5645,6 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
   final Value<String> identificacao;
   final Value<SituacaoParcela> situacao;
   final Value<double?> areaHa;
-  final Value<PosicaoReferenciaParcela?> posicaoReferencia;
   final Value<DateTime> criadoEm;
   final Value<DateTime> atualizadoEm;
   const ParcelasCompanion({
@@ -5708,7 +5653,6 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
     this.identificacao = const Value.absent(),
     this.situacao = const Value.absent(),
     this.areaHa = const Value.absent(),
-    this.posicaoReferencia = const Value.absent(),
     this.criadoEm = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
   });
@@ -5718,7 +5662,6 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
     required String identificacao,
     required SituacaoParcela situacao,
     this.areaHa = const Value.absent(),
-    this.posicaoReferencia = const Value.absent(),
     required DateTime criadoEm,
     required DateTime atualizadoEm,
   }) : talhaoLevantamentoId = Value(talhaoLevantamentoId),
@@ -5732,7 +5675,6 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
     Expression<String>? identificacao,
     Expression<String>? situacao,
     Expression<double>? areaHa,
-    Expression<String>? posicaoReferencia,
     Expression<DateTime>? criadoEm,
     Expression<DateTime>? atualizadoEm,
   }) {
@@ -5743,7 +5685,6 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
       if (identificacao != null) 'identificacao': identificacao,
       if (situacao != null) 'situacao': situacao,
       if (areaHa != null) 'area_ha': areaHa,
-      if (posicaoReferencia != null) 'posicao_referencia': posicaoReferencia,
       if (criadoEm != null) 'criado_em': criadoEm,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
     });
@@ -5755,7 +5696,6 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
     Value<String>? identificacao,
     Value<SituacaoParcela>? situacao,
     Value<double?>? areaHa,
-    Value<PosicaoReferenciaParcela?>? posicaoReferencia,
     Value<DateTime>? criadoEm,
     Value<DateTime>? atualizadoEm,
   }) {
@@ -5765,7 +5705,6 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
       identificacao: identificacao ?? this.identificacao,
       situacao: situacao ?? this.situacao,
       areaHa: areaHa ?? this.areaHa,
-      posicaoReferencia: posicaoReferencia ?? this.posicaoReferencia,
       criadoEm: criadoEm ?? this.criadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
     );
@@ -5791,13 +5730,6 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
     if (areaHa.present) {
       map['area_ha'] = Variable<double>(areaHa.value);
     }
-    if (posicaoReferencia.present) {
-      map['posicao_referencia'] = Variable<String>(
-        $ParcelasTable.$converterposicaoReferencian.toSql(
-          posicaoReferencia.value,
-        ),
-      );
-    }
     if (criadoEm.present) {
       map['criado_em'] = Variable<DateTime>(criadoEm.value);
     }
@@ -5815,561 +5747,8 @@ class ParcelasCompanion extends UpdateCompanion<Parcela> {
           ..write('identificacao: $identificacao, ')
           ..write('situacao: $situacao, ')
           ..write('areaHa: $areaHa, ')
-          ..write('posicaoReferencia: $posicaoReferencia, ')
           ..write('criadoEm: $criadoEm, ')
           ..write('atualizadoEm: $atualizadoEm')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $PontosGeograficosParcelaTable extends PontosGeograficosParcela
-    with TableInfo<$PontosGeograficosParcelaTable, PontoGeograficoParcela> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $PontosGeograficosParcelaTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _parcelaIdMeta = const VerificationMeta(
-    'parcelaId',
-  );
-  @override
-  late final GeneratedColumn<int> parcelaId = GeneratedColumn<int>(
-    'parcela_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES parcelas (id) ON DELETE CASCADE',
-    ),
-  );
-  static const VerificationMeta _ordemPontoMeta = const VerificationMeta(
-    'ordemPonto',
-  );
-  @override
-  late final GeneratedColumn<int> ordemPonto = GeneratedColumn<int>(
-    'ordem_ponto',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<PosicaoReferenciaParcela?, String>
-  posicaoReferencia =
-      GeneratedColumn<String>(
-        'posicao_referencia',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<PosicaoReferenciaParcela?>(
-        $PontosGeograficosParcelaTable.$converterposicaoReferencian,
-      );
-  static const VerificationMeta _latitudeMeta = const VerificationMeta(
-    'latitude',
-  );
-  @override
-  late final GeneratedColumn<double> latitude = GeneratedColumn<double>(
-    'latitude',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _longitudeMeta = const VerificationMeta(
-    'longitude',
-  );
-  @override
-  late final GeneratedColumn<double> longitude = GeneratedColumn<double>(
-    'longitude',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _precisaoMetrosMeta = const VerificationMeta(
-    'precisaoMetros',
-  );
-  @override
-  late final GeneratedColumn<double> precisaoMetros = GeneratedColumn<double>(
-    'precisao_metros',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _capturadoEmMeta = const VerificationMeta(
-    'capturadoEm',
-  );
-  @override
-  late final GeneratedColumn<DateTime> capturadoEm = GeneratedColumn<DateTime>(
-    'capturado_em',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    parcelaId,
-    ordemPonto,
-    posicaoReferencia,
-    latitude,
-    longitude,
-    precisaoMetros,
-    capturadoEm,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'pontos_geograficos_parcela';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<PontoGeograficoParcela> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('parcela_id')) {
-      context.handle(
-        _parcelaIdMeta,
-        parcelaId.isAcceptableOrUnknown(data['parcela_id']!, _parcelaIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_parcelaIdMeta);
-    }
-    if (data.containsKey('ordem_ponto')) {
-      context.handle(
-        _ordemPontoMeta,
-        ordemPonto.isAcceptableOrUnknown(data['ordem_ponto']!, _ordemPontoMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_ordemPontoMeta);
-    }
-    if (data.containsKey('latitude')) {
-      context.handle(
-        _latitudeMeta,
-        latitude.isAcceptableOrUnknown(data['latitude']!, _latitudeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_latitudeMeta);
-    }
-    if (data.containsKey('longitude')) {
-      context.handle(
-        _longitudeMeta,
-        longitude.isAcceptableOrUnknown(data['longitude']!, _longitudeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_longitudeMeta);
-    }
-    if (data.containsKey('precisao_metros')) {
-      context.handle(
-        _precisaoMetrosMeta,
-        precisaoMetros.isAcceptableOrUnknown(
-          data['precisao_metros']!,
-          _precisaoMetrosMeta,
-        ),
-      );
-    }
-    if (data.containsKey('capturado_em')) {
-      context.handle(
-        _capturadoEmMeta,
-        capturadoEm.isAcceptableOrUnknown(
-          data['capturado_em']!,
-          _capturadoEmMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_capturadoEmMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  PontoGeograficoParcela map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return PontoGeograficoParcela(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      parcelaId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}parcela_id'],
-      )!,
-      ordemPonto: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}ordem_ponto'],
-      )!,
-      posicaoReferencia: $PontosGeograficosParcelaTable
-          .$converterposicaoReferencian
-          .fromSql(
-            attachedDatabase.typeMapping.read(
-              DriftSqlType.string,
-              data['${effectivePrefix}posicao_referencia'],
-            ),
-          ),
-      latitude: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}latitude'],
-      )!,
-      longitude: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}longitude'],
-      )!,
-      precisaoMetros: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}precisao_metros'],
-      ),
-      capturadoEm: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}capturado_em'],
-      )!,
-    );
-  }
-
-  @override
-  $PontosGeograficosParcelaTable createAlias(String alias) {
-    return $PontosGeograficosParcelaTable(attachedDatabase, alias);
-  }
-
-  static JsonTypeConverter2<PosicaoReferenciaParcela, String, String>
-  $converterposicaoReferencia =
-      const EnumNameConverter<PosicaoReferenciaParcela>(
-        PosicaoReferenciaParcela.values,
-      );
-  static JsonTypeConverter2<PosicaoReferenciaParcela?, String?, String?>
-  $converterposicaoReferencian = JsonTypeConverter2.asNullable(
-    $converterposicaoReferencia,
-  );
-}
-
-class PontoGeograficoParcela extends DataClass
-    implements Insertable<PontoGeograficoParcela> {
-  final int id;
-  final int parcelaId;
-  final int ordemPonto;
-  final PosicaoReferenciaParcela? posicaoReferencia;
-  final double latitude;
-  final double longitude;
-  final double? precisaoMetros;
-  final DateTime capturadoEm;
-  const PontoGeograficoParcela({
-    required this.id,
-    required this.parcelaId,
-    required this.ordemPonto,
-    this.posicaoReferencia,
-    required this.latitude,
-    required this.longitude,
-    this.precisaoMetros,
-    required this.capturadoEm,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['parcela_id'] = Variable<int>(parcelaId);
-    map['ordem_ponto'] = Variable<int>(ordemPonto);
-    if (!nullToAbsent || posicaoReferencia != null) {
-      map['posicao_referencia'] = Variable<String>(
-        $PontosGeograficosParcelaTable.$converterposicaoReferencian.toSql(
-          posicaoReferencia,
-        ),
-      );
-    }
-    map['latitude'] = Variable<double>(latitude);
-    map['longitude'] = Variable<double>(longitude);
-    if (!nullToAbsent || precisaoMetros != null) {
-      map['precisao_metros'] = Variable<double>(precisaoMetros);
-    }
-    map['capturado_em'] = Variable<DateTime>(capturadoEm);
-    return map;
-  }
-
-  PontosGeograficosParcelaCompanion toCompanion(bool nullToAbsent) {
-    return PontosGeograficosParcelaCompanion(
-      id: Value(id),
-      parcelaId: Value(parcelaId),
-      ordemPonto: Value(ordemPonto),
-      posicaoReferencia: posicaoReferencia == null && nullToAbsent
-          ? const Value.absent()
-          : Value(posicaoReferencia),
-      latitude: Value(latitude),
-      longitude: Value(longitude),
-      precisaoMetros: precisaoMetros == null && nullToAbsent
-          ? const Value.absent()
-          : Value(precisaoMetros),
-      capturadoEm: Value(capturadoEm),
-    );
-  }
-
-  factory PontoGeograficoParcela.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return PontoGeograficoParcela(
-      id: serializer.fromJson<int>(json['id']),
-      parcelaId: serializer.fromJson<int>(json['parcelaId']),
-      ordemPonto: serializer.fromJson<int>(json['ordemPonto']),
-      posicaoReferencia: $PontosGeograficosParcelaTable
-          .$converterposicaoReferencian
-          .fromJson(serializer.fromJson<String?>(json['posicaoReferencia'])),
-      latitude: serializer.fromJson<double>(json['latitude']),
-      longitude: serializer.fromJson<double>(json['longitude']),
-      precisaoMetros: serializer.fromJson<double?>(json['precisaoMetros']),
-      capturadoEm: serializer.fromJson<DateTime>(json['capturadoEm']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'parcelaId': serializer.toJson<int>(parcelaId),
-      'ordemPonto': serializer.toJson<int>(ordemPonto),
-      'posicaoReferencia': serializer.toJson<String?>(
-        $PontosGeograficosParcelaTable.$converterposicaoReferencian.toJson(
-          posicaoReferencia,
-        ),
-      ),
-      'latitude': serializer.toJson<double>(latitude),
-      'longitude': serializer.toJson<double>(longitude),
-      'precisaoMetros': serializer.toJson<double?>(precisaoMetros),
-      'capturadoEm': serializer.toJson<DateTime>(capturadoEm),
-    };
-  }
-
-  PontoGeograficoParcela copyWith({
-    int? id,
-    int? parcelaId,
-    int? ordemPonto,
-    Value<PosicaoReferenciaParcela?> posicaoReferencia = const Value.absent(),
-    double? latitude,
-    double? longitude,
-    Value<double?> precisaoMetros = const Value.absent(),
-    DateTime? capturadoEm,
-  }) => PontoGeograficoParcela(
-    id: id ?? this.id,
-    parcelaId: parcelaId ?? this.parcelaId,
-    ordemPonto: ordemPonto ?? this.ordemPonto,
-    posicaoReferencia: posicaoReferencia.present
-        ? posicaoReferencia.value
-        : this.posicaoReferencia,
-    latitude: latitude ?? this.latitude,
-    longitude: longitude ?? this.longitude,
-    precisaoMetros: precisaoMetros.present
-        ? precisaoMetros.value
-        : this.precisaoMetros,
-    capturadoEm: capturadoEm ?? this.capturadoEm,
-  );
-  PontoGeograficoParcela copyWithCompanion(
-    PontosGeograficosParcelaCompanion data,
-  ) {
-    return PontoGeograficoParcela(
-      id: data.id.present ? data.id.value : this.id,
-      parcelaId: data.parcelaId.present ? data.parcelaId.value : this.parcelaId,
-      ordemPonto: data.ordemPonto.present
-          ? data.ordemPonto.value
-          : this.ordemPonto,
-      posicaoReferencia: data.posicaoReferencia.present
-          ? data.posicaoReferencia.value
-          : this.posicaoReferencia,
-      latitude: data.latitude.present ? data.latitude.value : this.latitude,
-      longitude: data.longitude.present ? data.longitude.value : this.longitude,
-      precisaoMetros: data.precisaoMetros.present
-          ? data.precisaoMetros.value
-          : this.precisaoMetros,
-      capturadoEm: data.capturadoEm.present
-          ? data.capturadoEm.value
-          : this.capturadoEm,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('PontoGeograficoParcela(')
-          ..write('id: $id, ')
-          ..write('parcelaId: $parcelaId, ')
-          ..write('ordemPonto: $ordemPonto, ')
-          ..write('posicaoReferencia: $posicaoReferencia, ')
-          ..write('latitude: $latitude, ')
-          ..write('longitude: $longitude, ')
-          ..write('precisaoMetros: $precisaoMetros, ')
-          ..write('capturadoEm: $capturadoEm')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    parcelaId,
-    ordemPonto,
-    posicaoReferencia,
-    latitude,
-    longitude,
-    precisaoMetros,
-    capturadoEm,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is PontoGeograficoParcela &&
-          other.id == this.id &&
-          other.parcelaId == this.parcelaId &&
-          other.ordemPonto == this.ordemPonto &&
-          other.posicaoReferencia == this.posicaoReferencia &&
-          other.latitude == this.latitude &&
-          other.longitude == this.longitude &&
-          other.precisaoMetros == this.precisaoMetros &&
-          other.capturadoEm == this.capturadoEm);
-}
-
-class PontosGeograficosParcelaCompanion
-    extends UpdateCompanion<PontoGeograficoParcela> {
-  final Value<int> id;
-  final Value<int> parcelaId;
-  final Value<int> ordemPonto;
-  final Value<PosicaoReferenciaParcela?> posicaoReferencia;
-  final Value<double> latitude;
-  final Value<double> longitude;
-  final Value<double?> precisaoMetros;
-  final Value<DateTime> capturadoEm;
-  const PontosGeograficosParcelaCompanion({
-    this.id = const Value.absent(),
-    this.parcelaId = const Value.absent(),
-    this.ordemPonto = const Value.absent(),
-    this.posicaoReferencia = const Value.absent(),
-    this.latitude = const Value.absent(),
-    this.longitude = const Value.absent(),
-    this.precisaoMetros = const Value.absent(),
-    this.capturadoEm = const Value.absent(),
-  });
-  PontosGeograficosParcelaCompanion.insert({
-    this.id = const Value.absent(),
-    required int parcelaId,
-    required int ordemPonto,
-    this.posicaoReferencia = const Value.absent(),
-    required double latitude,
-    required double longitude,
-    this.precisaoMetros = const Value.absent(),
-    required DateTime capturadoEm,
-  }) : parcelaId = Value(parcelaId),
-       ordemPonto = Value(ordemPonto),
-       latitude = Value(latitude),
-       longitude = Value(longitude),
-       capturadoEm = Value(capturadoEm);
-  static Insertable<PontoGeograficoParcela> custom({
-    Expression<int>? id,
-    Expression<int>? parcelaId,
-    Expression<int>? ordemPonto,
-    Expression<String>? posicaoReferencia,
-    Expression<double>? latitude,
-    Expression<double>? longitude,
-    Expression<double>? precisaoMetros,
-    Expression<DateTime>? capturadoEm,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (parcelaId != null) 'parcela_id': parcelaId,
-      if (ordemPonto != null) 'ordem_ponto': ordemPonto,
-      if (posicaoReferencia != null) 'posicao_referencia': posicaoReferencia,
-      if (latitude != null) 'latitude': latitude,
-      if (longitude != null) 'longitude': longitude,
-      if (precisaoMetros != null) 'precisao_metros': precisaoMetros,
-      if (capturadoEm != null) 'capturado_em': capturadoEm,
-    });
-  }
-
-  PontosGeograficosParcelaCompanion copyWith({
-    Value<int>? id,
-    Value<int>? parcelaId,
-    Value<int>? ordemPonto,
-    Value<PosicaoReferenciaParcela?>? posicaoReferencia,
-    Value<double>? latitude,
-    Value<double>? longitude,
-    Value<double?>? precisaoMetros,
-    Value<DateTime>? capturadoEm,
-  }) {
-    return PontosGeograficosParcelaCompanion(
-      id: id ?? this.id,
-      parcelaId: parcelaId ?? this.parcelaId,
-      ordemPonto: ordemPonto ?? this.ordemPonto,
-      posicaoReferencia: posicaoReferencia ?? this.posicaoReferencia,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
-      precisaoMetros: precisaoMetros ?? this.precisaoMetros,
-      capturadoEm: capturadoEm ?? this.capturadoEm,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (parcelaId.present) {
-      map['parcela_id'] = Variable<int>(parcelaId.value);
-    }
-    if (ordemPonto.present) {
-      map['ordem_ponto'] = Variable<int>(ordemPonto.value);
-    }
-    if (posicaoReferencia.present) {
-      map['posicao_referencia'] = Variable<String>(
-        $PontosGeograficosParcelaTable.$converterposicaoReferencian.toSql(
-          posicaoReferencia.value,
-        ),
-      );
-    }
-    if (latitude.present) {
-      map['latitude'] = Variable<double>(latitude.value);
-    }
-    if (longitude.present) {
-      map['longitude'] = Variable<double>(longitude.value);
-    }
-    if (precisaoMetros.present) {
-      map['precisao_metros'] = Variable<double>(precisaoMetros.value);
-    }
-    if (capturadoEm.present) {
-      map['capturado_em'] = Variable<DateTime>(capturadoEm.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('PontosGeograficosParcelaCompanion(')
-          ..write('id: $id, ')
-          ..write('parcelaId: $parcelaId, ')
-          ..write('ordemPonto: $ordemPonto, ')
-          ..write('posicaoReferencia: $posicaoReferencia, ')
-          ..write('latitude: $latitude, ')
-          ..write('longitude: $longitude, ')
-          ..write('precisaoMetros: $precisaoMetros, ')
-          ..write('capturadoEm: $capturadoEm')
           ..write(')'))
         .toString();
   }
@@ -7674,8 +7053,6 @@ abstract class _$BancoDendro extends GeneratedDatabase {
   late final $CoeficientesTalhaoLevantamentoTable
   coeficientesTalhaoLevantamento = $CoeficientesTalhaoLevantamentoTable(this);
   late final $ParcelasTable parcelas = $ParcelasTable(this);
-  late final $PontosGeograficosParcelaTable pontosGeograficosParcela =
-      $PontosGeograficosParcelaTable(this);
   late final $ArvoresTable arvores = $ArvoresTable(this);
   late final $RegistrosAtividadeTable registrosAtividade =
       $RegistrosAtividadeTable(this);
@@ -7696,7 +7073,6 @@ abstract class _$BancoDendro extends GeneratedDatabase {
     talhaoLevantamentos,
     coeficientesTalhaoLevantamento,
     parcelas,
-    pontosGeograficosParcela,
     arvores,
     registrosAtividade,
   ];
@@ -7794,15 +7170,6 @@ abstract class _$BancoDendro extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('parcelas', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'parcelas',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [
-        TableUpdate('pontos_geograficos_parcela', kind: UpdateKind.delete),
-      ],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -13655,7 +13022,6 @@ typedef $$ParcelasTableCreateCompanionBuilder =
       required String identificacao,
       required SituacaoParcela situacao,
       Value<double?> areaHa,
-      Value<PosicaoReferenciaParcela?> posicaoReferencia,
       required DateTime criadoEm,
       required DateTime atualizadoEm,
     });
@@ -13666,7 +13032,6 @@ typedef $$ParcelasTableUpdateCompanionBuilder =
       Value<String> identificacao,
       Value<SituacaoParcela> situacao,
       Value<double?> areaHa,
-      Value<PosicaoReferenciaParcela?> posicaoReferencia,
       Value<DateTime> criadoEm,
       Value<DateTime> atualizadoEm,
     });
@@ -13694,31 +13059,6 @@ final class $$ParcelasTableReferences
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static MultiTypedResultKey<
-    $PontosGeograficosParcelaTable,
-    List<PontoGeograficoParcela>
-  >
-  _pontosGeograficosParcelaRefsTable(_$BancoDendro db) =>
-      MultiTypedResultKey.fromTable(
-        db.pontosGeograficosParcela,
-        aliasName: 'parcelas__id__pontos_geograficos_parcela__parcela_id',
-      );
-
-  $$PontosGeograficosParcelaTableProcessedTableManager
-  get pontosGeograficosParcelaRefs {
-    final manager = $$PontosGeograficosParcelaTableTableManager(
-      $_db,
-      $_db.pontosGeograficosParcela,
-    ).filter((f) => f.parcelaId.id.sqlEquals($_itemColumn<int>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _pontosGeograficosParcelaRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
     );
   }
 
@@ -13772,16 +13112,6 @@ class $$ParcelasTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<
-    PosicaoReferenciaParcela?,
-    PosicaoReferenciaParcela,
-    String
-  >
-  get posicaoReferencia => $composableBuilder(
-    column: $table.posicaoReferencia,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-
   ColumnFilters<DateTime> get criadoEm => $composableBuilder(
     column: $table.criadoEm,
     builder: (column) => ColumnFilters(column),
@@ -13813,33 +13143,6 @@ class $$ParcelasTableFilterComposer
           ),
     );
     return composer;
-  }
-
-  Expression<bool> pontosGeograficosParcelaRefs(
-    Expression<bool> Function($$PontosGeograficosParcelaTableFilterComposer f)
-    f,
-  ) {
-    final $$PontosGeograficosParcelaTableFilterComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.id,
-          referencedTable: $db.pontosGeograficosParcela,
-          getReferencedColumn: (t) => t.parcelaId,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$PontosGeograficosParcelaTableFilterComposer(
-                $db: $db,
-                $table: $db.pontosGeograficosParcela,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return f(composer);
   }
 
   Expression<bool> arvoresRefs(
@@ -13894,11 +13197,6 @@ class $$ParcelasTableOrderingComposer
 
   ColumnOrderings<double> get areaHa => $composableBuilder(
     column: $table.areaHa,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get posicaoReferencia => $composableBuilder(
-    column: $table.posicaoReferencia,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -13960,12 +13258,6 @@ class $$ParcelasTableAnnotationComposer
   GeneratedColumn<double> get areaHa =>
       $composableBuilder(column: $table.areaHa, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<PosicaoReferenciaParcela?, String>
-  get posicaoReferencia => $composableBuilder(
-    column: $table.posicaoReferencia,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<DateTime> get criadoEm =>
       $composableBuilder(column: $table.criadoEm, builder: (column) => column);
 
@@ -13996,33 +13288,6 @@ class $$ParcelasTableAnnotationComposer
               ),
         );
     return composer;
-  }
-
-  Expression<T> pontosGeograficosParcelaRefs<T extends Object>(
-    Expression<T> Function($$PontosGeograficosParcelaTableAnnotationComposer a)
-    f,
-  ) {
-    final $$PontosGeograficosParcelaTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.id,
-          referencedTable: $db.pontosGeograficosParcela,
-          getReferencedColumn: (t) => t.parcelaId,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$PontosGeograficosParcelaTableAnnotationComposer(
-                $db: $db,
-                $table: $db.pontosGeograficosParcela,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return f(composer);
   }
 
   Expression<T> arvoresRefs<T extends Object>(
@@ -14064,11 +13329,7 @@ class $$ParcelasTableTableManager
           $$ParcelasTableUpdateCompanionBuilder,
           (Parcela, $$ParcelasTableReferences),
           Parcela,
-          PrefetchHooks Function({
-            bool talhaoLevantamentoId,
-            bool pontosGeograficosParcelaRefs,
-            bool arvoresRefs,
-          })
+          PrefetchHooks Function({bool talhaoLevantamentoId, bool arvoresRefs})
         > {
   $$ParcelasTableTableManager(_$BancoDendro db, $ParcelasTable table)
     : super(
@@ -14088,8 +13349,6 @@ class $$ParcelasTableTableManager
                 Value<String> identificacao = const Value.absent(),
                 Value<SituacaoParcela> situacao = const Value.absent(),
                 Value<double?> areaHa = const Value.absent(),
-                Value<PosicaoReferenciaParcela?> posicaoReferencia =
-                    const Value.absent(),
                 Value<DateTime> criadoEm = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
               }) => ParcelasCompanion(
@@ -14098,7 +13357,6 @@ class $$ParcelasTableTableManager
                 identificacao: identificacao,
                 situacao: situacao,
                 areaHa: areaHa,
-                posicaoReferencia: posicaoReferencia,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
               ),
@@ -14109,8 +13367,6 @@ class $$ParcelasTableTableManager
                 required String identificacao,
                 required SituacaoParcela situacao,
                 Value<double?> areaHa = const Value.absent(),
-                Value<PosicaoReferenciaParcela?> posicaoReferencia =
-                    const Value.absent(),
                 required DateTime criadoEm,
                 required DateTime atualizadoEm,
               }) => ParcelasCompanion.insert(
@@ -14119,7 +13375,6 @@ class $$ParcelasTableTableManager
                 identificacao: identificacao,
                 situacao: situacao,
                 areaHa: areaHa,
-                posicaoReferencia: posicaoReferencia,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
               ),
@@ -14132,18 +13387,10 @@ class $$ParcelasTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({
-                talhaoLevantamentoId = false,
-                pontosGeograficosParcelaRefs = false,
-                arvoresRefs = false,
-              }) {
+              ({talhaoLevantamentoId = false, arvoresRefs = false}) {
                 return PrefetchHooks(
                   db: db,
-                  explicitlyWatchedTables: [
-                    if (pontosGeograficosParcelaRefs)
-                      db.pontosGeograficosParcela,
-                    if (arvoresRefs) db.arvores,
-                  ],
+                  explicitlyWatchedTables: [if (arvoresRefs) db.arvores],
                   addJoins:
                       <
                         T extends TableManagerState<
@@ -14178,27 +13425,6 @@ class $$ParcelasTableTableManager
                       },
                   getPrefetchedDataCallback: (items) async {
                     return [
-                      if (pontosGeograficosParcelaRefs)
-                        await $_getPrefetchedData<
-                          Parcela,
-                          $ParcelasTable,
-                          PontoGeograficoParcela
-                        >(
-                          currentTable: table,
-                          referencedTable: $$ParcelasTableReferences
-                              ._pontosGeograficosParcelaRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$ParcelasTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).pontosGeograficosParcelaRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.parcelaId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
                       if (arvoresRefs)
                         await $_getPrefetchedData<
                           Parcela,
@@ -14240,420 +13466,7 @@ typedef $$ParcelasTableProcessedTableManager =
       $$ParcelasTableUpdateCompanionBuilder,
       (Parcela, $$ParcelasTableReferences),
       Parcela,
-      PrefetchHooks Function({
-        bool talhaoLevantamentoId,
-        bool pontosGeograficosParcelaRefs,
-        bool arvoresRefs,
-      })
-    >;
-typedef $$PontosGeograficosParcelaTableCreateCompanionBuilder =
-    PontosGeograficosParcelaCompanion Function({
-      Value<int> id,
-      required int parcelaId,
-      required int ordemPonto,
-      Value<PosicaoReferenciaParcela?> posicaoReferencia,
-      required double latitude,
-      required double longitude,
-      Value<double?> precisaoMetros,
-      required DateTime capturadoEm,
-    });
-typedef $$PontosGeograficosParcelaTableUpdateCompanionBuilder =
-    PontosGeograficosParcelaCompanion Function({
-      Value<int> id,
-      Value<int> parcelaId,
-      Value<int> ordemPonto,
-      Value<PosicaoReferenciaParcela?> posicaoReferencia,
-      Value<double> latitude,
-      Value<double> longitude,
-      Value<double?> precisaoMetros,
-      Value<DateTime> capturadoEm,
-    });
-
-final class $$PontosGeograficosParcelaTableReferences
-    extends
-        BaseReferences<
-          _$BancoDendro,
-          $PontosGeograficosParcelaTable,
-          PontoGeograficoParcela
-        > {
-  $$PontosGeograficosParcelaTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $ParcelasTable _parcelaIdTable(_$BancoDendro db) => db.parcelas
-      .createAlias('pontos_geograficos_parcela__parcela_id__parcelas__id');
-
-  $$ParcelasTableProcessedTableManager get parcelaId {
-    final $_column = $_itemColumn<int>('parcela_id')!;
-
-    final manager = $$ParcelasTableTableManager(
-      $_db,
-      $_db.parcelas,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_parcelaIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$PontosGeograficosParcelaTableFilterComposer
-    extends Composer<_$BancoDendro, $PontosGeograficosParcelaTable> {
-  $$PontosGeograficosParcelaTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get ordemPonto => $composableBuilder(
-    column: $table.ordemPonto,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<
-    PosicaoReferenciaParcela?,
-    PosicaoReferenciaParcela,
-    String
-  >
-  get posicaoReferencia => $composableBuilder(
-    column: $table.posicaoReferencia,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-
-  ColumnFilters<double> get latitude => $composableBuilder(
-    column: $table.latitude,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get longitude => $composableBuilder(
-    column: $table.longitude,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get precisaoMetros => $composableBuilder(
-    column: $table.precisaoMetros,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get capturadoEm => $composableBuilder(
-    column: $table.capturadoEm,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$ParcelasTableFilterComposer get parcelaId {
-    final $$ParcelasTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.parcelaId,
-      referencedTable: $db.parcelas,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ParcelasTableFilterComposer(
-            $db: $db,
-            $table: $db.parcelas,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$PontosGeograficosParcelaTableOrderingComposer
-    extends Composer<_$BancoDendro, $PontosGeograficosParcelaTable> {
-  $$PontosGeograficosParcelaTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get ordemPonto => $composableBuilder(
-    column: $table.ordemPonto,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get posicaoReferencia => $composableBuilder(
-    column: $table.posicaoReferencia,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get latitude => $composableBuilder(
-    column: $table.latitude,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get longitude => $composableBuilder(
-    column: $table.longitude,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get precisaoMetros => $composableBuilder(
-    column: $table.precisaoMetros,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get capturadoEm => $composableBuilder(
-    column: $table.capturadoEm,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$ParcelasTableOrderingComposer get parcelaId {
-    final $$ParcelasTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.parcelaId,
-      referencedTable: $db.parcelas,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ParcelasTableOrderingComposer(
-            $db: $db,
-            $table: $db.parcelas,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$PontosGeograficosParcelaTableAnnotationComposer
-    extends Composer<_$BancoDendro, $PontosGeograficosParcelaTable> {
-  $$PontosGeograficosParcelaTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<int> get ordemPonto => $composableBuilder(
-    column: $table.ordemPonto,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<PosicaoReferenciaParcela?, String>
-  get posicaoReferencia => $composableBuilder(
-    column: $table.posicaoReferencia,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get latitude =>
-      $composableBuilder(column: $table.latitude, builder: (column) => column);
-
-  GeneratedColumn<double> get longitude =>
-      $composableBuilder(column: $table.longitude, builder: (column) => column);
-
-  GeneratedColumn<double> get precisaoMetros => $composableBuilder(
-    column: $table.precisaoMetros,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get capturadoEm => $composableBuilder(
-    column: $table.capturadoEm,
-    builder: (column) => column,
-  );
-
-  $$ParcelasTableAnnotationComposer get parcelaId {
-    final $$ParcelasTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.parcelaId,
-      referencedTable: $db.parcelas,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ParcelasTableAnnotationComposer(
-            $db: $db,
-            $table: $db.parcelas,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$PontosGeograficosParcelaTableTableManager
-    extends
-        RootTableManager<
-          _$BancoDendro,
-          $PontosGeograficosParcelaTable,
-          PontoGeograficoParcela,
-          $$PontosGeograficosParcelaTableFilterComposer,
-          $$PontosGeograficosParcelaTableOrderingComposer,
-          $$PontosGeograficosParcelaTableAnnotationComposer,
-          $$PontosGeograficosParcelaTableCreateCompanionBuilder,
-          $$PontosGeograficosParcelaTableUpdateCompanionBuilder,
-          (PontoGeograficoParcela, $$PontosGeograficosParcelaTableReferences),
-          PontoGeograficoParcela,
-          PrefetchHooks Function({bool parcelaId})
-        > {
-  $$PontosGeograficosParcelaTableTableManager(
-    _$BancoDendro db,
-    $PontosGeograficosParcelaTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$PontosGeograficosParcelaTableFilterComposer(
-                $db: db,
-                $table: table,
-              ),
-          createOrderingComposer: () =>
-              $$PontosGeograficosParcelaTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer: () =>
-              $$PontosGeograficosParcelaTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<int> parcelaId = const Value.absent(),
-                Value<int> ordemPonto = const Value.absent(),
-                Value<PosicaoReferenciaParcela?> posicaoReferencia =
-                    const Value.absent(),
-                Value<double> latitude = const Value.absent(),
-                Value<double> longitude = const Value.absent(),
-                Value<double?> precisaoMetros = const Value.absent(),
-                Value<DateTime> capturadoEm = const Value.absent(),
-              }) => PontosGeograficosParcelaCompanion(
-                id: id,
-                parcelaId: parcelaId,
-                ordemPonto: ordemPonto,
-                posicaoReferencia: posicaoReferencia,
-                latitude: latitude,
-                longitude: longitude,
-                precisaoMetros: precisaoMetros,
-                capturadoEm: capturadoEm,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required int parcelaId,
-                required int ordemPonto,
-                Value<PosicaoReferenciaParcela?> posicaoReferencia =
-                    const Value.absent(),
-                required double latitude,
-                required double longitude,
-                Value<double?> precisaoMetros = const Value.absent(),
-                required DateTime capturadoEm,
-              }) => PontosGeograficosParcelaCompanion.insert(
-                id: id,
-                parcelaId: parcelaId,
-                ordemPonto: ordemPonto,
-                posicaoReferencia: posicaoReferencia,
-                latitude: latitude,
-                longitude: longitude,
-                precisaoMetros: precisaoMetros,
-                capturadoEm: capturadoEm,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable<
-                    $PontosGeograficosParcelaTable,
-                    PontoGeograficoParcela
-                  >(table),
-                  $$PontosGeograficosParcelaTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({parcelaId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (parcelaId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.parcelaId,
-                                referencedTable:
-                                    $$PontosGeograficosParcelaTableReferences
-                                        ._parcelaIdTable(db),
-                                referencedColumn:
-                                    $$PontosGeograficosParcelaTableReferences
-                                        ._parcelaIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$PontosGeograficosParcelaTableProcessedTableManager =
-    ProcessedTableManager<
-      _$BancoDendro,
-      $PontosGeograficosParcelaTable,
-      PontoGeograficoParcela,
-      $$PontosGeograficosParcelaTableFilterComposer,
-      $$PontosGeograficosParcelaTableOrderingComposer,
-      $$PontosGeograficosParcelaTableAnnotationComposer,
-      $$PontosGeograficosParcelaTableCreateCompanionBuilder,
-      $$PontosGeograficosParcelaTableUpdateCompanionBuilder,
-      (PontoGeograficoParcela, $$PontosGeograficosParcelaTableReferences),
-      PontoGeograficoParcela,
-      PrefetchHooks Function({bool parcelaId})
+      PrefetchHooks Function({bool talhaoLevantamentoId, bool arvoresRefs})
     >;
 typedef $$ArvoresTableCreateCompanionBuilder =
     ArvoresCompanion Function({
@@ -15427,11 +14240,6 @@ class $BancoDendroManager {
       );
   $$ParcelasTableTableManager get parcelas =>
       $$ParcelasTableTableManager(_db, _db.parcelas);
-  $$PontosGeograficosParcelaTableTableManager get pontosGeograficosParcela =>
-      $$PontosGeograficosParcelaTableTableManager(
-        _db,
-        _db.pontosGeograficosParcela,
-      );
   $$ArvoresTableTableManager get arvores =>
       $$ArvoresTableTableManager(_db, _db.arvores);
   $$RegistrosAtividadeTableTableManager get registrosAtividade =>

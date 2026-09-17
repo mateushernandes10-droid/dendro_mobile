@@ -570,9 +570,6 @@ class RepositorioLevantamentos {
 
     if (parcelaIds.isNotEmpty) {
       await (_bancoDados.delete(
-        _bancoDados.pontosGeograficosParcela,
-      )..where((tabela) => tabela.parcelaId.isIn(parcelaIds))).go();
-      await (_bancoDados.delete(
         _bancoDados.arvores,
       )..where((tabela) => tabela.parcelaId.isIn(parcelaIds))).go();
       await (_bancoDados.delete(

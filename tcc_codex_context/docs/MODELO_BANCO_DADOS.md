@@ -8,7 +8,7 @@ A modelagem foi organizada em três níveis:
 
 1. **Modelo conceitual:** apresenta os conceitos do domínio florestal e seus relacionamentos, sem depender dos nomes físicos do SQLite.
 2. **Modelo lógico:** apresenta entidades, cardinalidades, chaves e tabelas associativas.
-3. **Modelo físico:** apresenta as 15 tabelas, os 114 campos, tipos SQLite, chaves e nulabilidade.
+3. **Modelo físico:** apresenta as 14 tabelas, os 105 campos, tipos SQLite, chaves e nulabilidade.
 
 Os resultados do inventário não são persistidos em uma tabela própria. Médias, volumes, distribuição diamétrica, árvores por hectare e quantidade/percentual de árvores com tronco tortuoso são calculados a partir das medições armazenadas.
 
@@ -34,8 +34,7 @@ Principais conceitos:
 | Levantamento | Agrupa uma execução do inventário na propriedade. |
 | Talhão no levantamento | Resolve a participação do talhão na coleta e preserva sua configuração. |
 | Parcela | Unidade amostral dentro do talhão levantado. |
-| Árvore | Armazena DAP, altura, condição do tronco e localização opcional. |
-| Ponto geográfico | Documenta coordenadas de referência da parcela. |
+| Árvore | Armazena DAP, altura, condição do tronco, localização opcional e a identificação P1–P4 quando sua coordenada representa um ponto de referência da parcela. |
 | Modelo matemático | Define expressão, variáveis e coeficientes usados no cálculo. |
 | Registro de atividade | Registra eventos do aplicativo sem formar uma relação física com uma entidade específica. |
 
@@ -62,7 +61,6 @@ Relações centrais:
 | modelos_matematicos | 1:N | talhao_levantamentos | `talhao_levantamentos.modelo_matematico_id` |
 | talhao_levantamentos | 1:N | parcelas | `parcelas.talhao_levantamento_id` |
 | parcelas | 1:N | arvores | `arvores.parcela_id` |
-| parcelas | 1:N | pontos_geograficos_parcela | `pontos_geograficos_parcela.parcela_id` |
 
 As demais relações configuram variáveis e coeficientes de modelos matemáticos e estão detalhadas no modelo físico.
 
@@ -81,8 +79,7 @@ As tabelas podem ser apresentadas em dois grupos:
 | `levantamentos` | Execuções do inventário. |
 | `talhao_levantamentos` | Talhões incluídos em cada levantamento. |
 | `parcelas` | Unidades amostrais. |
-| `arvores` | Medições individuais das árvores. |
-| `pontos_geograficos_parcela` | Pontos GPS das parcelas. |
+| `arvores` | Medições individuais, coordenadas opcionais e referências P1–P4 das parcelas. |
 | `registros_atividade` | Eventos recentes do aplicativo. |
 
 ### Configuração dos cálculos
@@ -105,7 +102,7 @@ As tabelas podem ser apresentadas em dois grupos:
 - Talhão não se repete dentro do mesmo levantamento.
 - Identificação de parcela é única dentro do talhão levantado.
 - Número da árvore é único dentro da parcela.
-- Ordem do ponto geográfico é única dentro da parcela.
+- Cada referência P1–P4 é atribuída a no máximo uma árvore da parcela pela regra aplicada no repositório de coleta.
 - Símbolos de variáveis e coeficientes são únicos dentro de seus respectivos contextos.
 - Exclusões de estruturas dependentes usam principalmente `ON DELETE CASCADE`; espécie e modelo associados a coletas usam `RESTRICT`.
 
@@ -122,5 +119,7 @@ Os itens abaixo são produzidos pelos repositórios e não constituem colunas do
 - distribuição por classe diamétrica;
 - quantidade e percentual de árvores com tronco tortuoso;
 - conversões para tonelada ou metro estéreo.
+
+As coordenadas não são repetidas em uma tabela de pontos. Quando uma árvore é marcada como P1, P2, P3 ou P4, a própria linha de `arvores` fornece a coordenada usada para o resumo da parcela, para o polígono e para as exportações geográficas.
 
 Para apresentar a estrutura no artigo, use o modelo conceitual no corpo do texto, o modelo lógico na seção de projeto do banco e o modelo físico completo em apêndice quando a quantidade de atributos prejudicar a leitura.
