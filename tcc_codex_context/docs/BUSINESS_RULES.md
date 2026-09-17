@@ -87,7 +87,7 @@ Nome único, expressão textual, descrição, situacao, variáveis e coeficiente
 Captura opcional pelo Geolocator com verificação de serviço e permissão; latitude, longitude, precisão e data ficam no banco. Os pontos são documentação de campo, não levantamento topográfico certificado.
 
 ## BR-023 — KML
-Exporta representação geográfica a partir dos pontos armazenados das parcelas e coordenadas de árvores. Não existe exportação KMZ nem importação/desenho completo de contorno de talhão.
+Exporta a representação geográfica a partir das coordenadas registradas nas árvores. Quando uma coordenada possui referência P1–P4, ela também compõe os pontos e o polígono da parcela. Não existe exportação KMZ nem importação/desenho completo de contorno de talhão.
 
 ## BR-024 — Filtros
 Painel permite propriedade, espécie e talhões; exige propriedade ou espécie como filtro base. Alterar filtros modifica a consulta, não os dados. O escopo histórico do painel difere da seleção mais recente por talhão na exportação por propriedade.

@@ -80,6 +80,13 @@ void main() {
           startsWith('Propriedade;Talhão;Parcela;Árvore;DAP (cm);Altura (m)'),
         );
         expect(
+          linhas.first,
+          contains(
+            'Tronco torto;Ponto de referência da parcela;Latitude do ponto;Longitude do ponto;Precisão GPS (m);Data da captura GPS',
+          ),
+        );
+        expect(linhas.first, isNot(contains('Latitude árvore')));
+        expect(
           linhas[1],
           startsWith(
             '"Fazenda ""São João""; Sul";T-01;P01;1;20,123456789;0,0;',
@@ -249,9 +256,16 @@ void main() {
           talhaoLevantamentoIds: {talhaoLevantamento.id},
         );
         final textoCsv = await File(csv.caminho).readAsString();
-        expect(textoCsv, contains('Latitude árvore;Longitude árvore'));
-        expect(textoCsv, contains('-28.50000000;-50.90000000;3,50;P1'));
-        expect(textoCsv, contains('-28.49900000;-50.89900000;3,50;P3'));
+        expect(
+          textoCsv,
+          contains(
+            'Ponto de referência da parcela;Latitude do ponto;Longitude do ponto;Precisão GPS (m);Data da captura GPS',
+          ),
+        );
+        expect(textoCsv, isNot(contains('Latitude árvore')));
+        expect(textoCsv, isNot(contains('Latitude parcela')));
+        expect(textoCsv, contains('P1;-28.50000000;-50.90000000;3,50;'));
+        expect(textoCsv, contains('P3;-28.49900000;-50.89900000;3,50;'));
 
         final xlsx = await repositorio.gerarArquivo(
           solicitacao: solicitacao,
@@ -265,11 +279,16 @@ void main() {
         final abaCoordenadas = planilha['Coordenadas'];
         CellValue? coordenadaCelula(String endereco) =>
             abaCoordenadas.cell(CellIndex.indexByString(endereco)).value;
-        expect(coordenadaCelula('D2'), TextCellValue('Árvore'));
-        expect(coordenadaCelula('E2'), TextCellValue('P1'));
-        expect(coordenadaCelula('F2'), DoubleCellValue(-28.5));
-        expect(coordenadaCelula('G2'), DoubleCellValue(-50.9));
-        expect(coordenadaCelula('E5'), TextCellValue('P4'));
+        expect(
+          coordenadaCelula('D1'),
+          TextCellValue('Ponto de referência da parcela'),
+        );
+        expect(coordenadaCelula('D2'), TextCellValue('P1'));
+        expect(coordenadaCelula('E2'), DoubleCellValue(-28.5));
+        expect(coordenadaCelula('F2'), DoubleCellValue(-50.9));
+        expect(coordenadaCelula('D5'), TextCellValue('P4'));
+        final abaArvores = planilha['Árvores'];
+        expect(abaArvores.cell(CellIndex.indexByString('R1')).value, isNull);
         expect(abaCoordenadas.maxRows, 5);
       } finally {
         await bancoDados.close();

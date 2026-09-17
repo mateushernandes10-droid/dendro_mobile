@@ -30,11 +30,13 @@ Revisão em 14/09/2026. “Implementado” indica existência no código, não v
 
 ## Exportação bruta e escopo
 
-CSV bruto: uma linha por árvore, começando por propriedade, talhão, parcela, número, DAP cm e altura m. Inclui levantamento, espécie, situacao/área de parcela, tronco torto, GPS, datas e ID da árvore. Usa UTF-8 com BOM, separador ponto e vírgula e decimal com vírgula.
+CSV bruto: uma linha por árvore, começando por propriedade, talhão, parcela, número, DAP cm e altura m. Inclui levantamento, espécie, situacao/área de parcela, tronco torto, um único conjunto de campos do ponto geográfico (referência P1–P4, latitude, longitude, precisão e data da captura), datas e ID da árvore. Usa UTF-8 com BOM, separador ponto e vírgula e decimal com vírgula.
 
 XLSX bruto: uma aba por talhão, identificação de propriedade/talhão/levantamento no topo; títulos de parcelas em A6, E6, I6 etc. Cada grupo tem três colunas (árvore, DAP cm, altura m); dados começam na linha 7. Parcelas vazias preservam o título. O XLSX bruto não contém todos os campos auxiliares do CSV.
 
 Ambos preservam as medições originais sem estimativa de altura ou volume. Exportação por levantamento restringe os dados àquele levantamento. Exportação por propriedade escolhe o vínculo mais recentemente atualizado de cada talhão; não é um backup de todos os levantamentos históricos. A seleção de talhões é respeitada.
+
+O CSV de resultados também apresenta apenas um conjunto de coordenadas por árvore registrada. No XLSX de resultados, as coordenadas ficam concentradas na aba `Coordenadas`; a aba `Árvores` mantém as medições e os resultados sem repetir os campos geográficos.
 
 ## Requisitos não funcionais
 

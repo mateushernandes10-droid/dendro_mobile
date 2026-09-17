@@ -1062,11 +1062,11 @@ Iterable<List<Object?>> _brutoLinhas(DadosExportacao conjuntoDados) sync* {
     'Status parcela',
     'Área parcela (ha)',
     'Tronco torto',
-    'Latitude árvore',
-    'Longitude árvore',
+    'Ponto de referência da parcela',
+    'Latitude do ponto',
+    'Longitude do ponto',
     'Precisão GPS (m)',
-    'Data captura GPS',
-    'Ponto referência',
+    'Data da captura GPS',
     'Data cadastro árvore',
     'Data atualização árvore',
     'Árvore ID',
@@ -1086,11 +1086,11 @@ Iterable<List<Object?>> _brutoLinhas(DadosExportacao conjuntoDados) sync* {
           _parcelaSituacaoRotulo(parcela.parcela.situacao),
           parcela.parcela.areaHa,
           arvore.possuiTroncoTortuoso ? 'Sim' : 'Não',
+          _referenciaRotulo(arvore.posicaoReferenciaParcela),
           arvore.latitude,
           arvore.longitude,
           arvore.precisaoMetros,
           arvore.localizacaoCapturadaEm?.toIso8601String(),
-          _referenciaRotulo(arvore.posicaoReferenciaParcela),
           arvore.criadoEm.toIso8601String(),
           arvore.atualizadoEm.toIso8601String(),
           arvore.id,
@@ -1219,21 +1219,16 @@ List<int> _csvBytes(DadosExportacao conjuntoDados) {
         'Equivalente talhão',
         'Unidade equivalente',
         'Tronco torto',
-        'Latitude árvore',
-        'Longitude árvore',
-        'Precisão árvore (m)',
-        'Ponto referência',
-        'Latitude parcela',
-        'Longitude parcela',
-        'Precisão parcela (m)',
+        'Ponto de referência da parcela',
+        'Latitude do ponto',
+        'Longitude do ponto',
+        'Precisão GPS (m)',
+        'Data da captura GPS',
       ]),
     );
 
   for (final talhao in conjuntoDados.talhoes) {
     for (final parcela in talhao.parcelas) {
-      final primeiroPonto = parcela.pontosReferencia.isEmpty
-          ? null
-          : parcela.pontosReferencia.first;
       if (parcela.arvores.isEmpty) {
         buffer.writeln(
           _csvLinha([
@@ -1262,31 +1257,13 @@ List<int> _csvBytes(DadosExportacao conjuntoDados) {
             parcela.parcela.identificacao,
             _parcelaSituacaoRotulo(parcela.parcela.situacao),
             _opcionalDecimal(parcela.parcela.areaHa),
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            _referenciaRotulo(primeiroPonto?.posicaoReferenciaParcela),
-            _coordenadaOpcional(primeiroPonto?.latitude),
-            _coordenadaOpcional(primeiroPonto?.longitude),
-            _opcionalDecimal(primeiroPonto?.precisaoMetros),
+            ...List.filled(14, ''),
           ]),
         );
         continue;
       }
 
       for (final arvore in parcela.arvores) {
-        final parcelaPonto =
-            _correspondenteParcelaPonto(parcela, arvore) ?? primeiroPonto;
-
         buffer.writeln(
           _csvLinha([
             conjuntoDados.propriedade.nome,
@@ -1323,13 +1300,13 @@ List<int> _csvBytes(DadosExportacao conjuntoDados) {
             _opcionalDecimal(talhao.convertidoEstimadoVolume),
             talhao.conversao.unidade,
             arvore.possuiTroncoTortuoso ? 'Sim' : 'Não',
+            _referenciaRotulo(arvore.posicaoReferenciaParcela),
             _coordenadaOpcional(arvore.latitude),
             _coordenadaOpcional(arvore.longitude),
             _opcionalDecimal(arvore.precisaoMetros),
-            _referenciaRotulo(arvore.posicaoReferenciaParcela),
-            _coordenadaOpcional(parcelaPonto?.latitude),
-            _coordenadaOpcional(parcelaPonto?.longitude),
-            _opcionalDecimal(parcelaPonto?.precisaoMetros),
+            arvore.localizacaoCapturadaEm == null
+                ? ''
+                : _dataHora(arvore.localizacaoCapturadaEm!),
           ]),
         );
       }
@@ -1452,10 +1429,6 @@ List<int> _xlsxBytes(DadosExportacao conjuntoDados) {
       'Altura (m)',
       'Volume (m³)',
       'Tronco torto',
-      'Latitude',
-      'Longitude',
-      'Precisão GPS (m)',
-      'Ponto referência',
     ]),
   );
 
@@ -1464,12 +1437,11 @@ List<int> _xlsxBytes(DadosExportacao conjuntoDados) {
       'Propriedade',
       'Talhão',
       'Parcela',
-      'Origem',
-      'Ponto',
-      'Latitude',
-      'Longitude',
+      'Ponto de referência da parcela',
+      'Latitude do ponto',
+      'Longitude do ponto',
       'Precisão GPS (m)',
-      'Capturado em',
+      'Data da captura GPS',
     ]),
   );
 
@@ -1495,10 +1467,6 @@ List<int> _xlsxBytes(DadosExportacao conjuntoDados) {
             arvore.alturaM,
             talhao.volumeArvoreM3(arvore),
             arvore.possuiTroncoTortuoso ? 'Sim' : 'Não',
-            arvore.latitude,
-            arvore.longitude,
-            arvore.precisaoMetros,
-            _referenciaRotulo(arvore.posicaoReferenciaParcela),
           ]),
         );
 
@@ -1508,7 +1476,6 @@ List<int> _xlsxBytes(DadosExportacao conjuntoDados) {
               conjuntoDados.propriedade.nome,
               talhao.opcao.talhao.identificacao,
               parcela.parcela.identificacao,
-              'Árvore',
               _referenciaRotulo(arvore.posicaoReferenciaParcela),
               arvore.latitude,
               arvore.longitude,
@@ -1886,19 +1853,6 @@ String _csvValor(Object? valor) {
       texto.contains('\r');
   final escapado = texto.replaceAll('"', '""');
   return deveAspas ? '"$escapado"' : escapado;
-}
-
-Arvore? _correspondenteParcelaPonto(
-  DadosParcelaExportacao parcela,
-  Arvore arvore,
-) {
-  if (arvore.posicaoReferenciaParcela == null) return null;
-  for (final ponto in parcela.pontosReferencia) {
-    if (ponto.posicaoReferenciaParcela == arvore.posicaoReferenciaParcela) {
-      return ponto;
-    }
-  }
-  return null;
 }
 
 String _coordenadaKml(Arvore ponto) {
