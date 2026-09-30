@@ -49,8 +49,8 @@ Future<void> inserirCatalogosIniciais(GeneratedDatabase banco) async {
     codigo: codigoModeloFatorForma,
     nome: 'Fator de Forma',
     descricao:
-        'DAP informado em centímetros, convertido para metros no cálculo (D / 100). Altura em metros e fator de forma (ff) informado pelo usuário.',
-    expressao: 'pi * (D / 100)^2 * H * ff',
+        'Volume calculado pela área basal (pi / 4 * D²), altura em metros e fator de forma (ff) informado pelo usuário. O DAP é informado em centímetros e convertido para metros.',
+    expressao: '(pi / 4) * (D / 100)^2 * H * ff',
     agora: agora,
   );
 

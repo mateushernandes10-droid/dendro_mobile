@@ -298,7 +298,7 @@ A lista de talhões está incorporada ao detalhe da propriedade e ao detalhe do 
 - Área amostrada é necessária para extrapolação por hectare/talhão. Parcelas não pendentes entram na área medida; não interpretar dados de demonstração como validação técnica.
 - Spurr, Schumacher-Hall e Fator de Forma têm rotinas implementadas. Existe cadastro de expressões, mas não um avaliador genérico; expressões não reconhecidas podem seguir o caminho de Spurr. Não ensinar fórmulas arbitrárias como funcionalidade calculável validada.
 - Há valores padrão no calculador para Spurr/Schumacher-Hall e estimativa de altura; a coleta exige medidas válidas. Os padrões existentes não comprovam adequação à espécie/região. Não foram alterados coeficientes nem fórmulas.
-- A expressão implementada de Fator de Forma é `pi * (D / 100)^2 * H * ff`; o manual não deve substituí-la por outra equação. Adequação técnica do fator não foi validada nesta tarefa.
+- A expressão implementada de Fator de Forma é `(pi / 4) * (D / 100)^2 * H * ff`, usando a área basal circular calculada a partir do DAP. O fator `ff` deve ser tecnicamente definido para o contexto do levantamento.
 - Exportações disponíveis: Relatório PDF; Dados e resultados (CSV); Dados brutos (CSV); Dados brutos (XLSX); Planilha (Excel); Coordenadas (Google Earth/KML). KMZ e estimativa econômica não estão implementados.
 - O catálogo das capturas anteriores contém Spurr e Schumacher-Hall. A instalação nova do schema 1 inclui também Fator de Forma. Não usar essas imagens como lista completa do catálogo inicial atual.
 - GPS depende de serviço de localização e permissão; pontos são documentação geográfica, não medição topográfica validada. A substituição de referência ocupada exige confirmação.

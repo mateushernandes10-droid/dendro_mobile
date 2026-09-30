@@ -15,7 +15,7 @@ Revisão em 14/09/2026. Este documento registra o estado final observado no cód
 
 ## Pontos principais
 
-Fator de Forma usa `pi * (D / 100)^2 * H * ff`. O DAP permanece em centímetros no cadastro e é convertido para metros nesse cálculo. O valor de `ff` é informado pelo usuário.
+Fator de Forma usa `(pi / 4) * (D / 100)^2 * H * ff`. O DAP permanece em centímetros no cadastro e é convertido para metros nesse cálculo. A divisão por quatro calcula a área basal a partir do diâmetro, e o valor de `ff` é informado pelo usuário.
 
 A exportação bruta CSV mantém uma linha por árvore e inclui campos auxiliares. Referência P1–P4, latitude, longitude, precisão e data da captura formam um único conjunto de campos geográficos, sem duplicar coordenadas de árvore e parcela. No XLSX de resultados, esses campos ficam na aba `Coordenadas`. A planilha bruta organiza as parcelas lado a lado em A6, E6, I6 e assim por diante, com árvore, DAP e altura a partir da linha 7.
 

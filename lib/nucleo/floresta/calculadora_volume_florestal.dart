@@ -4,7 +4,7 @@ class CalculadoraVolumeFlorestal {
   const CalculadoraVolumeFlorestal._();
 
   static const codigoModeloFatorForma = 'formula_form_factor';
-  static const expressaoFatorForma = 'pi * (D / 100)^2 * H * ff';
+  static const expressaoFatorForma = '(pi / 4) * (D / 100)^2 * H * ff';
 
   static const padraoAlturaIntercepto = 0.8203;
   static const padraoAlturaInclinacao = 6.4229;
@@ -41,7 +41,8 @@ class CalculadoraVolumeFlorestal {
       final ff = coeficientes['ff'] ?? coeficientes['FF'];
       if (ff == null || !ff.isFinite || ff <= 0) return 0;
       final dapM = dapCm / 100;
-      final volume = math.pi * dapM * dapM * resolvidoAlturaM * ff;
+      final areaBasalM2 = (math.pi / 4) * dapM * dapM;
+      final volume = areaBasalM2 * resolvidoAlturaM * ff;
       return volume.isFinite && volume >= 0 ? volume : 0;
     }
 

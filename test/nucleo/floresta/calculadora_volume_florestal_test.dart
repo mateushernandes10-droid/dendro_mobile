@@ -2,7 +2,7 @@ import 'package:dendro_mobile/nucleo/floresta/calculadora_volume_florestal.dart'
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('fator de forma converte DAP de cm para m no calculo', () {
+  test('fator de forma usa area basal com DAP convertido para metros', () {
     expect(
       CalculadoraVolumeFlorestal.volumeArvoreM3(
         dapCm: 20,
@@ -11,7 +11,7 @@ void main() {
         modeloMatematicoCodigo:
             CalculadoraVolumeFlorestal.codigoModeloFatorForma,
       ),
-      closeTo(0.6283185307179586, 1e-12),
+      closeTo(0.15707963267948966, 1e-12),
     );
     expect(
       CalculadoraVolumeFlorestal.volumeArvoreM3(
@@ -19,9 +19,9 @@ void main() {
         alturaM: 10,
         coeficientes: const {'ff': 0.25},
         modeloMatematicoCodigo: 'custom_factor',
-        modeloMatematicoExpressao: 'pi * (dap / 100)^2 * h * ff',
+        modeloMatematicoExpressao: '(pi / 4) * (dap / 100)^2 * h * ff',
       ),
-      closeTo(0.3141592653589793, 1e-12),
+      closeTo(0.07853981633974483, 1e-12),
     );
   });
 

@@ -14,8 +14,8 @@ DAP é registrado em cm, altura em m e área em ha. Spurr e Schumacher-Hall usam
 ## BR-004 — Modelos disponíveis
 Spurr: `V = a + b × DAPcm² × Hm`.
 Schumacher-Hall: `V = exp(a + b × ln(DAPcm) + c × ln(Hm))`.
-Fator de Forma: `V = π × (DAPcm/100)² × Hm × ff`.
-O código usa dart:math, incluindo math.pi. A expressão do Fator de Forma não contém divisão por 4; registrar exatamente isso no artigo e submeter a definição de ff e a adequação da equação à avaliação técnica.
+Fator de Forma: `V = (π / 4) × (DAPcm/100)² × Hm × ff`.
+O código usa `math.pi` da biblioteca `dart:math`. A divisão por 4 transforma o quadrado do diâmetro na área da seção circular: `g = (π / 4) × D²`; em seguida, o volume é calculado por `V = g × H × ff`.
 
 ## BR-005 — Coeficientes e validade
 Os coeficientes não são universais. O aplicativo possui valores padrão, mas sua existência no código não demonstra adequação para qualquer espécie/região.
@@ -102,7 +102,7 @@ O próximo número é o maior número existente na parcela mais um; com parcela 
 A coordenada é opcional por árvore. O usuário pode associá-la explicitamente a P1–P4 da parcela. Pontos existentes são indicados e a substituição requer confirmação no fluxo da interface. Não representar a captura GPS como etapa obrigatória da coleta.
 
 ## Evidência
-Limitação de apresentação no PDF: _volumeEquacaoComValores formata apenas Schumacher-Hall ou Spurr, de modo que o texto da equação pode divergir do cálculo numérico do Fator de Forma. A narrativa metodológica também descreve amostragem sistemática sem verificar sua execução. Esses textos não constituem evidência de validação; a revisão documental não os alterou no app.
+A apresentação do PDF possui formatação própria para Spurr, Schumacher-Hall e Fator de Forma. A narrativa metodológica descreve amostragem sistemática sem verificar sua execução; esse texto não constitui evidência de validação científica.
 
 Fontes: lib/nucleo/banco/banco_dendro.dart; lib/nucleo/floresta/calculadora_volume_florestal.dart; repositórios em lib/funcionalidades/results, data_export, parcelas, levantamentos, tree_collection e settings; formulários correspondentes.
 

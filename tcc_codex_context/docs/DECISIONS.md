@@ -38,9 +38,9 @@ Os coeficientes aparecem em três níveis: definição do modelo, valor associad
 
 Os cálculos implementados são Spurr, Schumacher-Hall e Fator de Forma. No Fator de Forma, o DAP informado em centímetros é convertido para metros:
 
-`V = pi * (DAPcm / 100)^2 * H * ff`
+`V = (pi / 4) * (DAPcm / 100)^2 * H * ff`
 
-O valor de pi é fornecido pela biblioteca matemática do Dart. O fator de forma `ff` é informado pelo usuário. A expressão não divide o resultado por quatro, conforme a fórmula definida para este trabalho.
+O valor de pi é fornecido pela biblioteca matemática do Dart. O fator de forma `ff` é informado pelo usuário. A divisão por quatro decorre do cálculo da área basal circular a partir do diâmetro: `g = (pi / 4) * D²`.
 
 O cadastro permite armazenar outros modelos e expressões, mas não existe interpretador genérico. Somente os modelos reconhecidos pela calculadora possuem execução própria.
 

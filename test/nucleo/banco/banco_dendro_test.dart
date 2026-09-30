@@ -54,6 +54,10 @@ void main() {
       modelosMatematicos.map((item) => item.nome),
       containsAll(['Modelo de Spurr', 'Schumacher-Hall', 'Fator de Forma']),
     );
+    expect(
+      modelosMatematicos.singleWhere((item) => item.id == fatorId).expressao,
+      CalculadoraVolumeFlorestal.expressaoFatorForma,
+    );
     expect(variaveis, hasLength(6));
     expect(coeficientes, hasLength(6));
     expect(
