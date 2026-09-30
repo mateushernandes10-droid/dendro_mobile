@@ -668,7 +668,6 @@ ORDER BY simbolo
         _bancoDados.talhaoLevantamentos.especieId.equals(especieId),
       );
     }
-
     final consulta =
         _bancoDados.select(_bancoDados.talhaoLevantamentos).join([
             innerJoin(
@@ -699,11 +698,6 @@ ORDER BY simbolo
     final condicoes = <Expression<bool>>[
       _bancoDados.talhoes.propriedadeId.equals(propriedadeId),
     ];
-    if (especieId != null) {
-      condicoes.add(
-        _bancoDados.talhaoLevantamentos.especieId.equals(especieId),
-      );
-    }
 
     final consulta =
         _bancoDados.select(_bancoDados.talhaoLevantamentos).join([
@@ -729,7 +723,8 @@ ORDER BY simbolo
           ..where(condicoes.reduce((valor, elemento) => valor & elemento))
           ..orderBy([
             OrderingTerm.asc(_bancoDados.talhoes.identificacao),
-            OrderingTerm.desc(_bancoDados.talhaoLevantamentos.atualizadoEm),
+            OrderingTerm.desc(_bancoDados.levantamentos.iniciadoEm),
+            OrderingTerm.desc(_bancoDados.levantamentos.id),
           ]);
 
     final maisRecenteLinhasPorTalhaoId = <int, TypedResult>{};
@@ -738,7 +733,14 @@ ORDER BY simbolo
       maisRecenteLinhasPorTalhaoId.putIfAbsent(talhao.id, () => linha);
     }
 
-    return _opcoesDeLinhas(maisRecenteLinhasPorTalhaoId.values.toList());
+    final linhasMaisRecentes = maisRecenteLinhasPorTalhaoId.values.where((
+      linha,
+    ) {
+      return especieId == null ||
+          linha.readTable(_bancoDados.talhaoLevantamentos).especieId ==
+              especieId;
+    }).toList();
+    return _opcoesDeLinhas(linhasMaisRecentes);
   }
 
   Future<List<OpcaoTalhaoExportacao>> _opcoesDeLinhas(

@@ -177,19 +177,22 @@ A tela Resultados é uma aba da navegação inferior e funciona como dashboard a
 Entrada e navegação:
 
 - pode ser aberta diretamente pela aba **Resultados**;
-- pode ser aberta a partir do cadastro/detalhe de uma propriedade por botão/ícone de gráfico, já com a propriedade selecionada;
-- pode ser aberta a partir do cadastro/detalhe de um talhão por botão/ícone de gráfico, já com propriedade e talhão selecionados.
+- pode ser aberta a partir do cadastro/detalhe de uma propriedade por botão/ícone de gráfico, usando o levantamento mais recente de cada talhão da propriedade;
+- pode ser aberta a partir do detalhe de um levantamento por botão/ícone de gráfico, já com propriedade, levantamento e talhões selecionados;
+- pode ser aberta a partir do cadastro/detalhe de um talhão por botão/ícone de gráfico, já com propriedade, levantamento e talhão selecionados.
 
 Filtros:
 
 - seleção de propriedade;
+- seleção opcional de levantamento; sem seleção, considerar o mais recente de cada talhão compatível;
 - seleção opcional de um ou mais talhões;
 - seleção opcional de espécie;
-- filtros futuros podem incluir período, situacao do levantamento ou modelo/fórmula.
+- filtros futuros podem incluir período ou modelo/fórmula.
 
 Regras de interação:
 
-- filtros de talhão e espécie são opcionais e independentes;
+- o painel exige ao menos propriedade, espécie, levantamento ou talhão como base;
+- filtros de levantamento, talhão e espécie podem ser combinados;
 - alterar filtros deve atualizar os cards, gráficos e estimativas exibidas;
 - se nenhuma espécie for selecionada, considerar todas as espécies da propriedade/talhões filtrados;
 - se nenhum talhão for selecionado, considerar todos os talhões compatíveis com a propriedade e demais filtros;

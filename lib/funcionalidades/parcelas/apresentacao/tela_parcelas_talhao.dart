@@ -176,6 +176,7 @@ class TelaParcelasTalhao extends ConsumerWidget {
   void _abrirResultados(BuildContext context, EstadoParcelasTalhao estado) {
     NavegacaoEstruturaDendro.de(context).abrirResultados(
       propriedadeId: estado.talhao.propriedadeId,
+      levantamentoId: estado.atualLevantamento?.id,
       talhaoIds: {estado.talhao.id},
     );
   }

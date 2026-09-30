@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../aplicativo/tema/tema_dendro.dart';
 import '../../../compartilhado/componentes/componentes_dendro.dart';
+import '../../../nucleo/banco/banco_dendro.dart';
 import '../../exportacao_dados/apresentacao/tela_exportacao_dados.dart';
 import '../dados/repositorio_resultados.dart';
 
@@ -11,12 +12,14 @@ const _todosFiltroValor = -1;
 class TelaResultados extends ConsumerStatefulWidget {
   const TelaResultados({
     this.inicialPropriedadeId,
+    this.inicialLevantamentoId,
     this.inicialTalhaoIds = const {},
     this.inicialEspecieId,
     super.key,
   });
 
   final int? inicialPropriedadeId;
+  final int? inicialLevantamentoId;
   final Set<int> inicialTalhaoIds;
   final int? inicialEspecieId;
 
@@ -28,11 +31,13 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
   bool _aplicadoInicialFiltros = false;
   bool _restaurarAnteriorFiltros = false;
   int? _anteriorPropriedadeId;
+  int? _anteriorLevantamentoId;
   Set<int> _anteriorTalhaoIds = const {};
   int? _anteriorEspecieId;
 
   bool get _possuiInicialFiltros =>
       widget.inicialPropriedadeId != null ||
+      widget.inicialLevantamentoId != null ||
       widget.inicialTalhaoIds.isNotEmpty ||
       widget.inicialEspecieId != null;
 
@@ -47,6 +52,8 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
     if (_restaurarAnteriorFiltros) {
       ref.read(provedorFiltroPropriedadeResultados.notifier).state =
           _anteriorPropriedadeId;
+      ref.read(provedorFiltroLevantamentoResultados.notifier).state =
+          _anteriorLevantamentoId;
       ref.read(provedorFiltroTalhoesResultados.notifier).state =
           _anteriorTalhaoIds;
       ref.read(provedorFiltroEspecieResultados.notifier).state =
@@ -63,11 +70,14 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
 
     _restaurarAnteriorFiltros = true;
     _anteriorPropriedadeId = ref.read(provedorFiltroPropriedadeResultados);
+    _anteriorLevantamentoId = ref.read(provedorFiltroLevantamentoResultados);
     _anteriorTalhaoIds = {...ref.read(provedorFiltroTalhoesResultados)};
     _anteriorEspecieId = ref.read(provedorFiltroEspecieResultados);
 
     ref.read(provedorFiltroPropriedadeResultados.notifier).state =
         widget.inicialPropriedadeId;
+    ref.read(provedorFiltroLevantamentoResultados.notifier).state =
+        widget.inicialLevantamentoId;
     ref.read(provedorFiltroTalhoesResultados.notifier).state = {
       ...widget.inicialTalhaoIds,
     };
@@ -78,8 +88,15 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
   @override
   Widget build(BuildContext context) {
     final propriedadeId = ref.watch(provedorFiltroPropriedadeResultados);
+    final levantamentoId = ref.watch(provedorFiltroLevantamentoResultados);
     final especieId = ref.watch(provedorFiltroEspecieResultados);
-    final possuiBaseFiltro = _possuiBaseFiltro(propriedadeId, especieId);
+    final talhaoIds = ref.watch(provedorFiltroTalhoesResultados);
+    final possuiBaseFiltro = _possuiBaseFiltro(
+      propriedadeId,
+      levantamentoId,
+      especieId,
+      talhaoIds,
+    );
     final opcoes = ref.watch(provedorOpcoesFiltrosResultados);
     final painel = ref.watch(provedorPainelResultados);
 
@@ -126,6 +143,7 @@ class _ResultadosTelaEstado extends ConsumerState<TelaResultados> {
       MaterialPageRoute<void>(
         builder: (context) => TelaExportacaoDados(
           propriedadeId: ref.read(provedorFiltroPropriedadeResultados),
+          levantamentoId: ref.read(provedorFiltroLevantamentoResultados),
           inicialTalhaoIds: ref.read(provedorFiltroTalhoesResultados),
           especieId: ref.read(provedorFiltroEspecieResultados),
         ),
@@ -146,11 +164,21 @@ class _FiltroCartao extends ConsumerWidget {
         ? CoresDendro.escuroLegivelCampo
         : Colors.white;
     final propriedadeId = ref.watch(provedorFiltroPropriedadeResultados);
+    final levantamentoId = ref.watch(provedorFiltroLevantamentoResultados);
     final especieId = ref.watch(provedorFiltroEspecieResultados);
     final selecionadoTalhoes = ref.watch(provedorFiltroTalhoesResultados);
-    final possuiBaseFiltro = _possuiBaseFiltro(propriedadeId, especieId);
+    final possuiBaseFiltro = _possuiBaseFiltro(
+      propriedadeId,
+      levantamentoId,
+      especieId,
+      selecionadoTalhoes,
+    );
+    final levantamentosVisiveis = opcoes.levantamentosVisiveis(
+      propriedadeId: propriedadeId,
+    );
     final talhoesVisiveis = opcoes.talhoesVisiveis(
       propriedadeId: propriedadeId,
+      levantamentoId: levantamentoId,
       especieId: especieId,
     );
 
@@ -211,6 +239,72 @@ class _FiltroCartao extends ConsumerWidget {
             onChanged: (valor) {
               ref.read(provedorFiltroPropriedadeResultados.notifier).state =
                   valor == _todosFiltroValor ? null : valor;
+              ref.read(provedorFiltroLevantamentoResultados.notifier).state =
+                  null;
+              ref.read(provedorFiltroTalhoesResultados.notifier).state =
+                  <int>{};
+            },
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<int>(
+            key: ValueKey('inventory_$levantamentoId'),
+            initialValue: levantamentoId ?? _todosFiltroValor,
+            isExpanded: true,
+            style: const TextStyle(
+              color: CoresDendro.texto,
+              fontWeight: FontWeight.w700,
+            ),
+            dropdownColor: campoCor,
+            iconEnabledColor: CoresDendro.principal,
+            iconDisabledColor: CoresDendro.textoDiscreto,
+            decoration: InputDecoration(
+              labelText: 'Levantamento',
+              hintText: 'Selecione um levantamento',
+              labelStyle: const TextStyle(
+                color: CoresDendro.textoDiscreto,
+                fontWeight: FontWeight.w700,
+              ),
+              floatingLabelStyle: const TextStyle(
+                color: CoresDendro.principal,
+                fontWeight: FontWeight.w800,
+              ),
+              prefixIcon: const Icon(
+                Icons.assignment_outlined,
+                color: CoresDendro.principal,
+              ),
+              fillColor: campoCor,
+            ),
+            items: [
+              const DropdownMenuItem(
+                value: _todosFiltroValor,
+                child: Text('Mais recente de cada talhão'),
+              ),
+              for (final opcao in levantamentosVisiveis)
+                DropdownMenuItem(
+                  value: opcao.levantamento.id,
+                  child: Text(
+                    _rotuloLevantamento(opcao),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: (valor) {
+              final levantamentoSelecionadoId = valor == _todosFiltroValor
+                  ? null
+                  : valor;
+              OpcaoLevantamentoResultados? opcao;
+              for (final item in opcoes.levantamentos) {
+                if (item.levantamento.id == levantamentoSelecionadoId) {
+                  opcao = item;
+                  break;
+                }
+              }
+              ref.read(provedorFiltroLevantamentoResultados.notifier).state =
+                  levantamentoSelecionadoId;
+              if (opcao != null) {
+                ref.read(provedorFiltroPropriedadeResultados.notifier).state =
+                    opcao.propriedade.id;
+              }
               ref.read(provedorFiltroTalhoesResultados.notifier).state =
                   <int>{};
             },
@@ -276,6 +370,7 @@ class _FiltroCartao extends ConsumerWidget {
               ),
               if (_possuiAtivoFiltros(
                 propriedadeId,
+                levantamentoId,
                 especieId,
                 selecionadoTalhoes,
               ))
@@ -287,6 +382,10 @@ class _FiltroCartao extends ConsumerWidget {
                   onPressed: () {
                     ref
                             .read(provedorFiltroPropriedadeResultados.notifier)
+                            .state =
+                        null;
+                    ref
+                            .read(provedorFiltroLevantamentoResultados.notifier)
                             .state =
                         null;
                     ref.read(provedorFiltroEspecieResultados.notifier).state =
@@ -796,16 +895,42 @@ class _CartaoErroCarregamento extends StatelessWidget {
   }
 }
 
-bool _possuiBaseFiltro(int? propriedadeId, int? especieId) {
-  return propriedadeId != null || especieId != null;
+bool _possuiBaseFiltro(
+  int? propriedadeId,
+  int? levantamentoId,
+  int? especieId,
+  Set<int> talhaoIds,
+) {
+  return propriedadeId != null ||
+      levantamentoId != null ||
+      especieId != null ||
+      talhaoIds.isNotEmpty;
 }
 
 bool _possuiAtivoFiltros(
   int? propriedadeId,
+  int? levantamentoId,
   int? especieId,
   Set<int> talhaoIds,
 ) {
-  return propriedadeId != null || especieId != null || talhaoIds.isNotEmpty;
+  return propriedadeId != null ||
+      levantamentoId != null ||
+      especieId != null ||
+      talhaoIds.isNotEmpty;
+}
+
+String _rotuloLevantamento(OpcaoLevantamentoResultados opcao) {
+  final data = opcao.levantamento.iniciadoEm;
+  final dia = data.day.toString().padLeft(2, '0');
+  final mes = data.month.toString().padLeft(2, '0');
+  final hora = data.hour.toString().padLeft(2, '0');
+  final minuto = data.minute.toString().padLeft(2, '0');
+  final situacao = opcao.levantamento.situacao == SituacaoLevantamento.concluido
+      ? 'Concluído'
+      : opcao.levantamento.situacao == SituacaoLevantamento.emAndamento
+      ? 'Em andamento'
+      : 'Planejamento';
+  return '${opcao.propriedade.nome} • $dia/$mes/${data.year} $hora:$minuto • $situacao';
 }
 
 String _formatoArea(double valor) {

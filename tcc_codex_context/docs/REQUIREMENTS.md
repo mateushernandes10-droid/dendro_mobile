@@ -26,7 +26,7 @@ Revisão em 29/09/2026. “Implementado” indica existência no código, não v
 | RF-018 | Retomada rápida | Implementado: Início apresenta acesso ao levantamento ativo mais recente e ao talhão em foco. |
 | RF-019 | Navegação principal | Implementado: Início, Levantamentos, Propriedades, Resultados e Ajustes. |
 | RF-020 | Geolocalização | Implementado na coleta com permissão do dispositivo, coordenada opcional de árvore e associação explícita a P1–P4 da parcela. Não mede contorno do talhão nem distribui parcelas automaticamente. |
-| RF-021 | Filtrar resultados | Implementado: propriedade, espécie e um ou mais talhões. O painel não restringe automaticamente ao levantamento mais recente; ver diferenças de escopo das exportações. |
+| RF-021 | Filtrar resultados | Implementado: propriedade, levantamento, espécie e um ou mais talhões. Quando não há levantamento selecionado, o painel usa o mais recente de cada talhão compatível com os demais filtros. Quando há seleção, reúne somente parcelas daquela campanha. O atalho no detalhe do levantamento abre os resultados com propriedade, levantamento e seus talhões já filtrados. |
 | RF-022 | Avaliar suficiência amostral | Implementado por talhão: erro máximo configurável com padrão de 3%, confiança fixa de 95%, cálculo sobre volumes por hectare das parcelas finalizadas, correção para população finita quando aplicável e confirmação final mesmo quando insuficiente. |
 
 ## Exportação bruta e escopo

@@ -21,6 +21,12 @@ final provedorFiltroTalhoesResultados = StateProvider.autoDispose<Set<int>>((
   return <int>{};
 });
 
+final provedorFiltroLevantamentoResultados = StateProvider.autoDispose<int?>((
+  ref,
+) {
+  return null;
+});
+
 final provedorFiltroEspecieResultados = StateProvider.autoDispose<int?>((ref) {
   return null;
 });
@@ -35,6 +41,7 @@ final provedorPainelResultados = StreamProvider.autoDispose<PainelResultados>((
 ) {
   final filtros = FiltrosResultados(
     propriedadeId: ref.watch(provedorFiltroPropriedadeResultados),
+    levantamentoId: ref.watch(provedorFiltroLevantamentoResultados),
     talhaoIds: ref.watch(provedorFiltroTalhoesResultados),
     especieId: ref.watch(provedorFiltroEspecieResultados),
   );
@@ -45,52 +52,95 @@ final provedorPainelResultados = StreamProvider.autoDispose<PainelResultados>((
 class FiltrosResultados {
   const FiltrosResultados({
     required this.propriedadeId,
+    required this.levantamentoId,
     required this.talhaoIds,
     required this.especieId,
   });
 
   final int? propriedadeId;
+  final int? levantamentoId;
   final Set<int> talhaoIds;
   final int? especieId;
 
-  bool get possuiBaseFiltro => propriedadeId != null || especieId != null;
+  bool get possuiBaseFiltro =>
+      propriedadeId != null ||
+      levantamentoId != null ||
+      especieId != null ||
+      talhaoIds.isNotEmpty;
 }
 
 class OpcoesFiltrosResultados {
   const OpcoesFiltrosResultados({
     required this.propriedades,
+    required this.levantamentos,
     required this.talhoes,
     required this.especies,
   });
 
   final List<Propriedade> propriedades;
+  final List<OpcaoLevantamentoResultados> levantamentos;
   final List<OpcaoTalhaoResultados> talhoes;
   final List<Especie> especies;
 
   List<OpcaoTalhaoResultados> talhoesVisiveis({
     int? propriedadeId,
+    int? levantamentoId,
     int? especieId,
   }) {
-    if (propriedadeId == null && especieId == null) {
+    if (propriedadeId == null && levantamentoId == null && especieId == null) {
       return const [];
     }
 
-    return talhoes.where((opcao) {
+    final candidatos = talhoes.where((opcao) {
       if (propriedadeId != null &&
           opcao.talhao.propriedadeId != propriedadeId) {
         return false;
       }
-      if (especieId != null && opcao.especie.id != especieId) {
+      if (levantamentoId != null && opcao.levantamentoId != levantamentoId) {
         return false;
       }
       return true;
+    });
+
+    final porTalhao = <int, OpcaoTalhaoResultados>{};
+    for (final opcao in candidatos) {
+      porTalhao.putIfAbsent(opcao.talhao.id, () => opcao);
+    }
+    return porTalhao.values
+        .where((opcao) => especieId == null || opcao.especie.id == especieId)
+        .toList()
+      ..sort(
+        (a, b) => a.talhao.identificacao.compareTo(b.talhao.identificacao),
+      );
+  }
+
+  List<OpcaoLevantamentoResultados> levantamentosVisiveis({
+    int? propriedadeId,
+  }) {
+    return levantamentos.where((opcao) {
+      return propriedadeId == null || opcao.propriedade.id == propriedadeId;
     }).toList();
   }
 }
 
-class OpcaoTalhaoResultados {
-  const OpcaoTalhaoResultados({required this.talhao, required this.especie});
+class OpcaoLevantamentoResultados {
+  const OpcaoLevantamentoResultados({
+    required this.levantamento,
+    required this.propriedade,
+  });
 
+  final Levantamento levantamento;
+  final Propriedade propriedade;
+}
+
+class OpcaoTalhaoResultados {
+  const OpcaoTalhaoResultados({
+    required this.levantamentoId,
+    required this.talhao,
+    required this.especie,
+  });
+
+  final int levantamentoId;
   final Talhao talhao;
   final Especie especie;
 }
@@ -227,17 +277,33 @@ class RepositorioResultados {
             ),
           ),
           leftOuterJoin(
+            _bancoDados.talhaoLevantamentos,
+            _bancoDados.talhaoLevantamentos.talhaoId.equalsExp(
+              _bancoDados.talhoes.id,
+            ),
+          ),
+          leftOuterJoin(
+            _bancoDados.levantamentos,
+            _bancoDados.levantamentos.id.equalsExp(
+              _bancoDados.talhaoLevantamentos.levantamentoId,
+            ),
+          ),
+          leftOuterJoin(
             _bancoDados.especies,
-            _bancoDados.especies.id.equalsExp(_bancoDados.talhoes.especieId),
+            _bancoDados.especies.id.equalsExp(
+              _bancoDados.talhaoLevantamentos.especieId,
+            ),
           ),
         ])..orderBy([
           OrderingTerm.asc(_bancoDados.propriedades.nome),
+          OrderingTerm.desc(_bancoDados.levantamentos.iniciadoEm),
           OrderingTerm.asc(_bancoDados.talhoes.identificacao),
         ]);
 
     return consulta.watch().map((linhas) {
       final propriedadesPorId = <int, Propriedade>{};
-      final talhoesPorId = <int, OpcaoTalhaoResultados>{};
+      final levantamentosPorId = <int, OpcaoLevantamentoResultados>{};
+      final talhoesPorVinculo = <String, OpcaoTalhaoResultados>{};
       final especiePorId = <int, Especie>{};
 
       for (final linha in linhas) {
@@ -245,27 +311,49 @@ class RepositorioResultados {
         propriedadesPorId[propriedade.id] = propriedade;
 
         final talhao = linha.readTableOrNull(_bancoDados.talhoes);
+        final levantamento = linha.readTableOrNull(_bancoDados.levantamentos);
         final especie = linha.readTableOrNull(_bancoDados.especies);
-        if (talhao == null || especie == null) continue;
+        if (levantamento != null) {
+          levantamentosPorId[levantamento.id] = OpcaoLevantamentoResultados(
+            levantamento: levantamento,
+            propriedade: propriedade,
+          );
+        }
+        if (talhao == null || levantamento == null || especie == null) continue;
 
-        talhoesPorId[talhao.id] = OpcaoTalhaoResultados(
-          talhao: talhao,
-          especie: especie,
-        );
+        talhoesPorVinculo['${levantamento.id}:${talhao.id}'] =
+            OpcaoTalhaoResultados(
+              levantamentoId: levantamento.id,
+              talhao: talhao,
+              especie: especie,
+            );
         especiePorId[especie.id] = especie;
       }
 
       final propriedades = propriedadesPorId.values.toList()
         ..sort((a, b) => a.nome.compareTo(b.nome));
-      final talhoes = talhoesPorId.values.toList()
+      final levantamentos = levantamentosPorId.values.toList()
         ..sort(
-          (a, b) => a.talhao.identificacao.compareTo(b.talhao.identificacao),
+          (a, b) =>
+              b.levantamento.iniciadoEm.compareTo(a.levantamento.iniciadoEm),
         );
+      final levantamentoPorId = {
+        for (final opcao in levantamentos)
+          opcao.levantamento.id: opcao.levantamento,
+      };
+      final talhoes = talhoesPorVinculo.values.toList()
+        ..sort((a, b) {
+          final comparacaoData = levantamentoPorId[b.levantamentoId]!.iniciadoEm
+              .compareTo(levantamentoPorId[a.levantamentoId]!.iniciadoEm);
+          if (comparacaoData != 0) return comparacaoData;
+          return b.levantamentoId.compareTo(a.levantamentoId);
+        });
       final especies = especiePorId.values.toList()
         ..sort((a, b) => a.nome.compareTo(b.nome));
 
       return OpcoesFiltrosResultados(
         propriedades: propriedades,
+        levantamentos: levantamentos,
         talhoes: talhoes,
         especies: especies,
       );
@@ -332,24 +420,41 @@ class RepositorioResultados {
     if (filtros.propriedadeId != null) {
       condicoes.add(_bancoDados.propriedades.id.equals(filtros.propriedadeId!));
     }
+    if (filtros.levantamentoId != null) {
+      condicoes.add(
+        _bancoDados.levantamentos.id.equals(filtros.levantamentoId!),
+      );
+    }
     if (filtros.talhaoIds.isNotEmpty) {
       condicoes.add(_bancoDados.talhoes.id.isIn(filtros.talhaoIds));
-    }
-    if (filtros.especieId != null) {
-      condicoes.add(
-        _bancoDados.talhaoLevantamentos.especieId.equals(filtros.especieId!),
-      );
     }
     if (condicoes.isNotEmpty) {
       consulta.where(condicoes.reduce((valor, elemento) => valor & elemento));
     }
 
-    return consulta.watch().asyncMap(_montarPainelDasLinhas);
+    return consulta.watch().asyncMap(
+      (linhas) => _montarPainelDasLinhas(
+        linhas,
+        usarUltimoLevantamentoPorTalhao: filtros.levantamentoId == null,
+        especieId: filtros.especieId,
+      ),
+    );
   }
 
   Future<PainelResultados> _montarPainelDasLinhas(
-    List<TypedResult> linhas,
-  ) async {
+    List<TypedResult> linhas, {
+    required bool usarUltimoLevantamentoPorTalhao,
+    required int? especieId,
+  }) async {
+    if (usarUltimoLevantamentoPorTalhao) {
+      linhas = _somenteUltimoLevantamentoPorTalhao(linhas);
+    }
+    if (especieId != null) {
+      linhas = linhas.where((linha) {
+        return linha.readTable(_bancoDados.talhaoLevantamentos).especieId ==
+            especieId;
+      }).toList();
+    }
     final vistosParcelas = <int>{};
     final vistosArvores = <int>{};
     final diametroFaixas = <int, int>{};
@@ -468,6 +573,33 @@ class RepositorioResultados {
       diametroClasses: diametroClasses,
       talhoes: talhoes,
     );
+  }
+
+  List<TypedResult> _somenteUltimoLevantamentoPorTalhao(
+    List<TypedResult> linhas,
+  ) {
+    final ultimoPorTalhao =
+        <int, ({DateTime iniciadoEm, int levantamentoId})>{};
+    for (final linha in linhas) {
+      final talhao = linha.readTable(_bancoDados.talhoes);
+      final levantamento = linha.readTable(_bancoDados.levantamentos);
+      final atual = ultimoPorTalhao[talhao.id];
+      if (atual == null ||
+          levantamento.iniciadoEm.isAfter(atual.iniciadoEm) ||
+          (levantamento.iniciadoEm.compareTo(atual.iniciadoEm) == 0 &&
+              levantamento.id > atual.levantamentoId)) {
+        ultimoPorTalhao[talhao.id] = (
+          iniciadoEm: levantamento.iniciadoEm,
+          levantamentoId: levantamento.id,
+        );
+      }
+    }
+
+    return linhas.where((linha) {
+      final talhao = linha.readTable(_bancoDados.talhoes);
+      final levantamento = linha.readTable(_bancoDados.levantamentos);
+      return ultimoPorTalhao[talhao.id]?.levantamentoId == levantamento.id;
+    }).toList();
   }
 
   Future<Map<String, double?>> _coeficientesParaTalhao({

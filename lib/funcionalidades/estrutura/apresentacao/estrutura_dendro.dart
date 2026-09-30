@@ -111,11 +111,14 @@ class _DendroEstruturaEstado extends ConsumerState<EstruturaDendro> {
 
   void _abrirResultadosAba({
     int? propriedadeId,
+    int? levantamentoId,
     Set<int>? talhaoIds,
     int? especieId,
   }) {
     ref.read(provedorFiltroPropriedadeResultados.notifier).state =
         propriedadeId;
+    ref.read(provedorFiltroLevantamentoResultados.notifier).state =
+        levantamentoId;
     ref.read(provedorFiltroTalhoesResultados.notifier).state = {...?talhaoIds};
     ref.read(provedorFiltroEspecieResultados.notifier).state = especieId;
 

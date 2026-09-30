@@ -12,6 +12,7 @@ Revisão em 29/09/2026. Este documento registra o estado final observado no cód
 - Resultados com volumes e extrapolação por área.
 - Suficiência amostral por talhão, com erro máximo editável e padrão de 3%.
 - Exportação PDF, CSV, XLSX, KML, CSV bruto e XLSX bruto.
+- Resultados filtráveis por levantamento, propriedade, espécie e talhões; sem levantamento explícito, usa-se a campanha mais recente de cada talhão.
 - Registro local de atividades e modo escuro persistido.
 
 ## Pontos principais

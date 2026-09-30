@@ -1052,6 +1052,7 @@ ORDER BY simbolo
     final repositorioParcelas = RepositorioParcelas(bancoDados);
     final repositorioArvores = RepositorioArvores(bancoDados);
     final repositorioResultados = RepositorioResultados(bancoDados);
+    final repositorioLevantamentos = RepositorioLevantamentos(bancoDados);
 
     final propriedadeId = await repositorioPropriedades.criar(
       nome: 'Fazenda Resultado',
@@ -1118,6 +1119,7 @@ ORDER BY simbolo
 
     final opcoes = await repositorioResultados.observarOpcoesFiltros().first;
     expect(opcoes.propriedades.single.nome, 'Fazenda Resultado');
+    expect(opcoes.levantamentos, hasLength(1));
     expect(opcoes.talhoes, hasLength(2));
     expect(
       opcoes.especies.map((item) => item.nome),
@@ -1125,7 +1127,14 @@ ORDER BY simbolo
     );
     expect(opcoes.talhoesVisiveis(), isEmpty);
     expect(
-      opcoes.talhoesVisiveis(especieId: pinus.id).single.talhao.id,
+      opcoes
+          .talhoesVisiveis(
+            levantamentoId: pinusTalhao.levantamentoId,
+            especieId: pinus.id,
+          )
+          .single
+          .talhao
+          .id,
       pinusTalhaoId,
     );
 
@@ -1133,6 +1142,7 @@ ORDER BY simbolo
         .observarPainel(
           const FiltrosResultados(
             propriedadeId: null,
+            levantamentoId: null,
             talhaoIds: {},
             especieId: null,
           ),
@@ -1148,6 +1158,7 @@ ORDER BY simbolo
         .observarPainel(
           FiltrosResultados(
             propriedadeId: propriedadeId,
+            levantamentoId: pinusTalhao.levantamentoId,
             talhaoIds: const {},
             especieId: null,
           ),
@@ -1176,6 +1187,7 @@ ORDER BY simbolo
         .observarPainel(
           FiltrosResultados(
             propriedadeId: propriedadeId,
+            levantamentoId: pinusTalhao.levantamentoId,
             talhaoIds: {pinusTalhaoId},
             especieId: null,
           ),
@@ -1197,6 +1209,7 @@ ORDER BY simbolo
         .observarPainel(
           FiltrosResultados(
             propriedadeId: null,
+            levantamentoId: pinusTalhao.levantamentoId,
             talhaoIds: const {},
             especieId: pinus.id,
           ),
@@ -1205,6 +1218,64 @@ ORDER BY simbolo
 
     expect(pinusEntrePropriedades.arvoreQuantidade, 2);
     expect(pinusEntrePropriedades.talhoes.single.talhao.id, pinusTalhaoId);
+
+    await repositorioLevantamentos.concluirLevantamento(
+      pinusTalhao.levantamentoId,
+    );
+    final novoPinusTalhao = await repositorioParcelas
+        .iniciarNovoLevantamentoParaTalhao(pinusTalhaoId);
+    final novaParcelaId = await repositorioParcelas
+        .criarParcelaParaTalhaoLevantamento(
+          talhaoLevantamentoId: novoPinusTalhao.id,
+          areaHa: 0.04,
+        );
+    await repositorioArvores.criarArvore(
+      parcelaId: novaParcelaId,
+      rascunho: const RascunhoArvore(
+        dapCm: 40,
+        alturaM: 22,
+        possuiTroncoTortuoso: false,
+      ),
+    );
+    await repositorioArvores.marcarParcelaColetada(novaParcelaId);
+
+    final levantamentoAnterior = await repositorioResultados
+        .observarPainel(
+          FiltrosResultados(
+            propriedadeId: propriedadeId,
+            levantamentoId: pinusTalhao.levantamentoId,
+            talhaoIds: const {},
+            especieId: null,
+          ),
+        )
+        .first;
+    final levantamentoNovo = await repositorioResultados
+        .observarPainel(
+          FiltrosResultados(
+            propriedadeId: propriedadeId,
+            levantamentoId: novoPinusTalhao.levantamentoId,
+            talhaoIds: const {},
+            especieId: null,
+          ),
+        )
+        .first;
+    final levantamentoMaisRecentePorTalhao = await repositorioResultados
+        .observarPainel(
+          FiltrosResultados(
+            propriedadeId: propriedadeId,
+            levantamentoId: null,
+            talhaoIds: {pinusTalhaoId},
+            especieId: null,
+          ),
+        )
+        .first;
+
+    expect(levantamentoAnterior.arvoreQuantidade, 2);
+    expect(levantamentoAnterior.mediaDapCm, closeTo(22.5, 0.0001));
+    expect(levantamentoNovo.arvoreQuantidade, 1);
+    expect(levantamentoNovo.mediaDapCm, closeTo(40, 0.0001));
+    expect(levantamentoMaisRecentePorTalhao.arvoreQuantidade, 1);
+    expect(levantamentoMaisRecentePorTalhao.mediaDapCm, closeTo(40, 0.0001));
   });
 
   test('repositorios registram historico de atividades', () async {
@@ -1329,6 +1400,7 @@ ORDER BY simbolo
         .observarPainel(
           FiltrosResultados(
             propriedadeId: propriedadeId,
+            levantamentoId: vinculo.levantamentoId,
             talhaoIds: const {},
             especieId: null,
           ),

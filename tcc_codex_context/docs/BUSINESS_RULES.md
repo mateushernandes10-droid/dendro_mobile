@@ -70,7 +70,7 @@ Médias de DAP e altura usam medições armazenadas. A substituição de altura 
 O painel informa a quantidade de árvores com tronco tortuoso e o percentual em relação ao total de árvores incluídas nos filtros, tanto no consolidado quanto por talhão. Essa classificação é informativa e não altera o cálculo de volume.
 O exportador também calcula área basal por árvore como π × (DAPcm/200)² e área basal/ha dividindo a soma pela área medida. O PDF apresenta idade quando há ano de plantio válido, mas não foi identificada rotina de cálculo de IMA: a menção a IMA em um aviso do exportador não comprova sua implementação.
 Conversões por nome da espécie: Pinus usa 0.9367 ton/m³; Eucalyptus/Eucalipto usa 1.4 mst/m³; demais nomes mantêm m³. Não são fatores universais.
-O painel agrega todos os registros compatíveis com seus filtros, incluindo diferentes levantamentos do mesmo talhão; não deduz automaticamente uma única situação florestal atual.
+Quando um levantamento é selecionado, o painel agrega somente os registros compatíveis daquela campanha. Sem essa seleção, usa o levantamento mais recente de cada talhão compatível com os demais filtros, evitando somar medições históricas diferentes do mesmo talhão.
 
 ## BR-017 — Exclusão
 Interfaces solicitam confirmação para exclusões. O banco declara relações em cascata e restrições; repositórios também removem dados relacionados explicitamente. Excluir talhão de um levantamento preserva o cadastro permanente do talhão; excluir o levantamento remove seus dados de coleta. Não desenhar exclusão da propriedade como requisito obrigatório para encerrar levantamento.

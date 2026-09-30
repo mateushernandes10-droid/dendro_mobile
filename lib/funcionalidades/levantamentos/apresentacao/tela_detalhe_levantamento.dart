@@ -6,6 +6,7 @@ import '../../../aplicativo/tema/tema_dendro.dart';
 import '../../../nucleo/banco/banco_dendro.dart';
 import '../../../compartilhado/componentes/componentes_dendro.dart';
 import '../../exportacao_dados/apresentacao/tela_exportacao_dados.dart';
+import '../../estrutura/apresentacao/navegacao_estrutura_dendro.dart';
 import '../../parcelas/apresentacao/tela_parcelas_talhao.dart';
 import '../../talhoes/dados/repositorio_talhoes.dart';
 import '../dados/selecao_modelo_levantamento.dart';
@@ -46,6 +47,7 @@ class TelaDetalheLevantamento extends ConsumerWidget {
               aoExcluirLevantamento: () =>
                   _confirmarExcluirLevantamento(context, ref, resumo),
               aoExportacaoLevantamento: () => _abrirExportacao(context, resumo),
+              aoAbrirResultados: () => _abrirResultados(context, resumo),
               aoEditarTalhao: (talhao) =>
                   _abrirTalhaoFormulario(context, talhao),
               aoRemoverTalhao: (talhao) =>
@@ -64,6 +66,14 @@ class TelaDetalheLevantamento extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _abrirResultados(BuildContext context, LevantamentoResumo resumo) {
+    NavegacaoEstruturaDendro.de(context).abrirResultados(
+      propriedadeId: resumo.propriedade.id,
+      levantamentoId: resumo.levantamento.id,
+      talhaoIds: resumo.talhoes.map((item) => item.talhao.id).toSet(),
     );
   }
 
@@ -278,6 +288,7 @@ class _LevantamentoCorpo extends StatelessWidget {
     required this.aoConcluirLevantamento,
     required this.aoExcluirLevantamento,
     required this.aoExportacaoLevantamento,
+    required this.aoAbrirResultados,
     required this.aoEditarTalhao,
     required this.aoRemoverTalhao,
   });
@@ -286,6 +297,7 @@ class _LevantamentoCorpo extends StatelessWidget {
   final VoidCallback aoConcluirLevantamento;
   final VoidCallback aoExcluirLevantamento;
   final VoidCallback aoExportacaoLevantamento;
+  final VoidCallback aoAbrirResultados;
   final ValueChanged<LevantamentoTalhaoResumo> aoEditarTalhao;
   final ValueChanged<LevantamentoTalhaoResumo> aoRemoverTalhao;
 
@@ -294,7 +306,10 @@ class _LevantamentoCorpo extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        _LevantamentoResumoCartao(resumo: resumo),
+        _LevantamentoResumoCartao(
+          resumo: resumo,
+          aoAbrirResultados: aoAbrirResultados,
+        ),
         if (resumo.levantamento.situacao ==
             SituacaoLevantamento.emAndamento) ...[
           const SizedBox(height: 12),
@@ -389,9 +404,13 @@ class _LevantamentoCorpo extends StatelessWidget {
 }
 
 class _LevantamentoResumoCartao extends StatelessWidget {
-  const _LevantamentoResumoCartao({required this.resumo});
+  const _LevantamentoResumoCartao({
+    required this.resumo,
+    required this.aoAbrirResultados,
+  });
 
   final LevantamentoResumo resumo;
+  final VoidCallback aoAbrirResultados;
 
   @override
   Widget build(BuildContext context) {
@@ -407,7 +426,12 @@ class _LevantamentoResumoCartao extends StatelessWidget {
                 rotulo: _situacaoRotulo(resumo.levantamento.situacao),
               ),
               const Spacer(),
-              const Icon(Icons.assignment, color: CoresDendro.principal),
+              IconButton(
+                onPressed: aoAbrirResultados,
+                icon: const Icon(Icons.bar_chart),
+                color: CoresDendro.principal,
+                tooltip: 'Resultados deste levantamento',
+              ),
             ],
           ),
           const SizedBox(height: 12),
