@@ -1409,5 +1409,15 @@ ORDER BY simbolo
     expect(painel.parcelaQuantidade, 2);
     expect(painel.arvoreQuantidade, 2);
     expect(painel.mediaDapCm, 20);
+    final suficienciaNosResultados = painel.talhoes.single.suficienciaAmostral;
+    expect(suficienciaNosResultados.parcelasUtilizadas, 2);
+    expect(suficienciaNosResultados.erroMaximoPercentual, 4.5);
+    expect(
+      suficienciaNosResultados.erroAmostralAtualPercentual,
+      closeTo(0, 0.0001),
+    );
+    expect(suficienciaNosResultados.parcelasEstimadas, 2);
+    expect(suficienciaNosResultados.parcelasAdicionais, 0);
+    expect(suficienciaNosResultados.suficiente, isTrue);
   });
 }

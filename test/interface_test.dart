@@ -647,6 +647,10 @@ void main() {
     expect(find.text('Fazenda Resultado'), findsWidgets);
     expect(find.text('Árvores com tronco tortuoso'), findsOneWidget);
     expect(find.text('1 (100,0%)'), findsOneWidget);
+    expect(find.text('Suficiência amostral'), findsOneWidget);
+    expect(find.text('Dados insuficientes'), findsOneWidget);
+    expect(find.text('Parcelas utilizadas'), findsOneWidget);
+    expect(find.text('Erro máximo desejado'), findsOneWidget);
 
     await testador.pumpWidget(const SizedBox.shrink());
     await testador.pump(const Duration(milliseconds: 1));

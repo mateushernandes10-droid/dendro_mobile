@@ -10,7 +10,7 @@ Revisão em 29/09/2026. Este documento registra o estado final observado no cód
 - Catálogos de espécies, modelos matemáticos e coeficientes por espécie e por talhão do levantamento.
 - Cálculo por Spurr, Schumacher-Hall e Fator de Forma.
 - Resultados com volumes e extrapolação por área.
-- Suficiência amostral por talhão, com erro máximo editável e padrão de 3%.
+- Suficiência amostral por talhão, com erro máximo editável, padrão de 3% e cartão permanente nos resultados.
 - Exportação PDF, CSV, XLSX, KML, CSV bruto e XLSX bruto.
 - Resultados filtráveis por levantamento, propriedade, espécie e talhões; sem levantamento explícito, usa-se a campanha mais recente de cada talhão.
 - Backup local completo em `.dendrobackup`, compartilhamento, importação e restauração transacional com cópia preventiva.
@@ -24,7 +24,7 @@ A exportação bruta CSV mantém uma linha por árvore e inclui campos auxiliare
 
 A tela Novo levantamento reutiliza o formulário de propriedade. Ao salvar, a nova propriedade passa a estar disponível para seleção.
 
-Resultados e suficiência usam somente parcelas explicitamente finalizadas. Se houver parcelas abertas ao encerrar o levantamento, o primeiro aviso explica sua exclusão dos cálculos; depois, um segundo diálogo sempre apresenta parcelas registradas e utilizadas, erro atual, erro desejado, quantidade estimada, parcelas adicionais e situação. O encerramento continua permitido mediante confirmação.
+Resultados e suficiência usam somente parcelas explicitamente finalizadas. Se houver parcelas abertas ao encerrar o levantamento, o primeiro aviso explica sua exclusão dos cálculos; depois, um segundo diálogo sempre apresenta parcelas registradas e utilizadas, erro atual, erro desejado, quantidade estimada, parcelas adicionais e situação. O encerramento continua permitido mediante confirmação. O painel de resultados repete esses indicadores em um cartão permanente para cada talhão selecionado, usando a mesma calculadora estatística do encerramento.
 
 ## Banco de dados
 
@@ -61,7 +61,7 @@ O catálogo inicial é inserido por `catalogos_iniciais.dart` na primeira criaç
 
 Os testes automatizados cobrem banco, cálculos, suficiência amostral, exclusão de parcelas abertas dos resultados, exportações brutas, tema e fluxos de interface. `diagrama_banco_test.dart` compara as 14 tabelas e suas 106 colunas com o diagrama completo em Mermaid.
 
-Na verificação de 29/09/2026, `flutter analyze` terminou sem apontamentos e os 42 testes passaram.
+Na verificação de 29/09/2026, `flutter analyze` terminou sem apontamentos e os 44 testes passaram.
 
 Build Android e testes automatizados verificam o software, mas não substituem validação científica, testes de campo ou avaliação formal com usuários.
 

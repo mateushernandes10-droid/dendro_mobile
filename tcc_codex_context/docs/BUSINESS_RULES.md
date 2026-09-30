@@ -39,11 +39,13 @@ Esse comportamento deve ser documentado como limite da implementação, sem afir
 ## BR-009 — Amostragem
 O método de referência é amostragem sistemática com parcelas de área fixa. O app registra parcelas e permite dimensões/áreas; não posiciona parcelas automaticamente nem verifica o protocolo de distribuição. Largura × comprimento / 10000 fornece a área padrão em ha quando configurada.
 
-Cada talhão do levantamento armazena o erro amostral máximo desejado, inicialmente 3% e editável durante a coleta. Ao finalizar, o aplicativo calcula a suficiência com 95% de confiança a partir do volume em m³/ha de cada parcela finalizada: média, desvio padrão, coeficiente de variação, erro amostral relativo e número estimado de parcelas. A intensidade é calculada iterativamente com t de Student e usa correção para população finita quando a área do talhão e a área da parcela permitem estimar o número de unidades possíveis.
+Cada talhão do levantamento armazena o erro amostral máximo desejado, inicialmente 3% e editável durante a coleta. Ao finalizar e ao montar o painel de resultados, o aplicativo calcula a suficiência com 95% de confiança a partir do volume em m³/ha de cada parcela finalizada: média, desvio padrão, coeficiente de variação, erro amostral relativo e número estimado de parcelas. A intensidade é calculada iterativamente com t de Student e usa correção para população finita quando a área do talhão e a área da parcela permitem estimar o número de unidades possíveis.
 
 Equações implementadas: `CV% = (s / média) × 100`; `Er% = t × CV% / √n`, com fator `√((N-n)/(N-1))` quando a população é finita; `n0 = t² × CV%² / LE%²`; e `n = N × n0 / (N + n0 - 1)` para a correção finita. O valor de t e a quantidade estimada são recalculados até estabilização; em uma oscilação de arredondamento, conserva-se o maior valor.
 
 São necessárias pelo menos duas parcelas finalizadas, com área válida e média positiva, para calcular a variabilidade. O resultado é uma orientação estatística; o usuário pode confirmar o encerramento mesmo quando a amostragem é insuficiente.
+
+Nos resultados, cada talhão exibe permanentemente parcelas utilizadas, erro amostral atual, erro máximo desejado, parcelas estimadas, parcelas adicionais recomendadas e situação. Quando a amostra ainda não permite o cálculo, o cartão informa dados insuficientes em vez de produzir uma estimativa.
 
 ## BR-010 — Estimativa econômica
 Não implementada. Entrada de preço e estimativa de valor bruto eram requisitos originais. Não há cálculo de receita ou lucro na versão atual.

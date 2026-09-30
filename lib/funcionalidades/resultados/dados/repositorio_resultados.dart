@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/banco/banco_dendro.dart';
+import '../../../nucleo/floresta/calculadora_suficiencia_amostral.dart';
 import '../../../nucleo/floresta/calculadora_volume_florestal.dart';
 import '../../../nucleo/provedores/provedores_banco.dart';
 
@@ -237,6 +238,7 @@ class ResumoResultadosTalhao {
     required this.convertidoVolumePorHa,
     required this.convertidoUnidade,
     required this.arvoresPorHa,
+    required this.suficienciaAmostral,
   });
 
   final Talhao talhao;
@@ -256,6 +258,7 @@ class ResumoResultadosTalhao {
   final double? convertidoVolumePorHa;
   final String convertidoUnidade;
   final double? arvoresPorHa;
+  final ResultadoSuficienciaAmostral suficienciaAmostral;
 
   double get troncoTortuosoPercentual => arvoreQuantidade == 0
       ? 0
@@ -529,7 +532,11 @@ class RepositorioResultados {
         modeloMatematicoExpressao: modeloMatematico.expressao,
       );
       amostraVolumeM3 += volumeArvoreM3;
-      talhaoAcumulador.adicionarArvore(arvore, volumeArvoreM3);
+      talhaoAcumulador.adicionarArvore(
+        arvore,
+        parcelaId: parcela.id,
+        volumeM3: volumeArvoreM3,
+      );
 
       final faixaIniciar = (arvore.dapCm ~/ 5) * 5;
       diametroFaixas[faixaIniciar] = (diametroFaixas[faixaIniciar] ?? 0) + 1;
@@ -677,9 +684,13 @@ class _TalhaoResultadosAcumulador {
   double dapSoma = 0;
   double alturaSoma = 0;
   double amostraVolumeM3 = 0;
+  final Map<int, double> _volumePorParcelaM3 = {};
+  final Map<int, double?> _areaPorParcelaHa = {};
 
   void adicionarParcela(Parcela parcela) {
     parcelaQuantidade++;
+    _volumePorParcelaM3[parcela.id] = 0;
+    _areaPorParcelaHa[parcela.id] = parcela.areaHa;
     if (parcela.situacao == SituacaoParcela.coletada) {
       coletadaParcelaQuantidade++;
     }
@@ -689,12 +700,18 @@ class _TalhaoResultadosAcumulador {
     }
   }
 
-  void adicionarArvore(Arvore arvore, double volumeM3) {
+  void adicionarArvore(
+    Arvore arvore, {
+    required int parcelaId,
+    required double volumeM3,
+  }) {
     arvoreQuantidade++;
     if (arvore.possuiTroncoTortuoso) troncoTortuosoQuantidade++;
     dapSoma += arvore.dapCm;
     alturaSoma += arvore.alturaM;
     amostraVolumeM3 += volumeM3;
+    _volumePorParcelaM3[parcelaId] =
+        (_volumePorParcelaM3[parcelaId] ?? 0) + volumeM3;
   }
 
   ResumoResultadosTalhao paraResumo() {
@@ -706,6 +723,36 @@ class _TalhaoResultadosAcumulador {
         : volumePorHaM3 * talhao.areaHa;
     final conversao = CalculadoraVolumeFlorestal.conversaoParaEspecie(
       especie.nome,
+    );
+    final areasValidas = _areaPorParcelaHa.values
+        .whereType<double>()
+        .where((area) => area > 0)
+        .toList(growable: false);
+    final volumesPorHaM3 = <double>[
+      for (final entrada in _volumePorParcelaM3.entries)
+        if ((_areaPorParcelaHa[entrada.key] ?? 0) > 0)
+          entrada.value / _areaPorParcelaHa[entrada.key]!,
+    ];
+    final larguraParcelaM = talhao.larguraParcelaM;
+    final comprimentoParcelaM = talhao.comprimentoParcelaM;
+    final areaPadraoParcelaHa =
+        larguraParcelaM != null &&
+            larguraParcelaM > 0 &&
+            comprimentoParcelaM != null &&
+            comprimentoParcelaM > 0
+        ? larguraParcelaM * comprimentoParcelaM / 10000
+        : areasValidas.isEmpty
+        ? null
+        : areasValidas.fold<double>(0, (total, area) => total + area) /
+              areasValidas.length;
+    final unidadesAmostraisPossiveis =
+        areaPadraoParcelaHa == null || areaPadraoParcelaHa <= 0
+        ? null
+        : talhao.areaHa / areaPadraoParcelaHa;
+    final suficienciaAmostral = CalculadoraSuficienciaAmostral.calcular(
+      volumesPorHaM3: volumesPorHaM3,
+      erroMaximoPercentual: talhaoLevantamento.erroAmostralMaximoPercentual,
+      unidadesAmostraisPossiveis: unidadesAmostraisPossiveis,
     );
     return ResumoResultadosTalhao(
       talhao: talhao,
@@ -731,6 +778,7 @@ class _TalhaoResultadosAcumulador {
           : conversao.converter(volumePorHaM3),
       convertidoUnidade: conversao.unidade,
       arvoresPorHa: medidaAreaHa == 0 ? null : arvoreQuantidade / medidaAreaHa,
+      suficienciaAmostral: suficienciaAmostral,
     );
   }
 }

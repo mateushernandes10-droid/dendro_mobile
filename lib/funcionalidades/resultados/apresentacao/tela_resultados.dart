@@ -560,6 +560,10 @@ class _VistaPainelResultados extends StatelessWidget {
           icone: Icons.nature_outlined,
         ),
         const SizedBox(height: 20),
+        const TituloSecao(titulo: 'Suficiência amostral'),
+        for (final talhao in painel.talhoes)
+          _SuficienciaAmostralCartao(resumo: talhao),
+        const SizedBox(height: 12),
         const TituloSecao(titulo: 'Distribuição diamétrica'),
         _DiametroDistribuicaoCartao(classes: painel.diametroClasses),
         const SizedBox(height: 20),
@@ -570,6 +574,148 @@ class _VistaPainelResultados extends StatelessWidget {
           for (final talhao in painel.talhoes)
             _TalhaoResultadoLinha(resumo: talhao),
       ],
+    );
+  }
+}
+
+class _SuficienciaAmostralCartao extends StatelessWidget {
+  const _SuficienciaAmostralCartao({required this.resumo});
+
+  final ResumoResultadosTalhao resumo;
+
+  @override
+  Widget build(BuildContext context) {
+    final resultado = resumo.suficienciaAmostral;
+    final calculavel = resultado.calculavel;
+    final suficiente = resultado.suficiente;
+    final corSituacao = suficiente ? CoresDendro.principal : CoresDendro.aviso;
+    final situacao = calculavel
+        ? suficiente
+              ? 'Amostragem suficiente'
+              : 'Amostragem insuficiente'
+        : 'Dados insuficientes';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: CartaoDendro(
+        espacamentoInterno: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
+        filho: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    resumo.talhao.identificacao,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: corSituacao.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    child: Text(
+                      situacao,
+                      style: TextStyle(
+                        color: corSituacao,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 18,
+              runSpacing: 10,
+              children: [
+                _DadoSuficiencia(
+                  rotulo: 'Parcelas utilizadas',
+                  valor: resultado.parcelasUtilizadas.toString(),
+                ),
+                _DadoSuficiencia(
+                  rotulo: 'Erro amostral atual',
+                  valor: resultado.erroAmostralAtualPercentual == null
+                      ? '-'
+                      : _formatoPercentual(
+                          resultado.erroAmostralAtualPercentual!,
+                        ),
+                ),
+                _DadoSuficiencia(
+                  rotulo: 'Erro máximo desejado',
+                  valor: _formatoPercentual(resultado.erroMaximoPercentual),
+                ),
+                _DadoSuficiencia(
+                  rotulo: 'Parcelas estimadas',
+                  valor: resultado.parcelasEstimadas?.toString() ?? '-',
+                ),
+                _DadoSuficiencia(
+                  rotulo: 'Parcelas adicionais recomendadas',
+                  valor: resultado.parcelasAdicionais?.toString() ?? '-',
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              calculavel
+                  ? 'Estimativa com 95% de confiança, calculada apenas com parcelas finalizadas.'
+                  : 'Finalize ao menos duas parcelas com área válida e volume médio positivo para calcular a suficiência.',
+              style: const TextStyle(
+                color: CoresDendro.textoDiscreto,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DadoSuficiencia extends StatelessWidget {
+  const _DadoSuficiencia({required this.rotulo, required this.valor});
+
+  final String rotulo;
+  final String valor;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 135,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            rotulo,
+            style: const TextStyle(
+              color: CoresDendro.textoDiscreto,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            valor,
+            style: const TextStyle(
+              color: CoresDendro.texto,
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

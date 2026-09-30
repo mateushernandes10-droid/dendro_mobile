@@ -54,13 +54,13 @@ O GPS serve como apoio documental. Cada posição pode ser associada a uma refer
 
 ## Resultados
 
-Os resultados são calculados a partir das árvores de parcelas finalizadas e não possuem tabela própria. Parcelas pendentes ou em andamento permanecem salvas e disponíveis na exportação bruta, mas não participam dos indicadores. O aplicativo apresenta contagens, médias, distribuição diamétrica, volume amostrado, volume por hectare e extrapolação para a área do talhão quando os dados necessários estão disponíveis.
+Os resultados são calculados a partir das árvores de parcelas finalizadas e não possuem tabela própria. Parcelas pendentes ou em andamento permanecem salvas e disponíveis na exportação bruta, mas não participam dos indicadores. O aplicativo apresenta contagens, médias, distribuição diamétrica, volume amostrado, volume por hectare, extrapolação para a área do talhão e a situação permanente da suficiência amostral por talhão quando os dados necessários estão disponíveis.
 
 O levantamento pode ser selecionado no painel de resultados. Quando ele não é informado, o painel escolhe o levantamento mais recente de cada talhão compatível com propriedade, espécie e talhões filtrados. Assim, uma visão consolidada não soma campanhas históricas diferentes do mesmo talhão. Quando uma campanha é escolhida, os resultados ficam restritos a ela.
 
 ## Suficiência amostral no encerramento
 
-O erro amostral máximo é armazenado por talhão do levantamento, com valor inicial de 3% e edição permitida durante a coleta. A validação usa 95% de confiança, t de Student, coeficiente de variação dos volumes em m³/ha e correção para população finita quando as áreas permitem estimá-la. Somente parcelas finalizadas, com área positiva, compõem a amostra. O resultado orienta a decisão, mas não bloqueia o encerramento: depois de visualizar os dados, o usuário pode confirmar ou cancelar.
+O erro amostral máximo é armazenado por talhão do levantamento, com valor inicial de 3% e edição permitida durante a coleta. A validação usa 95% de confiança, t de Student, coeficiente de variação dos volumes em m³/ha e correção para população finita quando as áreas permitem estimá-la. Somente parcelas finalizadas, com área positiva, compõem a amostra. O resultado orienta a decisão, mas não bloqueia o encerramento: depois de visualizar os dados, o usuário pode confirmar ou cancelar. A mesma avaliação fica disponível no painel de resultados, com erro atual, limite, quantidade utilizada, estimativa e parcelas adicionais recomendadas.
 
 ## Exportações
 
