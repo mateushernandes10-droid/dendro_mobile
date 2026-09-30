@@ -1,4 +1,5 @@
 import 'package:dendro_mobile/nucleo/banco/banco_dendro.dart';
+import 'package:dendro_mobile/nucleo/banco/catalogos_iniciais.dart';
 import 'package:dendro_mobile/nucleo/floresta/calculadora_volume_florestal.dart';
 import 'package:dendro_mobile/funcionalidades/atividades/dados/repositorio_atividades.dart';
 import 'package:dendro_mobile/funcionalidades/levantamentos/dados/selecao_modelo_levantamento.dart';
@@ -15,7 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late BancoDendro bancoDados;
-  late int pinusId, spurrId, schumacherId, fatorId;
+  late int pinusId, eucalyptusId, spurrId, schumacherId, fatorId;
 
   setUp(() async {
     bancoDados = BancoDendro(NativeDatabase.memory());
@@ -27,9 +28,9 @@ void main() {
         .singleWhere((m) => m.codigo == 'formula_schumacher_hall')
         .id;
     fatorId = modelos.singleWhere((m) => m.codigo == 'formula_form_factor').id;
-    pinusId = (await bancoDados.select(bancoDados.especies).get())
-        .singleWhere((e) => e.codigo == 'species_pinus')
-        .id;
+    final especies = await bancoDados.select(bancoDados.especies).get();
+    pinusId = especies.singleWhere((e) => e.codigo == codigoPinus).id;
+    eucalyptusId = especies.singleWhere((e) => e.codigo == codigoEucalyptus).id;
   });
 
   tearDown(() async {
@@ -44,6 +45,9 @@ void main() {
     final variaveis = await bancoDados.select(bancoDados.variaveisModelo).get();
     final coeficientes = await bancoDados
         .select(bancoDados.coeficientesModelo)
+        .get();
+    final coeficientesEspecie = await bancoDados
+        .select(bancoDados.coeficientesEspecieModelo)
         .get();
 
     expect(
@@ -63,6 +67,28 @@ void main() {
     expect(
       coeficientes.singleWhere((item) => item.simbolo == 'ff').valor,
       isNull,
+    );
+    expect(
+      coeficientesEspecie
+          .singleWhere(
+            (item) =>
+                item.especieId == pinusId &&
+                item.modeloMatematicoId == fatorId &&
+                item.simbolo == 'ff',
+          )
+          .valor,
+      fatorFormaPadraoPinus,
+    );
+    expect(
+      coeficientesEspecie
+          .singleWhere(
+            (item) =>
+                item.especieId == eucalyptusId &&
+                item.modeloMatematicoId == fatorId &&
+                item.simbolo == 'ff',
+          )
+          .valor,
+      fatorFormaPadraoEucalyptus,
     );
     expect(
       coeficientes

@@ -24,8 +24,8 @@ Os coeficientes não são universais. O aplicativo possui valores padrão, mas s
 Não há ajuste estatístico de coeficientes. Os valores presentes em CalculadoraVolumeFlorestal são:
 - Spurr: a = 0.0175858265880592; b = 0.0000329326161133665.
 - Schumacher-Hall: a = -11.584059201173265; b = 1.8114471288118603; c = 1.6187968875426328.
-- ff: sem valor padrão.
-São parâmetros de referência do desenvolvimento. A referência bibliográfica e a aplicabilidade devem ser confirmadas no trabalho acadêmico, sem atribuir validação científica apenas pelo nome das rotinas de carga inicial.
+- Fator de Forma: `ff = 0,50` para Pinus e `ff = 0,45` para Eucalyptus no pré-cadastro por espécie; o modelo global mantém o valor vazio.
+São parâmetros de referência do desenvolvimento. Os valores de `ff` foram informados por orientação técnica e continuam editáveis na configuração do levantamento. A aplicabilidade deve ser descrita no trabalho acadêmico sem atribuir validação científica apenas à rotina de carga inicial.
 
 ## BR-007 — Alcance regional
 O foco do TCC é Rio Grande do Sul, Pinus e Eucalyptus. O cadastro permite outras espécies, mas isso não valida automaticamente modelos para elas.

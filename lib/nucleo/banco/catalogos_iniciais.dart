@@ -5,6 +5,8 @@ const codigoEucalyptus = 'species_eucalyptus';
 const codigoModeloSpurr = 'formula_spurr';
 const codigoModeloSchumacherHall = 'formula_schumacher_hall';
 const codigoModeloFatorForma = 'formula_form_factor';
+const fatorFormaPadraoPinus = 0.50;
+const fatorFormaPadraoEucalyptus = 0.45;
 
 Future<void> inserirCatalogosIniciais(GeneratedDatabase banco) async {
   final agora = DateTime.now().millisecondsSinceEpoch;
@@ -162,7 +164,9 @@ Future<void> inserirCatalogosIniciais(GeneratedDatabase banco) async {
         modeloId: fatorFormaId,
         simbolo: coeficiente.$1,
         rotulo: coeficiente.$2,
-        valor: coeficiente.$3,
+        valor: especieId == pinusId
+            ? fatorFormaPadraoPinus
+            : fatorFormaPadraoEucalyptus,
         agora: agora,
       );
     }

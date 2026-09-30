@@ -22,7 +22,7 @@ As abas são Início, Levantamentos, Propriedades, Resultados e Ajustes. Ajustes
 
 ## Cálculos
 
-Modelos implementados: Spurr, Schumacher-Hall e Fator de Forma. DAP é registrado em cm e altura em m. No Fator de Forma, o cálculo converte DAP para metros e usa ff informado pelo usuário. O cadastro de fórmulas não equivale a um interpretador genérico de expressões.
+Modelos implementados: Spurr, Schumacher-Hall e Fator de Forma. DAP é registrado em cm e altura em m. No Fator de Forma, o cálculo converte DAP para metros e usa ff informado pelo usuário, com pré-cadastro de 0,50 para Pinus e 0,45 para Eucalyptus. O cadastro de fórmulas não equivale a um interpretador genérico de expressões.
 
 O sistema aplica coeficientes configurados e valores de referência presentes no código; não estima coeficientes por regressão. A existência de valores padrão não comprova sua aplicabilidade a qualquer espécie ou região. As equações e comportamentos alternativos estão em BUSINESS_RULES.md.
 

@@ -42,6 +42,8 @@ Os cálculos implementados são Spurr, Schumacher-Hall e Fator de Forma. No Fato
 
 O valor de pi é fornecido pela biblioteca matemática do Dart. O fator de forma `ff` é informado pelo usuário. A divisão por quatro decorre do cálculo da área basal circular a partir do diâmetro: `g = (pi / 4) * D²`.
 
+O pré-cadastro por espécie usa `ff = 0,50` para Pinus e `ff = 0,45` para Eucalyptus. Ao iniciar um levantamento, o usuário pode revisar ou substituir o valor antes de salvar a configuração do talhão.
+
 O cadastro permite armazenar outros modelos e expressões, mas não existe interpretador genérico. Somente os modelos reconhecidos pela calculadora possuem execução própria.
 
 ## Parcelas e coleta de árvores
