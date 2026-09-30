@@ -326,7 +326,9 @@ class RepositorioResultados {
           OrderingTerm.asc(_bancoDados.arvores.numero),
         ]);
 
-    final condicoes = <Expression<bool>>[];
+    final condicoes = <Expression<bool>>[
+      _bancoDados.parcelas.situacao.equalsValue(SituacaoParcela.coletada),
+    ];
     if (filtros.propriedadeId != null) {
       condicoes.add(_bancoDados.propriedades.id.equals(filtros.propriedadeId!));
     }

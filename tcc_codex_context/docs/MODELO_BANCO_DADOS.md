@@ -8,7 +8,7 @@ A modelagem foi organizada em três níveis:
 
 1. **Modelo conceitual:** apresenta os conceitos do domínio florestal e seus relacionamentos, sem depender dos nomes físicos do SQLite.
 2. **Modelo lógico:** apresenta entidades, cardinalidades, chaves e tabelas associativas.
-3. **Modelo físico:** apresenta as 14 tabelas, os 105 campos, tipos SQLite, chaves e nulabilidade.
+3. **Modelo físico:** apresenta as 14 tabelas, os 106 campos, tipos SQLite, chaves e nulabilidade.
 
 Os resultados do inventário não são persistidos em uma tabela própria. Médias, volumes, distribuição diamétrica, árvores por hectare e quantidade/percentual de árvores com tronco tortuoso são calculados a partir das medições armazenadas.
 
@@ -77,7 +77,7 @@ As tabelas podem ser apresentadas em dois grupos:
 | `propriedades` | Cadastro das propriedades. |
 | `talhoes` | Cadastro permanente dos talhões. |
 | `levantamentos` | Execuções do inventário. |
-| `talhao_levantamentos` | Talhões incluídos em cada levantamento. |
+| `talhao_levantamentos` | Talhões incluídos em cada levantamento, com espécie, modelo e erro amostral máximo adotados na coleta. |
 | `parcelas` | Unidades amostrais. |
 | `arvores` | Medições individuais, coordenadas opcionais e referências P1–P4 das parcelas. |
 | `registros_atividade` | Eventos recentes do aplicativo. |

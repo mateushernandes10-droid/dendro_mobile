@@ -1,6 +1,6 @@
 # Requisitos e atendimento na versão atual
 
-Revisão em 14/09/2026. “Implementado” indica existência no código, não validação científica ou aprovação por usuários.
+Revisão em 29/09/2026. “Implementado” indica existência no código, não validação científica ou aprovação por usuários.
 
 ## Requisitos funcionais
 
@@ -15,7 +15,7 @@ Revisão em 14/09/2026. “Implementado” indica existência no código, não v
 | RF-007 | Configurar fórmulas/modelos | Parcial: cadastro de nome, expressão, descrição, variáveis e coeficientes existe; avaliação de expressões arbitrárias e validação por parser não foram implementadas. |
 | RF-008 | Configurar coeficientes | Implementado: definições globais, valores por espécie/fórmula e valores por talhão do levantamento; inclui ff editável, pré-cadastrado como 0,50 para Pinus e 0,45 para Eucalyptus. Não há ajuste estatístico. |
 | RF-009 | Calcular volume | Implementado para Spurr, Schumacher-Hall e Fator de Forma. Ver equações, seleção interna e valores alternativos em BUSINESS_RULES.md. A adequação científica ainda depende de validação. |
-| RF-010 | Apresentar resultados | Implementado: contagens, área medida, médias, distribuição diamétrica, quantidade e percentual de árvores com tronco tortuoso, volume amostrado, por hectare, extrapolado e conversões por espécie; relatórios contêm indicadores adicionais. |
+| RF-010 | Apresentar resultados | Implementado: usa somente parcelas finalizadas para contagens e cálculos; apresenta área medida, médias, distribuição diamétrica, quantidade e percentual de árvores com tronco tortuoso, volume amostrado, por hectare, extrapolado e conversões por espécie. |
 | RF-011 | Estimar valor econômico bruto | Não implementado: objetivo original do TCC, sem fluxo de preço da madeira ou cálculo monetário no código atual. Não incluir como caso de uso entregue. |
 | RF-012 | Corrigir dados coletados | Implementado: edição de cadastros e medições. Datas e atividades apoiam organização; não constituem auditoria completa de versões. |
 | RF-013 | Operar offline | Implementado para os fluxos locais de coleta, consulta e cálculo; não há backend. |
@@ -27,6 +27,7 @@ Revisão em 14/09/2026. “Implementado” indica existência no código, não v
 | RF-019 | Navegação principal | Implementado: Início, Levantamentos, Propriedades, Resultados e Ajustes. |
 | RF-020 | Geolocalização | Implementado na coleta com permissão do dispositivo, coordenada opcional de árvore e associação explícita a P1–P4 da parcela. Não mede contorno do talhão nem distribui parcelas automaticamente. |
 | RF-021 | Filtrar resultados | Implementado: propriedade, espécie e um ou mais talhões. O painel não restringe automaticamente ao levantamento mais recente; ver diferenças de escopo das exportações. |
+| RF-022 | Avaliar suficiência amostral | Implementado por talhão: erro máximo configurável com padrão de 3%, confiança fixa de 95%, cálculo sobre volumes por hectare das parcelas finalizadas, correção para população finita quando aplicável e confirmação final mesmo quando insuficiente. |
 
 ## Exportação bruta e escopo
 
@@ -64,4 +65,4 @@ A decisão de encerrar alterações no aplicativo não transforma requisitos nã
 
 ## Identificadores
 
-As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. São 14 tabelas e 105 colunas.
+As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. São 14 tabelas e 106 colunas.

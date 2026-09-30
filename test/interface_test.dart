@@ -616,6 +616,7 @@ void main() {
           possuiTroncoTortuoso: true,
         ),
       );
+      await repositorioArvores.marcarParcelaColetada(parcelaId);
     });
 
     await testador.pumpWidget(

@@ -10,6 +10,7 @@ import '../../parcelas/apresentacao/tela_parcelas_talhao.dart';
 import '../../talhoes/dados/repositorio_talhoes.dart';
 import '../dados/selecao_modelo_levantamento.dart';
 import '../dados/repositorio_levantamentos.dart';
+import 'componentes/confirmacao_encerramento_levantamento.dart';
 import 'componentes/painel_selecao_modelo_levantamento.dart';
 
 class TelaDetalheLevantamento extends ConsumerWidget {
@@ -71,41 +72,14 @@ class TelaDetalheLevantamento extends ConsumerWidget {
     WidgetRef ref,
     LevantamentoResumo resumo,
   ) async {
-    final possuiAbrirParcelas =
-        resumo.abrirParcelaQuantidade > 0 || resumo.parcelaQuantidade == 0;
-    final confirmado = await showDialog<bool>(
+    final repositorio = ref.read(provedorRepositorioLevantamentos);
+    final confirmado = await confirmarEncerramentoLevantamento(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: Icon(
-          possuiAbrirParcelas
-              ? Icons.warning_amber_rounded
-              : Icons.check_circle_outline,
-          color: possuiAbrirParcelas
-              ? Colors.red.shade700
-              : CoresDendro.principal,
-        ),
-        title: const Text('Encerrar levantamento'),
-        content: Text(_concluirLevantamentoMensagem(resumo)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: possuiAbrirParcelas
-                  ? Colors.red.shade700
-                  : CoresDendro.principal,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Encerrar'),
-          ),
-        ],
-      ),
+      repositorio: repositorio,
+      resumo: resumo,
     );
 
-    if (confirmado != true || !context.mounted) return;
+    if (!confirmado || !context.mounted) return;
 
     try {
       await ref
@@ -537,6 +511,15 @@ class _LevantamentoTalhaoCartao extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Erro máximo: ${_formatoPercentual(resumo.talhaoLevantamento.erroAmostralMaximoPercentual)}',
+                        style: const TextStyle(
+                          color: CoresDendro.textoDiscreto,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -646,6 +629,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
   late final TextEditingController _manejoRegimeControlador;
   late final TextEditingController _parcelaLarguraControlador;
   late final TextEditingController _parcelaComprimentoControlador;
+  late final TextEditingController _erroAmostralControlador;
   late final TextEditingController _observacoesControlador;
   SelecaoModeloLevantamento? _modeloMatematicoSelecao;
   int? _especieId;
@@ -681,6 +665,11 @@ class _LevantamentoTalhaoFormularioPainelEstado
           ? ''
           : talhao.comprimentoParcelaM!.toStringAsFixed(2).replaceAll('.', ','),
     );
+    _erroAmostralControlador = TextEditingController(
+      text: widget.resumo.talhaoLevantamento.erroAmostralMaximoPercentual
+          .toStringAsFixed(1)
+          .replaceAll('.', ','),
+    );
     _observacoesControlador = TextEditingController(
       text: talhao.observacoes ?? '',
     );
@@ -704,6 +693,7 @@ class _LevantamentoTalhaoFormularioPainelEstado
     _manejoRegimeControlador.dispose();
     _parcelaLarguraControlador.dispose();
     _parcelaComprimentoControlador.dispose();
+    _erroAmostralControlador.dispose();
     _observacoesControlador.dispose();
     super.dispose();
   }
@@ -868,6 +858,22 @@ class _LevantamentoTalhaoFormularioPainelEstado
               ),
               const SizedBox(height: 12),
               TextFormField(
+                controller: _erroAmostralControlador,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp('[0-9,.]')),
+                ],
+                decoration: const InputDecoration(
+                  labelText: 'Erro amostral máximo (%)',
+                  prefixIcon: Icon(Icons.analytics_outlined),
+                  helperText: 'Pode ser alterado durante o levantamento',
+                ),
+                validator: _validarErroAmostral,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
                 controller: _observacoesControlador,
                 minLines: 2,
                 maxLines: 4,
@@ -921,6 +927,9 @@ class _LevantamentoTalhaoFormularioPainelEstado
             comprimentoParcelaM: _interpretarOpcionalArea(
               _parcelaComprimentoControlador.text,
             ),
+            erroAmostralMaximoPercentual: _interpretarArea(
+              _erroAmostralControlador.text,
+            )!,
             observacoes: _observacoesControlador.text,
             modeloMatematicoSelecao: _modeloMatematicoSelecao,
           );
@@ -1016,6 +1025,14 @@ class _LevantamentoTalhaoFormularioPainelEstado
 
     final interpretado = _interpretarOpcionalArea(valor);
     if (interpretado == null || interpretado <= 0) return 'Valor inválido';
+    return null;
+  }
+
+  String? _validarErroAmostral(String? valor) {
+    final erro = _interpretarArea(valor ?? '');
+    if (erro == null || erro <= 0 || erro >= 100) {
+      return 'Informe um percentual entre 0 e 100';
+    }
     return null;
   }
 }
@@ -1178,18 +1195,6 @@ String _situacaoRotulo(SituacaoLevantamento situacao) {
   }
 }
 
-String _concluirLevantamentoMensagem(LevantamentoResumo resumo) {
-  if (resumo.parcelaQuantidade == 0) {
-    return 'Esse levantamento ainda não possui parcelas cadastradas. Deseja encerrar mesmo assim?';
-  }
-
-  if (resumo.abrirParcelaQuantidade > 0) {
-    return 'Existem ${resumo.abrirParcelaQuantidade} ${_plural(resumo.abrirParcelaQuantidade, 'parcela')} ainda não ${_plural(resumo.abrirParcelaQuantidade, 'coletada')}. Se confirmar, o levantamento será encerrado e deixará de aparecer em andamento.';
-  }
-
-  return 'Encerrar o levantamento com ${resumo.coletadaParcelaQuantidade} ${_plural(resumo.coletadaParcelaQuantidade, 'parcela')} ${_plural(resumo.coletadaParcelaQuantidade, 'coletada')}?';
-}
-
 String _excluirLevantamentoMensagem(LevantamentoResumo resumo) {
   final talhaoTexto = resumo.talhoes.isEmpty
       ? 'nenhum talhão vinculado'
@@ -1209,6 +1214,10 @@ String _plural(int quantidade, String singular) {
 
 String _formatoArea(double valor) {
   return '${valor.toStringAsFixed(2).replaceAll('.', ',')} ha';
+}
+
+String _formatoPercentual(double valor) {
+  return '${valor.toStringAsFixed(1).replaceAll('.', ',')}%';
 }
 
 double? _interpretarArea(String valor) {

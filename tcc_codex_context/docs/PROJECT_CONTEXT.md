@@ -1,6 +1,6 @@
 # Contexto atual — DENDRO Mobile
 
-Revisão em 14/09/2026. Esta documentação retrata a versão final do aplicativo e seu banco de dados.
+Revisão em 29/09/2026. Esta documentação retrata a versão final do aplicativo e seu banco de dados.
 
 ## Tema e objetivo
 
@@ -16,7 +16,7 @@ Flutter/Dart, gerenciamento de estado com Riverpod e SQLite via Drift. Dados e c
 
 Cadastros permanentes: propriedade e talhão. Um levantamento pertence a uma propriedade e contém vínculos com talhões. Parcelas e árvores pertencem ao contexto de cada coleta, preservando levantamentos anteriores. A operação reúne coletas ativas da mesma propriedade; propriedades distintas podem ter levantamentos ativos simultâneos.
 
-Fluxo principal: cadastrar/selecionar propriedade e talhão, iniciar ou retomar levantamento, configurar modelo/coeficientes, preparar parcelas, registrar árvores com DAP e altura, capturar GPS opcional, encerrar parcelas, consultar resultados e exportar.
+Fluxo principal: cadastrar/selecionar propriedade e talhão, iniciar ou retomar levantamento, configurar modelo/coeficientes e erro amostral desejado, preparar parcelas, registrar árvores com DAP e altura, capturar GPS opcional, encerrar parcelas, avaliar a suficiência amostral, consultar resultados e exportar.
 
 As abas são Início, Levantamentos, Propriedades, Resultados e Ajustes. Ajustes contém espécies, fórmulas e modo escuro. Há histórico local de atividades.
 
@@ -28,7 +28,7 @@ O sistema aplica coeficientes configurados e valores de referência presentes no
 
 ## Método e recursos
 
-O método de referência é amostragem sistemática com parcelas de área fixa. O app permite registrar dimensões/áreas e extrapola volumes por área amostrada; não verifica a distribuição sistemática nem executa um planejamento estatístico completo da amostragem.
+O método de referência é amostragem sistemática com parcelas de área fixa. O app permite registrar dimensões/áreas, extrapola volumes por área amostrada e avalia a suficiência no encerramento, usando erro máximo inicial de 3%, confiança de 95% e a variabilidade observada nas parcelas finalizadas. Não verifica a distribuição sistemática em campo nem determina a amostra antes da existência de dados ou de um CV histórico.
 
 GPS é documental, opcional e sujeito à precisão do dispositivo. Não substitui levantamento topográfico.
 
@@ -47,4 +47,4 @@ A validação científica, a comparação manual de inventário completo, os tes
 
 ## Identificadores
 
-As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. São 14 tabelas e 105 colunas.
+As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. São 14 tabelas e 106 colunas.

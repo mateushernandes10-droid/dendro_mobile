@@ -274,6 +274,7 @@ class RepositorioParcelas {
   Future<TalhaoLevantamento> iniciarNovoLevantamentoParaTalhao(
     int talhaoId, {
     SelecaoModeloLevantamento? modeloMatematicoSelecao,
+    double erroAmostralMaximoPercentual = 3.0,
   }) async {
     final ativo = await _buscarTalhaoLevantamentoPorSituacao(
       talhaoId,
@@ -300,6 +301,10 @@ class RepositorioParcelas {
           talhaoLevantamento: planejamento,
           levantamentoId: reutilizavelAtivoLevantamento.id,
         );
+        await _aplicarErroAmostralMaximo(
+          talhaoLevantamentoId: movido.id,
+          erroAmostralMaximoPercentual: erroAmostralMaximoPercentual,
+        );
         if (modeloMatematicoSelecao != null) {
           await _aplicarSelecaoModeloMatematico(
             talhaoLevantamentoId: movido.id,
@@ -322,6 +327,10 @@ class RepositorioParcelas {
       }
 
       await _promoverLevantamento(planejamento.levantamentoId);
+      await _aplicarErroAmostralMaximo(
+        talhaoLevantamentoId: planejamento.id,
+        erroAmostralMaximoPercentual: erroAmostralMaximoPercentual,
+      );
       if (modeloMatematicoSelecao != null) {
         await _aplicarSelecaoModeloMatematico(
           talhaoLevantamentoId: planejamento.id,
@@ -350,6 +359,7 @@ class RepositorioParcelas {
       especie: context.especie,
       levantamentoId: levantamentoId,
       modeloMatematicoSelecao: modeloMatematicoSelecao,
+      erroAmostralMaximoPercentual: erroAmostralMaximoPercentual,
     );
 
     await _registrarInicioLevantamento(
@@ -690,6 +700,7 @@ class RepositorioParcelas {
     required Especie especie,
     required int levantamentoId,
     SelecaoModeloLevantamento? modeloMatematicoSelecao,
+    double erroAmostralMaximoPercentual = 3.0,
   }) async {
     late final int id;
     final agora = DateTime.now();
@@ -705,6 +716,7 @@ class RepositorioParcelas {
             talhaoId: talhao.id,
             especieId: especie.id,
             modeloMatematicoId: modeloMatematicoId,
+            erroAmostralMaximoPercentual: Value(erroAmostralMaximoPercentual),
             criadoEm: agora,
             atualizadoEm: agora,
           ),
@@ -719,6 +731,20 @@ class RepositorioParcelas {
     );
     await _atualizarLevantamento(levantamentoId, agora: agora);
     return _talhaoLevantamentoPorId(id);
+  }
+
+  Future<void> _aplicarErroAmostralMaximo({
+    required int talhaoLevantamentoId,
+    required double erroAmostralMaximoPercentual,
+  }) async {
+    await (_bancoDados.update(
+      _bancoDados.talhaoLevantamentos,
+    )..where((tabela) => tabela.id.equals(talhaoLevantamentoId))).write(
+      TalhaoLevantamentosCompanion(
+        erroAmostralMaximoPercentual: Value(erroAmostralMaximoPercentual),
+        atualizadoEm: Value(DateTime.now()),
+      ),
+    );
   }
 
   Future<void> _aplicarSelecaoModeloMatematico({

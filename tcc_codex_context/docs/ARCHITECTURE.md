@@ -1,6 +1,6 @@
 # Arquitetura implementada — DENDRO Mobile
 
-Revisão em 14/09/2026, baseada no código atual. Este documento descreve a versão final do aplicativo.
+Revisão em 29/09/2026, baseada no código atual. Este documento descreve a versão final do aplicativo.
 
 ## Organização efetiva
 
@@ -17,6 +17,7 @@ A organização é por funcionalidades. As telas consomem providers Riverpod e r
 | Código gerado do Drift | `lib/nucleo/banco/banco_dendro.g.dart` |
 | Persistência e orquestração | `lib/funcionalidades/*/dados/` |
 | Equações por árvore e conversões | `lib/nucleo/floresta/calculadora_volume_florestal.dart` |
+| Suficiência amostral | `lib/nucleo/floresta/calculadora_suficiencia_amostral.dart` |
 | Agregações do painel | `lib/funcionalidades/resultados/dados/repositorio_resultados.dart` |
 | Geração de arquivos e agregações dos relatórios | `lib/funcionalidades/exportacao_dados/dados/repositorio_exportacao_dados.dart` |
 | GPS | Chamadas ao Geolocator na tela de coleta; armazenamento em RepositorioArvores |
@@ -36,17 +37,19 @@ Não estão instaladas math_expressions, fl_chart, printing ou csv. CSV e KML s�
 
 O esquema é versão 1. As 14 tabelas da aplicação são declaradas em banco_dendro.dart e registradas em @DriftDatabase. O Drift cria a estrutura física do SQLite e gera as classes de dados correspondentes.
 
-Propriedade e talhão são cadastros permanentes. Levantamento representa o levantamento; TalhaoLevantamentos associa um talhão a um levantamento, com espécie e fórmula selecionadas. Parcelas pertencem a essa associação, e árvores pertencem às parcelas.
+Propriedade e talhão são cadastros permanentes. Levantamento representa o levantamento; TalhaoLevantamentos associa um talhão a um levantamento, com espécie, fórmula selecionada e erro amostral máximo desejado. Parcelas pertencem a essa associação, e árvores pertencem às parcelas.
 
 Os coeficientes existem em três níveis: definição global da fórmula, configuração por espécie/fórmula e cópia por talhão do levantamento. O vínculo conserva os valores da coleta, mas não há cópia histórica integral da expressão matemática: a fórmula continua referenciada por ID. Portanto, não afirmar imutabilidade de todos os resultados após edição do catálogo.
 
-Os resultados são calculados em memória; não existe tabela de resultados. registros_atividade armazena eventos, com tipo_entidade/entidade_id opcionais e sem chave estrangeira para as entidades.
+Os resultados e a suficiência amostral são calculados em memória; não existe tabela de resultados. Apenas parcelas finalizadas participam desses cálculos. registros_atividade armazena eventos, com tipo_entidade/entidade_id opcionais e sem chave estrangeira para as entidades.
 
 O modelo completo, as chaves e os relacionamentos estão em ENGINEERING_MODELS.md.
 
 ## Cálculos e limites
 
 CalculadoraVolumeFlorestal contém rotinas estáticas de Spurr, Schumacher-Hall e Fator de Forma. Há cadastro de expressões e variáveis, mas não há interpretador genérico de fórmulas. A seleção interna é por codigo e padrões da expressão, conforme BUSINESS_RULES.md.
+
+CalculadoraSuficienciaAmostral calcula média, dispersão, erro relativo e quantidade estimada de parcelas com 95% de confiança. RepositorioLevantamentos prepara os volumes por hectare das parcelas finalizadas e fornece o tamanho da população quando a área fixa é conhecida.
 
 RepositorioResultados consulta o banco, recupera coeficientes e agrega os volumes. RepositorioExportacaoDados usa a mesma calculadora por árvore, porém possui agregações e indicadores próprios; não existe um serviço único que centraliza todos os resultados.
 
@@ -66,4 +69,4 @@ Build Android e uso de emulador não comprovam validação científica, usabilid
 
 ## Identificadores
 
-As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional para identificar itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional, sem chave estrangeira, porque registra tipos diferentes de entidade. São 14 tabelas e 105 colunas.
+As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional para identificar itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional, sem chave estrangeira, porque registra tipos diferentes de entidade. São 14 tabelas e 106 colunas.

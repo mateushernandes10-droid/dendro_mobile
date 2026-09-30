@@ -54,7 +54,11 @@ O GPS serve como apoio documental. Cada posição pode ser associada a uma refer
 
 ## Resultados
 
-Os resultados são calculados a partir das árvores registradas e não possuem tabela própria. O aplicativo apresenta contagens, médias, distribuição diamétrica, volume amostrado, volume por hectare e extrapolação para a área do talhão quando os dados necessários estão disponíveis.
+Os resultados são calculados a partir das árvores de parcelas finalizadas e não possuem tabela própria. Parcelas pendentes ou em andamento permanecem salvas e disponíveis na exportação bruta, mas não participam dos indicadores. O aplicativo apresenta contagens, médias, distribuição diamétrica, volume amostrado, volume por hectare e extrapolação para a área do talhão quando os dados necessários estão disponíveis.
+
+## Suficiência amostral no encerramento
+
+O erro amostral máximo é armazenado por talhão do levantamento, com valor inicial de 3% e edição permitida durante a coleta. A validação usa 95% de confiança, t de Student, coeficiente de variação dos volumes em m³/ha e correção para população finita quando as áreas permitem estimá-la. Somente parcelas finalizadas, com área positiva, compõem a amostra. O resultado orienta a decisão, mas não bloqueia o encerramento: depois de visualizar os dados, o usuário pode confirmar ou cancelar.
 
 ## Exportações
 

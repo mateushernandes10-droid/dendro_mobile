@@ -52,7 +52,7 @@ void main() {
             total++;
           }
         }
-        expect(total, 105);
+        expect(total, 106);
         final documento = File(
           'tcc_codex_context/docs/ENGINEERING_MODELS.md',
         ).readAsStringSync().replaceAll('\r', '');

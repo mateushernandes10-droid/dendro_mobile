@@ -328,6 +328,7 @@ erDiagram
         integer especie_id FK
         integer modelo_matematico_id FK
         real area_padrao_parcela_ha "nullable"
+        real perc_erro_amostral
         integer criado_em
         integer atualizado_em
     }
@@ -419,7 +420,7 @@ flowchart TD
     R --> S(["Fim"])
 ```
 
-Este é um percurso de uso, não uma regra que obrigue finalizar tudo antes de consultar/exportar: o aplicativo permite resultados e exportação com coleta em andamento. As etapas acadêmicas da pesquisa devem ser representadas em outro fluxograma, baseado na metodologia efetivamente executada do artigo.
+Este é um percurso de uso, não uma regra que obrigue finalizar todo o levantamento antes de consultar/exportar: o aplicativo permite abrir resultados e exportações durante a coleta, porém os indicadores calculados usam somente parcelas finalizadas. As exportações brutas preservam também parcelas abertas. As etapas acadêmicas da pesquisa devem ser representadas em outro fluxograma, baseado na metodologia efetivamente executada do artigo.
 
 ## 7. Sequência de consulta de resultados
 
@@ -565,4 +566,4 @@ erDiagram
 
 ## Identificadores
 
-As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional para identificar itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional, sem chave estrangeira, porque representa diferentes tipos de entidade. São 14 tabelas e 105 colunas.
+As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id), ambas inteiras. Espécies e modelos têm codigo textual único e opcional para identificar itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional, sem chave estrangeira, porque representa diferentes tipos de entidade. São 14 tabelas e 106 colunas. O campo `talhao_levantamentos.perc_erro_amostral` guarda o limite percentual configurado para a avaliação de suficiência de cada talhão na coleta.

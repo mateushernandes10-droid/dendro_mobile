@@ -193,7 +193,7 @@ class DadosExportacao {
   double? get mediaDapCm {
     final todosArvores = [
       for (final talhao in talhoes)
-        for (final parcela in talhao.parcelas) ...parcela.arvores,
+        for (final parcela in talhao.parcelasColetadas) ...parcela.arvores,
     ];
     if (todosArvores.isEmpty) return null;
     return todosArvores.fold<double>(
@@ -206,7 +206,7 @@ class DadosExportacao {
   double? get mediaAlturaM {
     final todosArvores = [
       for (final talhao in talhoes)
-        for (final parcela in talhao.parcelas) ...parcela.arvores,
+        for (final parcela in talhao.parcelasColetadas) ...parcela.arvores,
     ];
     if (todosArvores.isEmpty) return null;
     return todosArvores.fold<double>(
@@ -230,16 +230,18 @@ class DadosTalhaoExportacao {
   final List<CoeficienteExportacao> coeficientes;
   final List<DadosParcelaExportacao> parcelas;
 
-  int get arvoreQuantidade =>
-      parcelas.fold(0, (total, parcela) => total + parcela.arvores.length);
+  Iterable<DadosParcelaExportacao> get parcelasColetadas => parcelas.where(
+    (item) => item.parcela.situacao == SituacaoParcela.coletada,
+  );
 
-  double get medidaAreaHa => parcelas.fold(
+  int get arvoreQuantidade => parcelasColetadas.fold(
     0,
-    (total, parcela) =>
-        total +
-        (parcela.parcela.situacao == SituacaoParcela.pendente
-            ? 0
-            : parcela.parcela.areaHa ?? 0),
+    (total, parcela) => total + parcela.arvores.length,
+  );
+
+  double get medidaAreaHa => parcelasColetadas.fold(
+    0,
+    (total, parcela) => total + (parcela.parcela.areaHa ?? 0),
   );
 
   Map<String, double?> get coeficienteValoresPorSimbolo => {
@@ -251,7 +253,7 @@ class DadosTalhaoExportacao {
       CalculadoraVolumeFlorestal.conversaoParaEspecie(opcao.especie.nome);
 
   double get amostraVolumeM3 {
-    return parcelas.fold<double>(
+    return parcelasColetadas.fold<double>(
       0,
       (total, parcela) =>
           total +
@@ -278,7 +280,7 @@ class DadosTalhaoExportacao {
       medidaAreaHa == 0 ? null : arvoreQuantidade / medidaAreaHa;
 
   double get basalAreaAmostraM2 {
-    return parcelas.fold<double>(
+    return parcelasColetadas.fold<double>(
       0,
       (total, parcela) =>
           total +
@@ -308,7 +310,9 @@ class DadosTalhaoExportacao {
   }
 
   double? get mediaDapCm {
-    final todosArvores = [for (final parcela in parcelas) ...parcela.arvores];
+    final todosArvores = [
+      for (final parcela in parcelasColetadas) ...parcela.arvores,
+    ];
     if (todosArvores.isEmpty) return null;
     return todosArvores.fold<double>(
           0,
@@ -318,7 +322,9 @@ class DadosTalhaoExportacao {
   }
 
   double? get mediaAlturaM {
-    final todosArvores = [for (final parcela in parcelas) ...parcela.arvores];
+    final todosArvores = [
+      for (final parcela in parcelasColetadas) ...parcela.arvores,
+    ];
     if (todosArvores.isEmpty) return null;
     return todosArvores.fold<double>(
           0,
@@ -991,9 +997,9 @@ Future<List<int>> _pdfBytes(DadosExportacao conjuntoDados) async {
           _pdfParagrafo(
             'Espécie: ${talhao.opcao.especie.nome}. Modelo: ${talhao.modeloMatematico?.nome ?? 'sem modelo'}. Coeficientes: ${_coeficienteLista(talhao)}.',
           ),
-          if (talhao.parcelas.isEmpty)
+          if (talhao.parcelasColetadas.isEmpty)
             pw.Text(
-              'Nenhuma parcela cadastrada para este talhão.',
+              'Nenhuma parcela finalizada para este talhão.',
               style: const pw.TextStyle(fontSize: 9),
             )
           else
@@ -1019,7 +1025,7 @@ Future<List<int>> _pdfBytes(DadosExportacao conjuntoDados) async {
                 'GPS',
               ],
               data: [
-                for (final parcela in talhao.parcelas)
+                for (final parcela in talhao.parcelasColetadas)
                   [
                     parcela.parcela.identificacao,
                     _parcelaSituacaoRotulo(parcela.parcela.situacao),
@@ -1228,7 +1234,7 @@ List<int> _csvBytes(DadosExportacao conjuntoDados) {
     );
 
   for (final talhao in conjuntoDados.talhoes) {
-    for (final parcela in talhao.parcelas) {
+    for (final parcela in talhao.parcelasColetadas) {
       if (parcela.arvores.isEmpty) {
         buffer.writeln(
           _csvLinha([
@@ -1446,7 +1452,7 @@ List<int> _xlsxBytes(DadosExportacao conjuntoDados) {
   );
 
   for (final talhao in conjuntoDados.talhoes) {
-    for (final parcela in talhao.parcelas) {
+    for (final parcela in talhao.parcelasColetadas) {
       for (final arvore in parcela.arvores) {
         arvores.appendRow(
           _excelLinha([
@@ -1996,8 +2002,10 @@ class _EspecieExportacaoResumo {
 
   int get talhaoQuantidade => talhoes.length;
 
-  int get parcelaQuantidade =>
-      talhoes.fold(0, (total, talhao) => total + talhao.parcelas.length);
+  int get parcelaQuantidade => talhoes.fold(
+    0,
+    (total, talhao) => total + talhao.parcelasColetadas.length,
+  );
 
   int get arvoreQuantidade =>
       talhoes.fold(0, (total, talhao) => total + talhao.arvoreQuantidade);
@@ -2059,10 +2067,8 @@ String _espacamentoFrase(DadosExportacao conjuntoDados) {
 double? _mediaParcelaAreaHa(DadosExportacao conjuntoDados) {
   final areas = [
     for (final talhao in conjuntoDados.talhoes)
-      for (final parcela in talhao.parcelas)
-        if (parcela.parcela.situacao != SituacaoParcela.pendente &&
-            parcela.parcela.areaHa != null)
-          parcela.parcela.areaHa!,
+      for (final parcela in talhao.parcelasColetadas)
+        if (parcela.parcela.areaHa != null) parcela.parcela.areaHa!,
   ];
   if (areas.isEmpty) return null;
   return areas.fold<double>(0, (total, area) => total + area) / areas.length;
@@ -2180,10 +2186,8 @@ List<String> _observacoesTecnicas(DadosExportacao conjuntoDados) {
     );
   }
   if (conjuntoDados.talhoes.any(
-    (talhao) => talhao.parcelas.any(
-      (parcela) =>
-          parcela.parcela.situacao != SituacaoParcela.pendente &&
-          parcela.parcela.areaHa == null,
+    (talhao) => talhao.parcelasColetadas.any(
+      (parcela) => parcela.parcela.areaHa == null,
     ),
   )) {
     observacoes.add(

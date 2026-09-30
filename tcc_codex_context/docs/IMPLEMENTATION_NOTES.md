@@ -1,6 +1,6 @@
 # Estado da implementação e evidências
 
-Revisão em 14/09/2026. Este documento registra o estado final observado no código.
+Revisão em 29/09/2026. Este documento registra o estado final observado no código.
 
 ## Implementação disponível
 
@@ -10,6 +10,7 @@ Revisão em 14/09/2026. Este documento registra o estado final observado no cód
 - Catálogos de espécies, modelos matemáticos e coeficientes por espécie e por talhão do levantamento.
 - Cálculo por Spurr, Schumacher-Hall e Fator de Forma.
 - Resultados com volumes e extrapolação por área.
+- Suficiência amostral por talhão, com erro máximo editável e padrão de 3%.
 - Exportação PDF, CSV, XLSX, KML, CSV bruto e XLSX bruto.
 - Registro local de atividades e modo escuro persistido.
 
@@ -21,9 +22,11 @@ A exportação bruta CSV mantém uma linha por árvore e inclui campos auxiliare
 
 A tela Novo levantamento reutiliza o formulário de propriedade. Ao salvar, a nova propriedade passa a estar disponível para seleção.
 
+Resultados e suficiência usam somente parcelas explicitamente finalizadas. Se houver parcelas abertas ao encerrar o levantamento, o primeiro aviso explica sua exclusão dos cálculos; depois, um segundo diálogo sempre apresenta parcelas registradas e utilizadas, erro atual, erro desejado, quantidade estimada, parcelas adicionais e situação. O encerramento continua permitido mediante confirmação.
+
 ## Banco de dados
 
-O SQLite possui 14 tabelas e 105 colunas. As tabelas, colunas, enums e classes do domínio usam português. Treze tabelas usam `INTEGER PRIMARY KEY AUTOINCREMENT`; `especies_modelos` usa a chave composta `(especie_id, modelo_matematico_id)`.
+O SQLite possui 14 tabelas e 106 colunas. As tabelas, colunas, enums e classes do domínio usam português. Treze tabelas usam `INTEGER PRIMARY KEY AUTOINCREMENT`; `especies_modelos` usa a chave composta `(especie_id, modelo_matematico_id)`.
 
 O catálogo inicial é inserido por `catalogos_iniciais.dart` na primeira criação do banco. Ele inclui Pinus, Eucalyptus e os três modelos matemáticos disponíveis.
 
@@ -44,6 +47,7 @@ O catálogo inicial é inserido por `catalogos_iniciais.dart` na primeira criaç
 | Tabelas e abertura do banco | `lib/nucleo/banco/banco_dendro.dart` |
 | Catálogo inicial | `lib/nucleo/banco/catalogos_iniciais.dart` |
 | Fórmulas e conversões | `lib/nucleo/floresta/calculadora_volume_florestal.dart` |
+| Suficiência amostral | `lib/nucleo/floresta/calculadora_suficiencia_amostral.dart` |
 | Painel e filtros | `lib/funcionalidades/resultados/dados/repositorio_resultados.dart` |
 | Exportações | `lib/funcionalidades/exportacao_dados/dados/repositorio_exportacao_dados.dart` |
 | Coleta e GPS | `lib/funcionalidades/coleta_arvores/` |
@@ -52,12 +56,12 @@ O catálogo inicial é inserido por `catalogos_iniciais.dart` na primeira criaç
 
 ## Verificação
 
-Os testes automatizados cobrem banco, cálculos, exportações brutas, tema e fluxos de interface. `diagrama_banco_test.dart` compara as 14 tabelas e suas 105 colunas com o diagrama completo em Mermaid.
+Os testes automatizados cobrem banco, cálculos, suficiência amostral, exclusão de parcelas abertas dos resultados, exportações brutas, tema e fluxos de interface. `diagrama_banco_test.dart` compara as 14 tabelas e suas 106 colunas com o diagrama completo em Mermaid.
 
-Na verificação de 14/09/2026, `flutter analyze` terminou sem apontamentos, os 36 testes passaram e o APK de depuração foi gerado em `build/app/outputs/flutter-apk/app-debug.apk`.
+Na verificação de 29/09/2026, `flutter analyze` terminou sem apontamentos e os 42 testes passaram.
 
 Build Android e testes automatizados verificam o software, mas não substituem validação científica, testes de campo ou avaliação formal com usuários.
 
 ## Documentos para os diagramas
 
-ENGINEERING_MODELS.md reúne os diagramas atualizados. O diretório `diagrams/` guarda as oito fontes Mermaid editáveis. ARCHITECTURE.md descreve os componentes reais, REQUIREMENTS.md classifica os requisitos e BUSINESS_RULES.md registra comportamentos e limites do cálculo.
+ENGINEERING_MODELS.md reúne os diagramas atualizados. O diretório `diagrams/` guarda as nove fontes Mermaid editáveis. ARCHITECTURE.md descreve os componentes reais, REQUIREMENTS.md classifica os requisitos e BUSINESS_RULES.md registra comportamentos e limites do cálculo.

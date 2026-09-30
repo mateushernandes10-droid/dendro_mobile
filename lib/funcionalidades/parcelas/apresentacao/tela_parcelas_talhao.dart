@@ -7,6 +7,7 @@ import '../../../nucleo/banco/banco_dendro.dart';
 import '../../../compartilhado/componentes/componentes_dendro.dart';
 import '../../levantamentos/dados/repositorio_levantamentos.dart';
 import '../../levantamentos/apresentacao/tela_detalhe_levantamento.dart';
+import '../../levantamentos/apresentacao/componentes/confirmacao_encerramento_levantamento.dart';
 import '../../estrutura/apresentacao/navegacao_estrutura_dendro.dart';
 import '../../coleta_arvores/apresentacao/tela_coleta_arvores.dart';
 import '../dados/repositorio_parcelas.dart';
@@ -88,41 +89,16 @@ class TelaParcelasTalhao extends ConsumerWidget {
       return;
     }
 
-    final possuiAbrirParcelas =
-        estado.abrirParcelas > 0 || estado.totalParcelas == 0;
-    final confirmado = await showDialog<bool>(
+    final repositorio = ref.read(provedorRepositorioLevantamentos);
+    final resumo = await repositorio.observarPorId(levantamento.id).first;
+    if (resumo == null || !context.mounted) return;
+    final confirmado = await confirmarEncerramentoLevantamento(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: Icon(
-          possuiAbrirParcelas
-              ? Icons.warning_amber_rounded
-              : Icons.check_circle_outline,
-          color: possuiAbrirParcelas
-              ? Colors.red.shade700
-              : CoresDendro.principal,
-        ),
-        title: const Text('Encerrar levantamento'),
-        content: Text(_concluirLevantamentoMensagem(estado)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: possuiAbrirParcelas
-                  ? Colors.red.shade700
-                  : CoresDendro.principal,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Encerrar'),
-          ),
-        ],
-      ),
+      repositorio: repositorio,
+      resumo: resumo,
     );
 
-    if (confirmado != true || !context.mounted) return;
+    if (!confirmado || !context.mounted) return;
 
     try {
       await ref
@@ -1330,23 +1306,6 @@ String _situacaoRotulo(
     case SituacaoParcela.pendente:
       return 'Pendente';
   }
-}
-
-String _concluirLevantamentoMensagem(EstadoParcelasTalhao estado) {
-  if (estado.totalParcelas == 0) {
-    return 'Esse levantamento ainda não possui parcelas cadastradas. Deseja encerrar mesmo assim?';
-  }
-
-  if (estado.abrirParcelas > 0) {
-    return 'Existem ${estado.abrirParcelas} ${_plural(estado.abrirParcelas, 'parcela')} ainda não ${_plural(estado.abrirParcelas, 'coletada')}. Se confirmar, o levantamento será encerrado e deixará de aparecer em andamento.';
-  }
-
-  return 'Encerrar o levantamento com ${estado.coletadaParcelas} ${_plural(estado.coletadaParcelas, 'parcela')} ${_plural(estado.coletadaParcelas, 'coletada')}?';
-}
-
-String _plural(int quantidade, String singular) {
-  if (quantidade == 1) return singular;
-  return '${singular}s';
 }
 
 String _formatarCoordenada(Arvore ponto) {

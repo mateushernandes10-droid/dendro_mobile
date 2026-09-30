@@ -171,6 +171,8 @@ class TalhaoLevantamentos extends Table {
     onDelete: KeyAction.restrict,
   )();
   RealColumn get areaPadraoParcelaHa => real().nullable()();
+  RealColumn get erroAmostralMaximoPercentual =>
+      real().named('perc_erro_amostral').withDefault(const Constant(3.0))();
   DateTimeColumn get criadoEm => dateTime()();
   DateTimeColumn get atualizadoEm => dateTime()();
 

@@ -222,6 +222,7 @@ void main() {
             ),
           );
         }
+        await repositorioArvores.marcarParcelaColetada(parcelaId);
 
         final repositorio = RepositorioExportacaoDados(bancoDados);
         final solicitacao = SolicitacaoExportacaoDados(

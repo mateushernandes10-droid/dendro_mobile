@@ -1,6 +1,6 @@
 # Regras de negócio e limites observados
 
-Revisão em 14/09/2026. Descreve o comportamento implementado, inclusive limitações; não certifica a validade científica das equações.
+Revisão em 29/09/2026. Descreve o comportamento implementado, inclusive limitações; não certifica a validade científica das equações.
 
 ## BR-001 — Hierarquia
 Propriedade possui talhões e levantamentos. TalhaoLevantamentos associa um talhão a um levantamento, com espécie/modelo. Parcela pertence a essa associação; árvore pertence à parcela. Há histórico de diferentes levantamentos.
@@ -39,6 +39,12 @@ Esse comportamento deve ser documentado como limite da implementação, sem afir
 ## BR-009 — Amostragem
 O método de referência é amostragem sistemática com parcelas de área fixa. O app registra parcelas e permite dimensões/áreas; não posiciona parcelas automaticamente nem verifica o protocolo de distribuição. Largura × comprimento / 10000 fornece a área padrão em ha quando configurada.
 
+Cada talhão do levantamento armazena o erro amostral máximo desejado, inicialmente 3% e editável durante a coleta. Ao finalizar, o aplicativo calcula a suficiência com 95% de confiança a partir do volume em m³/ha de cada parcela finalizada: média, desvio padrão, coeficiente de variação, erro amostral relativo e número estimado de parcelas. A intensidade é calculada iterativamente com t de Student e usa correção para população finita quando a área do talhão e a área da parcela permitem estimar o número de unidades possíveis.
+
+Equações implementadas: `CV% = (s / média) × 100`; `Er% = t × CV% / √n`, com fator `√((N-n)/(N-1))` quando a população é finita; `n0 = t² × CV%² / LE%²`; e `n = N × n0 / (N + n0 - 1)` para a correção finita. O valor de t e a quantidade estimada são recalculados até estabilização; em uma oscilação de arredondamento, conserva-se o maior valor.
+
+São necessárias pelo menos duas parcelas finalizadas, com área válida e média positiva, para calcular a variabilidade. O resultado é uma orientação estatística; o usuário pode confirmar o encerramento mesmo quando a amostragem é insuficiente.
+
 ## BR-010 — Estimativa econômica
 Não implementada. Entrada de preço e estimativa de valor bruto eram requisitos originais. Não há cálculo de receita ou lucro na versão atual.
 
@@ -58,7 +64,7 @@ SQLite via Drift. Há 14 tabelas de aplicação declaradas no banco. Resultados 
 Datas, situacao e registros_atividade apoiam a organização. Coeficientes por talhão do levantamento são armazenados separadamente. A expressão da fórmula permanece vinculada ao catálogo por ID; não existe versionamento histórico completo nem trilha de todas as alterações.
 
 ## BR-016 — Agregação e extrapolação
-No painel e nos conjuntos de exportação, volume amostrado é a soma dos volumes das árvores incluídas. A área medida soma áreaHa das parcelas não pendentes, tratando área ausente como zero.
+No painel e nos conjuntos de exportação de resultados, entram somente parcelas com situacao coletada. Volume amostrado é a soma dos volumes das árvores dessas parcelas, e área medida soma suas áreas válidas. Parcelas pendentes ou em andamento permanecem armazenadas e aparecem nas exportações brutas, mas não participam de médias, volumes, extrapolações nem da suficiência amostral.
 Por talhão do levantamento: volume/ha = volume amostrado / área medida; volume extrapolado = volume/ha × área do talhão; árvores/ha = número de árvores / área medida. Sem área medida positiva, os quocientes não são disponibilizados. Se apenas algumas parcelas têm área ausente, elas não contribuem para o denominador, mas suas árvores podem contribuir para o numerador: isso limita a interpretação.
 Médias de DAP e altura usam medições armazenadas. A substituição de altura da calculadora não altera essas medições.
 O painel informa a quantidade de árvores com tronco tortuoso e o percentual em relação ao total de árvores incluídas nos filtros, tanto no consolidado quanto por talhão. Essa classificação é informativa e não altera o cálculo de volume.
@@ -93,7 +99,7 @@ Exporta a representação geográfica a partir das coordenadas registradas nas �
 Painel permite propriedade, espécie e talhões; exige propriedade ou espécie como filtro base. Alterar filtros modifica a consulta, não os dados. O escopo histórico do painel difere da seleção mais recente por talhão na exportação por propriedade.
 
 ## BR-025 — Estados de parcela
-pendente, emAndamento e coletada. Registrar árvores inicia/atualiza a coleta; finalizar parcela é ação explícita. Sair da tela preserva árvores já salvas. O situacao do levantamento é separado do situacao das parcelas.
+pendente, emAndamento e coletada. Registrar árvores inicia/atualiza a coleta; finalizar parcela é ação explícita. Sair da tela preserva árvores já salvas. O situacao do levantamento é separado do situacao das parcelas. Ao encerrar um levantamento com parcelas abertas, um primeiro aviso informa que elas serão preservadas, porém desconsideradas nos cálculos; depois da confirmação, a suficiência é sempre exibida antes da decisão final.
 
 ## BR-026 — Sequência de árvores
 O próximo número é o maior número existente na parcela mais um; com parcela vazia, começa em 1. Exclusão não renumera as demais árvores, mas excluir o maior número pode permitir reutilizá-lo depois. Salvar grava e recolhe o formulário; Próxima grava e prepara novo registro.
@@ -104,8 +110,8 @@ A coordenada é opcional por árvore. O usuário pode associá-la explicitamente
 ## Evidência
 A apresentação do PDF possui formatação própria para Spurr, Schumacher-Hall e Fator de Forma. A narrativa metodológica descreve amostragem sistemática sem verificar sua execução; esse texto não constitui evidência de validação científica.
 
-Fontes: lib/nucleo/banco/banco_dendro.dart; lib/nucleo/floresta/calculadora_volume_florestal.dart; repositórios em lib/funcionalidades/results, data_export, parcelas, levantamentos, tree_collection e settings; formulários correspondentes.
+Fontes: lib/nucleo/banco/banco_dendro.dart; lib/nucleo/floresta/calculadora_volume_florestal.dart; lib/nucleo/floresta/calculadora_suficiencia_amostral.dart; repositórios de resultados, exportação, parcelas e levantamentos; formulários correspondentes.
 
 ## Identificadores
 
-As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional e sem chave estrangeira porque pode apontar para diferentes tipos de cadastro. São 14 tabelas e 105 colunas.
+As 13 tabelas que possuem coluna id usam INTEGER PRIMARY KEY AUTOINCREMENT. especies_modelos mantém a chave primária composta (especie_id, modelo_matematico_id). Espécies e modelos possuem codigo textual único e opcional para os itens conhecidos do catálogo. registros_atividade usa entidade_id inteiro opcional e sem chave estrangeira porque pode apontar para diferentes tipos de cadastro. São 14 tabelas e 106 colunas.

@@ -1154,18 +1154,22 @@ ORDER BY simbolo
         )
         .first;
 
-    expect(painel.arvoreQuantidade, 3);
+    expect(painel.arvoreQuantidade, 2);
     expect(painel.troncoTortuosoQuantidade, 1);
-    expect(painel.troncoTortuosoPercentual, closeTo(100 / 3, 0.0001));
-    expect(painel.parcelaQuantidade, 2);
+    expect(painel.troncoTortuosoPercentual, closeTo(50, 0.0001));
+    expect(painel.parcelaQuantidade, 1);
     expect(painel.coletadaParcelaQuantidade, 1);
-    expect(painel.medidaParcelaQuantidade, 2);
-    expect(painel.medidaAreaHa, closeTo(0.09, 0.0001));
-    expect(painel.mediaDapCm, closeTo(25, 0.0001));
-    expect(painel.mediaAlturaM, closeTo(14, 0.0001));
+    expect(painel.medidaParcelaQuantidade, 1);
+    expect(painel.medidaAreaHa, closeTo(0.04, 0.0001));
+    expect(painel.mediaDapCm, closeTo(22.5, 0.0001));
+    expect(painel.mediaAlturaM, closeTo(12, 0.0001));
     expect(
       painel.diametroClasses.map((item) => item.rotulo),
-      containsAll(['20-24', '25-29', '30-34']),
+      containsAll(['20-24', '25-29']),
+    );
+    expect(
+      painel.diametroClasses.map((item) => item.rotulo),
+      isNot(contains('30-34')),
     );
 
     final pinusSomente = await repositorioResultados
@@ -1258,5 +1262,80 @@ ORDER BY simbolo
       registros.map((atividade) => atividade.titulo),
       isNot(contains('Exportacao realizada')),
     );
+  });
+
+  test('suficiencia e resultados usam somente parcelas finalizadas', () async {
+    final propriedades = RepositorioPropriedades(bancoDados);
+    final talhoes = RepositorioTalhoes(bancoDados);
+    final parcelas = RepositorioParcelas(bancoDados);
+    final arvores = RepositorioArvores(bancoDados);
+    final levantamentos = RepositorioLevantamentos(bancoDados);
+    final resultados = RepositorioResultados(bancoDados);
+
+    final propriedadeId = await propriedades.criar(
+      nome: 'Fazenda Suficiência',
+      municipio: 'Santa Maria',
+      areaTotalHa: 20,
+    );
+    final talhaoId = await talhoes.criar(
+      propriedadeId: propriedadeId,
+      identificacao: 'T-01',
+      especieId: pinusId,
+      areaHa: 10,
+      larguraParcelaM: 20,
+      comprimentoParcelaM: 20,
+    );
+    final vinculo = await parcelas.iniciarNovoLevantamentoParaTalhao(
+      talhaoId,
+      erroAmostralMaximoPercentual: 4.5,
+    );
+
+    for (var indice = 0; indice < 3; indice++) {
+      final parcelaId = await parcelas.criarParcelaParaTalhaoLevantamento(
+        talhaoLevantamentoId: vinculo.id,
+        areaHa: 0.04,
+      );
+      await arvores.criarArvore(
+        parcelaId: parcelaId,
+        rascunho: RascunhoArvore(
+          dapCm: indice == 2 ? 80 : 20,
+          alturaM: indice == 2 ? 30 : 12,
+          possuiTroncoTortuoso: false,
+        ),
+      );
+      if (indice < 2) {
+        await arvores.marcarParcelaColetada(parcelaId);
+      }
+    }
+
+    final resumo = await levantamentos
+        .observarPorId(vinculo.levantamentoId)
+        .first;
+    final avaliacao = (await levantamentos.avaliarSuficienciaAmostral(
+      resumo!,
+    )).single;
+
+    expect(
+      resumo.talhoes.single.talhaoLevantamento.erroAmostralMaximoPercentual,
+      4.5,
+    );
+    expect(avaliacao.parcelasRegistradas, 3);
+    expect(avaliacao.parcelasAbertas, 1);
+    expect(avaliacao.resultado.parcelasUtilizadas, 2);
+    expect(avaliacao.resultado.erroMaximoPercentual, 4.5);
+    expect(avaliacao.resultado.suficiente, isTrue);
+
+    final painel = await resultados
+        .observarPainel(
+          FiltrosResultados(
+            propriedadeId: propriedadeId,
+            talhaoIds: const {},
+            especieId: null,
+          ),
+        )
+        .first;
+    expect(painel.parcelaQuantidade, 2);
+    expect(painel.arvoreQuantidade, 2);
+    expect(painel.mediaDapCm, 20);
   });
 }

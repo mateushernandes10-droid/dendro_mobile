@@ -14,4 +14,4 @@ Revisadas contra a versão final do banco em 16/09/2026. Arquivos .mmd são text
 | 08_classes_dados.mmd | Registros Drift e classes de cálculo/resultados |
 | 09_modelo_conceitual_banco.mmd | Conceitos do domínio e relacionamentos, sem nomes físicos do SQLite |
 
-Verificação documental: 14 tabelas e 105 colunas comparadas automaticamente com as declarações do banco, incluindo tipos e nulabilidade. Os diagramas lógico e físico representam a estrutura persistida; resultados calculados não são tabelas. Não foram renderizadas imagens nesta revisão; não afirmar revisão visual de PNG/SVG.
+Verificação documental: 14 tabelas e 106 colunas comparadas automaticamente com as declarações do banco, incluindo tipos e nulabilidade. Os diagramas lógico e físico representam a estrutura persistida; resultados e suficiência amostral calculados não são tabelas. Não foram renderizadas imagens nesta revisão; não afirmar revisão visual de PNG/SVG.

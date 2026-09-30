@@ -4445,6 +4445,18 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
         type: DriftSqlType.double,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _erroAmostralMaximoPercentualMeta =
+      const VerificationMeta('erroAmostralMaximoPercentual');
+  @override
+  late final GeneratedColumn<double> erroAmostralMaximoPercentual =
+      GeneratedColumn<double>(
+        'perc_erro_amostral',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(3.0),
+      );
   static const VerificationMeta _criadoEmMeta = const VerificationMeta(
     'criadoEm',
   );
@@ -4475,6 +4487,7 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
     especieId,
     modeloMatematicoId,
     areaPadraoParcelaHa,
+    erroAmostralMaximoPercentual,
     criadoEm,
     atualizadoEm,
   ];
@@ -4540,6 +4553,15 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
         ),
       );
     }
+    if (data.containsKey('perc_erro_amostral')) {
+      context.handle(
+        _erroAmostralMaximoPercentualMeta,
+        erroAmostralMaximoPercentual.isAcceptableOrUnknown(
+          data['perc_erro_amostral']!,
+          _erroAmostralMaximoPercentualMeta,
+        ),
+      );
+    }
     if (data.containsKey('criado_em')) {
       context.handle(
         _criadoEmMeta,
@@ -4592,6 +4614,10 @@ class $TalhaoLevantamentosTable extends TalhaoLevantamentos
         DriftSqlType.double,
         data['${effectivePrefix}area_padrao_parcela_ha'],
       ),
+      erroAmostralMaximoPercentual: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}perc_erro_amostral'],
+      )!,
       criadoEm: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}criado_em'],
@@ -4617,6 +4643,7 @@ class TalhaoLevantamento extends DataClass
   final int especieId;
   final int modeloMatematicoId;
   final double? areaPadraoParcelaHa;
+  final double erroAmostralMaximoPercentual;
   final DateTime criadoEm;
   final DateTime atualizadoEm;
   const TalhaoLevantamento({
@@ -4626,6 +4653,7 @@ class TalhaoLevantamento extends DataClass
     required this.especieId,
     required this.modeloMatematicoId,
     this.areaPadraoParcelaHa,
+    required this.erroAmostralMaximoPercentual,
     required this.criadoEm,
     required this.atualizadoEm,
   });
@@ -4640,6 +4668,7 @@ class TalhaoLevantamento extends DataClass
     if (!nullToAbsent || areaPadraoParcelaHa != null) {
       map['area_padrao_parcela_ha'] = Variable<double>(areaPadraoParcelaHa);
     }
+    map['perc_erro_amostral'] = Variable<double>(erroAmostralMaximoPercentual);
     map['criado_em'] = Variable<DateTime>(criadoEm);
     map['atualizado_em'] = Variable<DateTime>(atualizadoEm);
     return map;
@@ -4655,6 +4684,7 @@ class TalhaoLevantamento extends DataClass
       areaPadraoParcelaHa: areaPadraoParcelaHa == null && nullToAbsent
           ? const Value.absent()
           : Value(areaPadraoParcelaHa),
+      erroAmostralMaximoPercentual: Value(erroAmostralMaximoPercentual),
       criadoEm: Value(criadoEm),
       atualizadoEm: Value(atualizadoEm),
     );
@@ -4674,6 +4704,9 @@ class TalhaoLevantamento extends DataClass
       areaPadraoParcelaHa: serializer.fromJson<double?>(
         json['areaPadraoParcelaHa'],
       ),
+      erroAmostralMaximoPercentual: serializer.fromJson<double>(
+        json['erroAmostralMaximoPercentual'],
+      ),
       criadoEm: serializer.fromJson<DateTime>(json['criadoEm']),
       atualizadoEm: serializer.fromJson<DateTime>(json['atualizadoEm']),
     );
@@ -4688,6 +4721,9 @@ class TalhaoLevantamento extends DataClass
       'especieId': serializer.toJson<int>(especieId),
       'modeloMatematicoId': serializer.toJson<int>(modeloMatematicoId),
       'areaPadraoParcelaHa': serializer.toJson<double?>(areaPadraoParcelaHa),
+      'erroAmostralMaximoPercentual': serializer.toJson<double>(
+        erroAmostralMaximoPercentual,
+      ),
       'criadoEm': serializer.toJson<DateTime>(criadoEm),
       'atualizadoEm': serializer.toJson<DateTime>(atualizadoEm),
     };
@@ -4700,6 +4736,7 @@ class TalhaoLevantamento extends DataClass
     int? especieId,
     int? modeloMatematicoId,
     Value<double?> areaPadraoParcelaHa = const Value.absent(),
+    double? erroAmostralMaximoPercentual,
     DateTime? criadoEm,
     DateTime? atualizadoEm,
   }) => TalhaoLevantamento(
@@ -4711,6 +4748,8 @@ class TalhaoLevantamento extends DataClass
     areaPadraoParcelaHa: areaPadraoParcelaHa.present
         ? areaPadraoParcelaHa.value
         : this.areaPadraoParcelaHa,
+    erroAmostralMaximoPercentual:
+        erroAmostralMaximoPercentual ?? this.erroAmostralMaximoPercentual,
     criadoEm: criadoEm ?? this.criadoEm,
     atualizadoEm: atualizadoEm ?? this.atualizadoEm,
   );
@@ -4728,6 +4767,9 @@ class TalhaoLevantamento extends DataClass
       areaPadraoParcelaHa: data.areaPadraoParcelaHa.present
           ? data.areaPadraoParcelaHa.value
           : this.areaPadraoParcelaHa,
+      erroAmostralMaximoPercentual: data.erroAmostralMaximoPercentual.present
+          ? data.erroAmostralMaximoPercentual.value
+          : this.erroAmostralMaximoPercentual,
       criadoEm: data.criadoEm.present ? data.criadoEm.value : this.criadoEm,
       atualizadoEm: data.atualizadoEm.present
           ? data.atualizadoEm.value
@@ -4744,6 +4786,9 @@ class TalhaoLevantamento extends DataClass
           ..write('especieId: $especieId, ')
           ..write('modeloMatematicoId: $modeloMatematicoId, ')
           ..write('areaPadraoParcelaHa: $areaPadraoParcelaHa, ')
+          ..write(
+            'erroAmostralMaximoPercentual: $erroAmostralMaximoPercentual, ',
+          )
           ..write('criadoEm: $criadoEm, ')
           ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
@@ -4758,6 +4803,7 @@ class TalhaoLevantamento extends DataClass
     especieId,
     modeloMatematicoId,
     areaPadraoParcelaHa,
+    erroAmostralMaximoPercentual,
     criadoEm,
     atualizadoEm,
   );
@@ -4771,6 +4817,8 @@ class TalhaoLevantamento extends DataClass
           other.especieId == this.especieId &&
           other.modeloMatematicoId == this.modeloMatematicoId &&
           other.areaPadraoParcelaHa == this.areaPadraoParcelaHa &&
+          other.erroAmostralMaximoPercentual ==
+              this.erroAmostralMaximoPercentual &&
           other.criadoEm == this.criadoEm &&
           other.atualizadoEm == this.atualizadoEm);
 }
@@ -4782,6 +4830,7 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
   final Value<int> especieId;
   final Value<int> modeloMatematicoId;
   final Value<double?> areaPadraoParcelaHa;
+  final Value<double> erroAmostralMaximoPercentual;
   final Value<DateTime> criadoEm;
   final Value<DateTime> atualizadoEm;
   const TalhaoLevantamentosCompanion({
@@ -4791,6 +4840,7 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
     this.especieId = const Value.absent(),
     this.modeloMatematicoId = const Value.absent(),
     this.areaPadraoParcelaHa = const Value.absent(),
+    this.erroAmostralMaximoPercentual = const Value.absent(),
     this.criadoEm = const Value.absent(),
     this.atualizadoEm = const Value.absent(),
   });
@@ -4801,6 +4851,7 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
     required int especieId,
     required int modeloMatematicoId,
     this.areaPadraoParcelaHa = const Value.absent(),
+    this.erroAmostralMaximoPercentual = const Value.absent(),
     required DateTime criadoEm,
     required DateTime atualizadoEm,
   }) : levantamentoId = Value(levantamentoId),
@@ -4816,6 +4867,7 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
     Expression<int>? especieId,
     Expression<int>? modeloMatematicoId,
     Expression<double>? areaPadraoParcelaHa,
+    Expression<double>? erroAmostralMaximoPercentual,
     Expression<DateTime>? criadoEm,
     Expression<DateTime>? atualizadoEm,
   }) {
@@ -4828,6 +4880,8 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
         'modelo_matematico_id': modeloMatematicoId,
       if (areaPadraoParcelaHa != null)
         'area_padrao_parcela_ha': areaPadraoParcelaHa,
+      if (erroAmostralMaximoPercentual != null)
+        'perc_erro_amostral': erroAmostralMaximoPercentual,
       if (criadoEm != null) 'criado_em': criadoEm,
       if (atualizadoEm != null) 'atualizado_em': atualizadoEm,
     });
@@ -4840,6 +4894,7 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
     Value<int>? especieId,
     Value<int>? modeloMatematicoId,
     Value<double?>? areaPadraoParcelaHa,
+    Value<double>? erroAmostralMaximoPercentual,
     Value<DateTime>? criadoEm,
     Value<DateTime>? atualizadoEm,
   }) {
@@ -4850,6 +4905,8 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
       especieId: especieId ?? this.especieId,
       modeloMatematicoId: modeloMatematicoId ?? this.modeloMatematicoId,
       areaPadraoParcelaHa: areaPadraoParcelaHa ?? this.areaPadraoParcelaHa,
+      erroAmostralMaximoPercentual:
+          erroAmostralMaximoPercentual ?? this.erroAmostralMaximoPercentual,
       criadoEm: criadoEm ?? this.criadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
     );
@@ -4878,6 +4935,11 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
         areaPadraoParcelaHa.value,
       );
     }
+    if (erroAmostralMaximoPercentual.present) {
+      map['perc_erro_amostral'] = Variable<double>(
+        erroAmostralMaximoPercentual.value,
+      );
+    }
     if (criadoEm.present) {
       map['criado_em'] = Variable<DateTime>(criadoEm.value);
     }
@@ -4896,6 +4958,9 @@ class TalhaoLevantamentosCompanion extends UpdateCompanion<TalhaoLevantamento> {
           ..write('especieId: $especieId, ')
           ..write('modeloMatematicoId: $modeloMatematicoId, ')
           ..write('areaPadraoParcelaHa: $areaPadraoParcelaHa, ')
+          ..write(
+            'erroAmostralMaximoPercentual: $erroAmostralMaximoPercentual, ',
+          )
           ..write('criadoEm: $criadoEm, ')
           ..write('atualizadoEm: $atualizadoEm')
           ..write(')'))
@@ -11788,6 +11853,7 @@ typedef $$TalhaoLevantamentosTableCreateCompanionBuilder =
       required int especieId,
       required int modeloMatematicoId,
       Value<double?> areaPadraoParcelaHa,
+      Value<double> erroAmostralMaximoPercentual,
       required DateTime criadoEm,
       required DateTime atualizadoEm,
     });
@@ -11799,6 +11865,7 @@ typedef $$TalhaoLevantamentosTableUpdateCompanionBuilder =
       Value<int> especieId,
       Value<int> modeloMatematicoId,
       Value<double?> areaPadraoParcelaHa,
+      Value<double> erroAmostralMaximoPercentual,
       Value<DateTime> criadoEm,
       Value<DateTime> atualizadoEm,
     });
@@ -11952,6 +12019,11 @@ class $$TalhaoLevantamentosTableFilterComposer
 
   ColumnFilters<double> get areaPadraoParcelaHa => $composableBuilder(
     column: $table.areaPadraoParcelaHa,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get erroAmostralMaximoPercentual => $composableBuilder(
+    column: $table.erroAmostralMaximoPercentual,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12131,6 +12203,12 @@ class $$TalhaoLevantamentosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get erroAmostralMaximoPercentual =>
+      $composableBuilder(
+        column: $table.erroAmostralMaximoPercentual,
+        builder: (column) => ColumnOrderings(column),
+      );
+
   ColumnOrderings<DateTime> get criadoEm => $composableBuilder(
     column: $table.criadoEm,
     builder: (column) => ColumnOrderings(column),
@@ -12250,6 +12328,12 @@ class $$TalhaoLevantamentosTableAnnotationComposer
     column: $table.areaPadraoParcelaHa,
     builder: (column) => column,
   );
+
+  GeneratedColumn<double> get erroAmostralMaximoPercentual =>
+      $composableBuilder(
+        column: $table.erroAmostralMaximoPercentual,
+        builder: (column) => column,
+      );
 
   GeneratedColumn<DateTime> get criadoEm =>
       $composableBuilder(column: $table.criadoEm, builder: (column) => column);
@@ -12456,6 +12540,8 @@ class $$TalhaoLevantamentosTableTableManager
                 Value<int> especieId = const Value.absent(),
                 Value<int> modeloMatematicoId = const Value.absent(),
                 Value<double?> areaPadraoParcelaHa = const Value.absent(),
+                Value<double> erroAmostralMaximoPercentual =
+                    const Value.absent(),
                 Value<DateTime> criadoEm = const Value.absent(),
                 Value<DateTime> atualizadoEm = const Value.absent(),
               }) => TalhaoLevantamentosCompanion(
@@ -12465,6 +12551,7 @@ class $$TalhaoLevantamentosTableTableManager
                 especieId: especieId,
                 modeloMatematicoId: modeloMatematicoId,
                 areaPadraoParcelaHa: areaPadraoParcelaHa,
+                erroAmostralMaximoPercentual: erroAmostralMaximoPercentual,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
               ),
@@ -12476,6 +12563,8 @@ class $$TalhaoLevantamentosTableTableManager
                 required int especieId,
                 required int modeloMatematicoId,
                 Value<double?> areaPadraoParcelaHa = const Value.absent(),
+                Value<double> erroAmostralMaximoPercentual =
+                    const Value.absent(),
                 required DateTime criadoEm,
                 required DateTime atualizadoEm,
               }) => TalhaoLevantamentosCompanion.insert(
@@ -12485,6 +12574,7 @@ class $$TalhaoLevantamentosTableTableManager
                 especieId: especieId,
                 modeloMatematicoId: modeloMatematicoId,
                 areaPadraoParcelaHa: areaPadraoParcelaHa,
+                erroAmostralMaximoPercentual: erroAmostralMaximoPercentual,
                 criadoEm: criadoEm,
                 atualizadoEm: atualizadoEm,
               ),

@@ -1,7 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/banco/banco_dendro.dart';
+import '../../../nucleo/floresta/calculadora_suficiencia_amostral.dart';
 import '../../../nucleo/floresta/calculadora_volume_florestal.dart';
 import '../../../nucleo/provedores/provedores_banco.dart';
 import '../../atividades/dados/repositorio_atividades.dart';
@@ -96,6 +99,22 @@ class LevantamentoTalhaoResumo {
   final int coletadaParcelaQuantidade;
   final int arvoreQuantidade;
   final double medidaAreaHa;
+}
+
+class AvaliacaoSuficienciaTalhao {
+  const AvaliacaoSuficienciaTalhao({
+    required this.talhaoIdentificacao,
+    required this.parcelasRegistradas,
+    required this.parcelasAbertas,
+    required this.parcelasSemArea,
+    required this.resultado,
+  });
+
+  final String talhaoIdentificacao;
+  final int parcelasRegistradas;
+  final int parcelasAbertas;
+  final int parcelasSemArea;
+  final ResultadoSuficienciaAmostral resultado;
 }
 
 class RepositorioLevantamentos {
@@ -211,6 +230,90 @@ class RepositorioLevantamentos {
     });
   }
 
+  Future<List<AvaliacaoSuficienciaTalhao>> avaliarSuficienciaAmostral(
+    LevantamentoResumo resumo,
+  ) async {
+    final avaliacoes = <AvaliacaoSuficienciaTalhao>[];
+
+    for (final talhaoResumo in resumo.talhoes) {
+      final vinculo = talhaoResumo.talhaoLevantamento;
+      final parcelas =
+          await (_bancoDados.select(_bancoDados.parcelas)..where(
+                (tabela) =>
+                    tabela.talhaoLevantamentoId.equals(vinculo.id) &
+                    tabela.situacao.equalsValue(SituacaoParcela.coletada),
+              ))
+              .get();
+      final coeficientes = {
+        for (final coeficiente in talhaoResumo.coeficientesModelo)
+          coeficiente.simbolo: coeficiente.valor,
+      };
+      final volumesPorHaM3 = <double>[];
+      var parcelasSemArea = 0;
+
+      for (final parcela in parcelas) {
+        final areaHa = parcela.areaHa;
+        if (areaHa == null || areaHa <= 0) {
+          parcelasSemArea++;
+          continue;
+        }
+
+        final arvores = await (_bancoDados.select(
+          _bancoDados.arvores,
+        )..where((tabela) => tabela.parcelaId.equals(parcela.id))).get();
+        final volumeParcelaM3 = arvores.fold<double>(
+          0,
+          (total, arvore) =>
+              total +
+              CalculadoraVolumeFlorestal.volumeArvoreM3(
+                dapCm: arvore.dapCm,
+                alturaM: arvore.alturaM,
+                coeficientes: coeficientes,
+                modeloMatematicoCodigo: talhaoResumo.modeloMatematico.codigo,
+                modeloMatematicoExpressao:
+                    talhaoResumo.modeloMatematico.expressao,
+              ),
+        );
+        volumesPorHaM3.add(volumeParcelaM3 / areaHa);
+      }
+
+      final areaPadraoHa =
+          _areaPadraoParcelaHa(talhaoResumo.talhao) ??
+          (parcelas.isEmpty
+              ? null
+              : parcelas
+                        .map((parcela) => parcela.areaHa)
+                        .whereType<double>()
+                        .where((area) => area > 0)
+                        .fold<double>(0, (total, area) => total + area) /
+                    math.max(
+                      1,
+                      parcelas.where((p) => (p.areaHa ?? 0) > 0).length,
+                    ));
+      final unidadesPossiveis = areaPadraoHa == null || areaPadraoHa <= 0
+          ? null
+          : talhaoResumo.talhao.areaHa / areaPadraoHa;
+
+      avaliacoes.add(
+        AvaliacaoSuficienciaTalhao(
+          talhaoIdentificacao: talhaoResumo.talhao.identificacao,
+          parcelasRegistradas: talhaoResumo.parcelaQuantidade,
+          parcelasAbertas:
+              talhaoResumo.parcelaQuantidade -
+              talhaoResumo.coletadaParcelaQuantidade,
+          parcelasSemArea: parcelasSemArea,
+          resultado: CalculadoraSuficienciaAmostral.calcular(
+            volumesPorHaM3: volumesPorHaM3,
+            erroMaximoPercentual: vinculo.erroAmostralMaximoPercentual,
+            unidadesAmostraisPossiveis: unidadesPossiveis,
+          ),
+        ),
+      );
+    }
+
+    return avaliacoes;
+  }
+
   Future<void> excluirLevantamento(int levantamentoId) {
     return _bancoDados.transaction(() async {
       final resumo = await _resumoPorId(levantamentoId);
@@ -285,6 +388,7 @@ class RepositorioLevantamentos {
     String? regimeManejo,
     double? larguraParcelaM,
     double? comprimentoParcelaM,
+    double erroAmostralMaximoPercentual = 3.0,
     String? observacoes,
     SelecaoModeloLevantamento? modeloMatematicoSelecao,
   }) {
@@ -328,6 +432,7 @@ class RepositorioLevantamentos {
         TalhaoLevantamentosCompanion(
           especieId: Value(especieId),
           modeloMatematicoId: Value(modeloMatematicoId),
+          erroAmostralMaximoPercentual: Value(erroAmostralMaximoPercentual),
           atualizadoEm: Value(agora),
         ),
       );
@@ -828,6 +933,18 @@ VALUES (?, ?, ?, ?)
     return (_bancoDados.select(
       _bancoDados.propriedades,
     )..where((tabela) => tabela.id.equals(id))).getSingleOrNull();
+  }
+
+  double? _areaPadraoParcelaHa(Talhao talhao) {
+    final largura = talhao.larguraParcelaM;
+    final comprimento = talhao.comprimentoParcelaM;
+    if (largura == null ||
+        comprimento == null ||
+        largura <= 0 ||
+        comprimento <= 0) {
+      return null;
+    }
+    return largura * comprimento / 10000;
   }
 }
 

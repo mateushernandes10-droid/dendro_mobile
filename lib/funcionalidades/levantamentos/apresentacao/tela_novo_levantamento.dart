@@ -30,6 +30,7 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
   int? _salvandoTalhaoId;
   String? _erroMensagem;
   final Map<int, SelecaoModeloLevantamento> _selecoesModeloPorTalhaoId = {};
+  final Map<int, double> _errosAmostraisPorTalhaoId = {};
 
   @override
   void initState() {
@@ -138,6 +139,9 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
                       modeloMatematicoSelecaoParaTalhao: (talhaoId) =>
                           _selecoesModeloPorTalhaoId[talhaoId],
                       aoAjustarModeloMatematico: _ajustarModeloMatematico,
+                      erroAmostralParaTalhao: (talhaoId) =>
+                          _errosAmostraisPorTalhaoId[talhaoId] ?? 3.0,
+                      aoAjustarErroAmostral: _ajustarErroAmostral,
                     ),
                     const SizedBox(height: 18),
                   ],
@@ -231,6 +235,8 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
             resumo.talhao.id,
             modeloMatematicoSelecao:
                 _selecoesModeloPorTalhaoId[resumo.talhao.id],
+            erroAmostralMaximoPercentual:
+                _errosAmostraisPorTalhaoId[resumo.talhao.id] ?? 3.0,
           );
 
       _invalidarIniciarProvedores(resumo.talhao.id);
@@ -267,6 +273,18 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
     });
   }
 
+  Future<void> _ajustarErroAmostral(TalhaoResumo resumo) async {
+    final valor = await _mostrarErroAmostralDialogo(
+      context,
+      inicial: _errosAmostraisPorTalhaoId[resumo.talhao.id] ?? 3.0,
+    );
+    if (valor == null || !mounted) return;
+    setState(() {
+      _errosAmostraisPorTalhaoId[resumo.talhao.id] = valor;
+      _erroMensagem = null;
+    });
+  }
+
   Future<void> _abrirNovoTalhaoPainel({required int propriedadeId}) async {
     final criacao = await showModalBottomSheet<_ResultadoCadastroRapidoTalhao>(
       context: context,
@@ -287,6 +305,8 @@ class _NovoLevantamentoTelaEstado extends ConsumerState<TelaNovoLevantamento> {
       _selecoesModeloPorTalhaoId[criacao.talhaoId] =
           criacao.modeloMatematicoSelecao!;
     }
+    _errosAmostraisPorTalhaoId[criacao.talhaoId] =
+        criacao.erroAmostralMaximoPercentual;
 
     final resumo = await ref
         .read(provedorRepositorioTalhoes)
@@ -472,6 +492,8 @@ class _LevantamentoIniciarPropriedadeGrupo extends StatelessWidget {
     required this.aoIniciar,
     required this.modeloMatematicoSelecaoParaTalhao,
     required this.aoAjustarModeloMatematico,
+    required this.erroAmostralParaTalhao,
+    required this.aoAjustarErroAmostral,
   });
 
   final OpcaoPropriedadeNovoLevantamento opcao;
@@ -481,6 +503,8 @@ class _LevantamentoIniciarPropriedadeGrupo extends StatelessWidget {
   final SelecaoModeloLevantamento? Function(int talhaoId)
   modeloMatematicoSelecaoParaTalhao;
   final ValueChanged<TalhaoResumo> aoAjustarModeloMatematico;
+  final double Function(int talhaoId) erroAmostralParaTalhao;
+  final ValueChanged<TalhaoResumo> aoAjustarErroAmostral;
 
   @override
   Widget build(BuildContext context) {
@@ -519,6 +543,10 @@ class _LevantamentoIniciarPropriedadeGrupo extends StatelessWidget {
               ),
               aoAjustarModeloMatematico: () =>
                   aoAjustarModeloMatematico(resumo),
+              erroAmostralMaximoPercentual: erroAmostralParaTalhao(
+                resumo.talhao.id,
+              ),
+              aoAjustarErroAmostral: () => aoAjustarErroAmostral(resumo),
               aoIniciar: () => aoIniciar(resumo),
             ),
             const SizedBox(height: 8),
@@ -602,6 +630,8 @@ class _IniciarTalhaoCartao extends StatelessWidget {
     required this.desabilitado,
     required this.modeloMatematicoSelecao,
     required this.aoAjustarModeloMatematico,
+    required this.erroAmostralMaximoPercentual,
+    required this.aoAjustarErroAmostral,
     required this.aoIniciar,
   });
 
@@ -610,6 +640,8 @@ class _IniciarTalhaoCartao extends StatelessWidget {
   final bool desabilitado;
   final SelecaoModeloLevantamento? modeloMatematicoSelecao;
   final VoidCallback aoAjustarModeloMatematico;
+  final double erroAmostralMaximoPercentual;
+  final VoidCallback aoAjustarErroAmostral;
   final VoidCallback aoIniciar;
 
   @override
@@ -666,6 +698,16 @@ class _IniciarTalhaoCartao extends StatelessWidget {
               aoPressionado: desabilitado || salvando
                   ? null
                   : aoAjustarModeloMatematico,
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: desabilitado || salvando
+                  ? null
+                  : aoAjustarErroAmostral,
+              icon: const Icon(Icons.analytics_outlined),
+              label: Text(
+                'Erro amostral máximo: ${_formatarPercentual(erroAmostralMaximoPercentual)}',
+              ),
             ),
           ],
           const SizedBox(height: 12),
@@ -885,6 +927,7 @@ class _EstadoPainelCadastroRapidoTalhao
   final _manejoRegimeControlador = TextEditingController();
   final _parcelaLarguraControlador = TextEditingController();
   final _parcelaComprimentoControlador = TextEditingController();
+  final _erroAmostralControlador = TextEditingController(text: '3,0');
   final _observacoesControlador = TextEditingController();
   SelecaoModeloLevantamento? _modeloMatematicoSelecao;
   int? _especieId;
@@ -899,6 +942,7 @@ class _EstadoPainelCadastroRapidoTalhao
     _manejoRegimeControlador.dispose();
     _parcelaLarguraControlador.dispose();
     _parcelaComprimentoControlador.dispose();
+    _erroAmostralControlador.dispose();
     _observacoesControlador.dispose();
     super.dispose();
   }
@@ -1063,6 +1107,22 @@ class _EstadoPainelCadastroRapidoTalhao
               ),
               const SizedBox(height: 12),
               TextFormField(
+                controller: _erroAmostralControlador,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp('[0-9,.]')),
+                ],
+                decoration: const InputDecoration(
+                  labelText: 'Erro amostral máximo (%)',
+                  prefixIcon: Icon(Icons.analytics_outlined),
+                  helperText: 'Valor inicial recomendado: 3%',
+                ),
+                validator: _validarErroAmostral,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
                 controller: _observacoesControlador,
                 minLines: 2,
                 maxLines: 4,
@@ -1127,6 +1187,9 @@ class _EstadoPainelCadastroRapidoTalhao
         _ResultadoCadastroRapidoTalhao(
           talhaoId: talhaoId,
           modeloMatematicoSelecao: _modeloMatematicoSelecao,
+          erroAmostralMaximoPercentual: _interpretarArea(
+            _erroAmostralControlador.text,
+          )!,
         ),
       );
     } catch (_) {
@@ -1197,6 +1260,14 @@ class _EstadoPainelCadastroRapidoTalhao
     return null;
   }
 
+  String? _validarErroAmostral(String? valor) {
+    final erro = _interpretarArea(valor ?? '');
+    if (erro == null || erro <= 0 || erro >= 100) {
+      return 'Informe um percentual entre 0 e 100';
+    }
+    return null;
+  }
+
   String? _validarDimensaoParcela(
     String? valor,
     String pareadoValor,
@@ -1217,10 +1288,12 @@ class _ResultadoCadastroRapidoTalhao {
   const _ResultadoCadastroRapidoTalhao({
     required this.talhaoId,
     required this.modeloMatematicoSelecao,
+    required this.erroAmostralMaximoPercentual,
   });
 
   final int talhaoId;
   final SelecaoModeloLevantamento? modeloMatematicoSelecao;
+  final double erroAmostralMaximoPercentual;
 }
 
 class _ModeloMatematicoAjusteCartao extends StatelessWidget {
@@ -1299,6 +1372,63 @@ String _historicoRotulo(int quantidade) {
 
 String _formatoArea(double valor) {
   return '${valor.toStringAsFixed(2).replaceAll('.', ',')} ha';
+}
+
+String _formatarPercentual(double valor) {
+  return '${valor.toStringAsFixed(1).replaceAll('.', ',')}%';
+}
+
+Future<double?> _mostrarErroAmostralDialogo(
+  BuildContext context, {
+  required double inicial,
+}) async {
+  final controlador = TextEditingController(
+    text: inicial.toStringAsFixed(1).replaceAll('.', ','),
+  );
+  String? erro;
+  final resultado = await showDialog<double>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, definirEstado) => AlertDialog(
+        title: const Text('Erro amostral máximo'),
+        content: TextField(
+          controller: controlador,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp('[0-9,.]')),
+          ],
+          decoration: InputDecoration(
+            labelText: 'Percentual',
+            suffixText: '%',
+            helperText: 'Valor inicial recomendado: 3%',
+            errorText: erro,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final valor = _interpretarArea(controlador.text);
+              if (valor == null || valor <= 0 || valor >= 100) {
+                definirEstado(
+                  () => erro = 'Informe um percentual entre 0 e 100',
+                );
+                return;
+              }
+              Navigator.of(context).pop(valor);
+            },
+            child: const Text('Aplicar'),
+          ),
+        ],
+      ),
+    ),
+  );
+  controlador.dispose();
+  return resultado;
 }
 
 double? _interpretarArea(String valor) {
