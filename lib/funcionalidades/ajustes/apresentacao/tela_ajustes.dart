@@ -6,6 +6,7 @@ import '../../../aplicativo/tema/tema_dendro.dart';
 import '../../../nucleo/banco/banco_dendro.dart';
 import '../../../nucleo/preferencias/controlador_tema.dart';
 import '../../../compartilhado/componentes/componentes_dendro.dart';
+import '../../backup/apresentacao/tela_backup_restauracao.dart';
 import '../dados/repositorio_ajustes.dart';
 
 class TelaAjustes extends StatelessWidget {
@@ -42,6 +43,20 @@ class TelaAjustes extends StatelessWidget {
             Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (context) => const _TelaModeloMatematicoAjustes(),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 18),
+        const TituloSecao(titulo: 'Dados'),
+        _AjustesOpcaoBloco(
+          icone: Icons.backup_outlined,
+          titulo: 'Backup e Restauração',
+          subtitulo: 'Salve, compartilhe ou restaure todos os dados do app.',
+          aoTocar: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => const TelaBackupRestauracao(),
               ),
             );
           },

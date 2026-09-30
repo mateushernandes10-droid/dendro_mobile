@@ -66,6 +66,10 @@ O erro amostral máximo é armazenado por talhão do levantamento, com valor ini
 
 O aplicativo gera PDF, CSV, XLSX e KML. Também oferece CSV e XLSX brutos com as medições originais. No XLSX bruto, as parcelas aparecem lado a lado e cada grupo apresenta árvore, DAP e altura nas linhas inferiores.
 
+## Backup e restauração
+
+O backup usa um arquivo próprio `.dendrobackup` em JSON, contendo metadados e os registros das 14 tabelas físicas. As cópias criadas ficam no diretório interno do aplicativo e podem ser compartilhadas. Na restauração, formato, versão do schema, tabelas e colunas são validados antes da alteração. A substituição ocorre em transação e cria previamente uma cópia automática do estado atual.
+
 KMZ e estimativa econômica não integram a versão final.
 
 ## Interface e identidade

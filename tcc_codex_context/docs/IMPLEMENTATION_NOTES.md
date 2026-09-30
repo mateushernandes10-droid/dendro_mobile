@@ -13,6 +13,7 @@ Revisão em 29/09/2026. Este documento registra o estado final observado no cód
 - Suficiência amostral por talhão, com erro máximo editável e padrão de 3%.
 - Exportação PDF, CSV, XLSX, KML, CSV bruto e XLSX bruto.
 - Resultados filtráveis por levantamento, propriedade, espécie e talhões; sem levantamento explícito, usa-se a campanha mais recente de cada talhão.
+- Backup local completo em `.dendrobackup`, compartilhamento, importação e restauração transacional com cópia preventiva.
 - Registro local de atividades e modo escuro persistido.
 
 ## Pontos principais
@@ -51,6 +52,7 @@ O catálogo inicial é inserido por `catalogos_iniciais.dart` na primeira criaç
 | Suficiência amostral | `lib/nucleo/floresta/calculadora_suficiencia_amostral.dart` |
 | Painel e filtros | `lib/funcionalidades/resultados/dados/repositorio_resultados.dart` |
 | Exportações | `lib/funcionalidades/exportacao_dados/dados/repositorio_exportacao_dados.dart` |
+| Backup e restauração | `lib/funcionalidades/backup/dados/repositorio_backup.dart` |
 | Coleta e GPS | `lib/funcionalidades/coleta_arvores/` |
 | Planejamento e parcelas | `lib/funcionalidades/parcelas/` |
 | Tema | `lib/nucleo/preferencias/controlador_tema.dart` |

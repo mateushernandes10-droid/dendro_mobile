@@ -39,6 +39,8 @@ O esquema é versão 1. As 14 tabelas da aplicação são declaradas em banco_de
 
 Propriedade e talhão são cadastros permanentes. Levantamento representa o levantamento; TalhaoLevantamentos associa um talhão a um levantamento, com espécie, fórmula selecionada e erro amostral máximo desejado. Parcelas pertencem a essa associação, e árvores pertencem às parcelas.
 
+O recurso de backup lê as tabelas físicas pelo banco Drift, grava um arquivo versionado no diretório interno do aplicativo e restaura os registros em transação. A tela correspondente fica em Ajustes e também oferece compartilhamento e seleção de arquivo externo.
+
 Os coeficientes existem em três níveis: definição global da fórmula, configuração por espécie/fórmula e cópia por talhão do levantamento. O vínculo conserva os valores da coleta, mas não há cópia histórica integral da expressão matemática: a fórmula continua referenciada por ID. Portanto, não afirmar imutabilidade de todos os resultados após edição do catálogo.
 
 Os resultados e a suficiência amostral são calculados em memória; não existe tabela de resultados. Apenas parcelas finalizadas participam desses cálculos. registros_atividade armazena eventos, com tipo_entidade/entidade_id opcionais e sem chave estrangeira para as entidades.

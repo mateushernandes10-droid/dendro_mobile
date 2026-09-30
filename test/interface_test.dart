@@ -8,6 +8,7 @@ import 'package:dendro_mobile/funcionalidades/parcelas/dados/repositorio_parcela
 import 'package:dendro_mobile/funcionalidades/propriedades/dados/repositorio_propriedades.dart';
 import 'package:dendro_mobile/funcionalidades/ajustes/dados/repositorio_ajustes.dart';
 import 'package:dendro_mobile/funcionalidades/ajustes/apresentacao/tela_ajustes.dart';
+import 'package:dendro_mobile/funcionalidades/backup/dados/repositorio_backup.dart';
 import 'package:dendro_mobile/funcionalidades/estrutura/apresentacao/estrutura_dendro.dart';
 import 'package:dendro_mobile/funcionalidades/talhoes/dados/repositorio_talhoes.dart';
 import 'package:dendro_mobile/funcionalidades/coleta_arvores/dados/repositorio_arvores.dart';
@@ -659,7 +660,10 @@ void main() {
 
     await testador.pumpWidget(
       ProviderScope(
-        overrides: [provedorBancoDendro.overrideWithValue(bancoDados)],
+        overrides: [
+          provedorBancoDendro.overrideWithValue(bancoDados),
+          provedorBackupsLocais.overrideWith((ref) async => const []),
+        ],
         child: MaterialApp(
           theme: TemaDendro.claro,
           home: const Scaffold(body: TelaAjustes()),
@@ -672,8 +676,20 @@ void main() {
     expect(find.text('Modo escuro'), findsOneWidget);
     expect(find.text('Cadastro de espécies'), findsOneWidget);
     expect(find.text('Modelos matemáticos'), findsOneWidget);
+    expect(find.text('Backup e Restauração'), findsOneWidget);
     expect(find.text('Nova espécie'), findsNothing);
     expect(find.text('Nova fórmula'), findsNothing);
+
+    await testador.ensureVisible(find.text('Backup e Restauração'));
+    await testador.tap(find.text('Backup e Restauração'));
+    await testador.pumpAndSettle();
+
+    expect(find.text('Backup e Restauração'), findsOneWidget);
+    expect(find.text('Criar novo backup'), findsOneWidget);
+    expect(find.text('Restaurar de um arquivo'), findsOneWidget);
+
+    await testador.tap(find.byTooltip('Voltar'));
+    await testador.pumpAndSettle();
 
     await testador.tap(find.text('Cadastro de espécies'));
     await testador.pumpAndSettle();

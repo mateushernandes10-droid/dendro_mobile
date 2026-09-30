@@ -34,6 +34,8 @@ GPS é documental, opcional e sujeito à precisão do dispositivo. Não substitu
 
 Exportações: PDF, CSV e XLSX com resultados, CSV/XLSX brutos e KML. Há diferenças de escopo entre painel, exportação por propriedade e exportação por levantamento, documentadas nos requisitos.
 
+Em Ajustes, Backup e Restauração cria uma cópia completa das tabelas em arquivo compartilhável e permite restaurá-la em uma instalação com schema compatível. O arquivo compartilhado é o meio de portabilidade; não há sincronização automática.
+
 ## Como usar estes documentos no TCC
 
 - REQUIREMENTS.md: requisitos e estado real de atendimento.

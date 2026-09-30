@@ -28,6 +28,7 @@ Revisão em 29/09/2026. “Implementado” indica existência no código, não v
 | RF-020 | Geolocalização | Implementado na coleta com permissão do dispositivo, coordenada opcional de árvore e associação explícita a P1–P4 da parcela. Não mede contorno do talhão nem distribui parcelas automaticamente. |
 | RF-021 | Filtrar resultados | Implementado: propriedade, levantamento, espécie e um ou mais talhões. Quando não há levantamento selecionado, o painel usa o mais recente de cada talhão compatível com os demais filtros. Quando há seleção, reúne somente parcelas daquela campanha. O atalho no detalhe do levantamento abre os resultados com propriedade, levantamento e seus talhões já filtrados. |
 | RF-022 | Avaliar suficiência amostral | Implementado por talhão: erro máximo configurável com padrão de 3%, confiança fixa de 95%, cálculo sobre volumes por hectare das parcelas finalizadas, correção para população finita quando aplicável e confirmação final mesmo quando insuficiente. |
+| RF-023 | Fazer backup e restaurar dados | Implementado em Ajustes: cria arquivo `.dendrobackup` com as 14 tabelas, mantém cópias no armazenamento interno, permite compartilhar, importar e restaurar. A estrutura e a versão do schema são validadas; antes de restaurar, uma cópia automática dos dados atuais é criada. |
 
 ## Exportação bruta e escopo
 
@@ -35,7 +36,7 @@ CSV bruto: uma linha por árvore, começando por propriedade, talhão, parcela, 
 
 XLSX bruto: uma aba por talhão, identificação de propriedade/talhão/levantamento no topo; títulos de parcelas em A6, E6, I6 etc. Cada grupo tem três colunas (árvore, DAP cm, altura m); dados começam na linha 7. Parcelas vazias preservam o título. O XLSX bruto não contém todos os campos auxiliares do CSV.
 
-Ambos preservam as medições originais sem estimativa de altura ou volume. Exportação por levantamento restringe os dados àquele levantamento. Exportação por propriedade escolhe o vínculo mais recentemente atualizado de cada talhão; não é um backup de todos os levantamentos históricos. A seleção de talhões é respeitada.
+Ambos preservam as medições originais sem estimativa de altura ou volume. Exportação por levantamento restringe os dados àquele levantamento. Exportação por propriedade escolhe o levantamento mais recente pela data de início de cada talhão; não é um backup de todos os levantamentos históricos. A seleção de talhões é respeitada.
 
 O CSV de resultados também apresenta apenas um conjunto de coordenadas por árvore registrada. No XLSX de resultados, as coordenadas ficam concentradas na aba `Coordenadas`; a aba `Árvores` mantém as medições e os resultados sem repetir os campos geográficos.
 
@@ -50,7 +51,7 @@ O CSV de resultados também apresenta apenas um conjunto de coordenadas por árv
 | RNF-005 — Confiabilidade matemática | Testes automatizados de casos conhecidos existem; comparação independente de inventário completo ainda pendente. |
 | RNF-006 — Entradas | Formulários validam campos e valores numéricos; não há validação agronômica universal ou garantia sobre qualquer expressão cadastrada. |
 | RNF-007 — Manutenção | Organização por funcionalidades, telas/repositórios e calculadora separada; não há camadas completas de Clean Architecture. |
-| RNF-008 — Expansão | Portabilidade/sincronização futura são possibilidades, não funcionalidades entregues. |
+| RNF-008 — Portabilidade | Backup completo pode ser compartilhado e restaurado em outra instalação compatível. Sincronização automática e nuvem não foram implementadas. |
 | RNF-009 — Expressões | Parser seguro de expressões genéricas não implementado. O código não executa a expressão como código arbitrário. |
 | RNF-010 — Localização | Solicita permissão e trata indisponibilidade; GPS é opcional. |
 | RNF-011 — Identidade | DENDRO Mobile, tema e preferência de modo escuro persistida localmente. |
