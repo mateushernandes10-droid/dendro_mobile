@@ -15,7 +15,7 @@
 Arquivo-base salvo no projeto:
 
 ```text
-tcc_codex_context/assets/branding/dendro_mobile_logo.png
+assets/branding/dendro_mobile_logo.png
 ```
 
 Asset disponível para uso no aplicativo Flutter:

@@ -16,7 +16,7 @@ A versão vigente é **schema 1**, com IDs inteiros, 14 tabelas declaradas no Dr
 
 A falha inicial ocorreu porque o emulador mantinha um banco antigo, versão 7, incompatível com essa estrutura. Durante a produção das imagens foi introduzido indevidamente um schema 12 com migrações. Essa alteração foi revertida para respeitar a decisão anterior do projeto. Os arquivos de migração, seus testes e a fixture antiga foram removidos.
 
-Para verificar a instalação atual, o banco de demonstração foi preservado em `C:\Users\Hernandes\AppData\Local\DendroBackups\schema12-antes-restaurar-schema1\dendro_mobile.sqlite`, com integridade SQLite conferida e seis árvores. Também permanece separado no armazenamento do aplicativo como `app_flutter/dendro_mobile_schema12_backup.sqlite`. O aplicativo cria um banco novo no caminho normal, sem converter ou sobrescrever esse backup. Não se deve reapresentar o schema 12 como versão vigente no TCC.
+Para verificar a instalação atual, o banco de demonstração foi preservado fora do repositório, em uma pasta local de backup, com integridade SQLite conferida e seis árvores. Também permanece separado no armazenamento interno do aplicativo. O aplicativo cria um banco novo no caminho normal, sem converter ou sobrescrever esse backup. Não se deve reapresentar o schema 12 como versão vigente no TCC.
 
 ### Validação após restaurar o combinado
 
