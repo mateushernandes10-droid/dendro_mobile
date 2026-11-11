@@ -22,7 +22,7 @@ Revisão em 29/09/2026. “Implementado” indica existência no código, não v
 | RF-014 | Persistir localmente | Implementado com SQLite/Drift. |
 | RF-015 | Exibir progresso da coleta | Implementado: parcelas pendentes, em andamento e coletadas; contagens e retomada. |
 | RF-016 | Exportar | Implementado: PDF, CSV, XLSX, CSV bruto, XLSX bruto e KML; KMZ e XLS binário não implementados. |
-| RF-017 | Gerenciar levantamentos | Implementado: planejamento, início/retomada, conclusão, edição do contexto de talhões e exclusão. Coletas ativas da mesma propriedade são reunidas; pode haver atividade simultânea em propriedades distintas. |
+| RF-017 | Gerenciar levantamentos | Implementado: planejamento, início/retomada, conclusão, edição do contexto de talhões e exclusão. A conclusão fica disponível somente no detalhe do levantamento, onde são executados os avisos de parcelas abertas e a avaliação de suficiência amostral. Coletas ativas da mesma propriedade são reunidas; pode haver atividade simultânea em propriedades distintas. |
 | RF-018 | Retomada rápida | Implementado: Início apresenta acesso ao levantamento ativo mais recente e ao talhão em foco. |
 | RF-019 | Navegação principal | Implementado: Início, Levantamentos, Propriedades, Resultados e Ajustes. |
 | RF-020 | Geolocalização | Implementado na coleta com permissão do dispositivo, coordenada opcional de árvore e associação explícita a P1–P4 da parcela. Não mede contorno do talhão nem distribui parcelas automaticamente. |

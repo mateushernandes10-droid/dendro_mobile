@@ -101,7 +101,7 @@ Exporta a representação geográfica a partir das coordenadas registradas nas �
 Painel permite propriedade, espécie e talhões; exige propriedade ou espécie como filtro base. Alterar filtros modifica a consulta, não os dados. O escopo histórico do painel difere da seleção mais recente por talhão na exportação por propriedade.
 
 ## BR-025 — Estados de parcela
-pendente, emAndamento e coletada. Registrar árvores inicia/atualiza a coleta; finalizar parcela é ação explícita. Sair da tela preserva árvores já salvas. O situacao do levantamento é separado do situacao das parcelas. Ao encerrar um levantamento com parcelas abertas, um primeiro aviso informa que elas serão preservadas, porém desconsideradas nos cálculos; depois da confirmação, a suficiência é sempre exibida antes da decisão final.
+pendente, emAndamento e coletada. Registrar árvores inicia/atualiza a coleta; finalizar parcela é ação explícita. Sair da tela preserva árvores já salvas. O situacao do levantamento é separado do situacao das parcelas. O encerramento do levantamento está disponível somente na tela de detalhe do levantamento. Se houver parcelas abertas, um primeiro aviso informa que elas serão preservadas, porém desconsideradas nos cálculos; depois da confirmação, a suficiência é sempre exibida antes da decisão final.
 
 ## BR-026 — Sequência de árvores
 O próximo número é o maior número existente na parcela mais um; com parcela vazia, começa em 1. Exclusão não renumera as demais árvores, mas excluir o maior número pode permitir reutilizá-lo depois. Salvar grava e recolhe o formulário; Próxima grava e prepara novo registro.

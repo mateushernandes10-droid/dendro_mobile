@@ -7,7 +7,6 @@ import '../../../nucleo/banco/banco_dendro.dart';
 import '../../../compartilhado/componentes/componentes_dendro.dart';
 import '../../levantamentos/dados/repositorio_levantamentos.dart';
 import '../../levantamentos/apresentacao/tela_detalhe_levantamento.dart';
-import '../../levantamentos/apresentacao/componentes/confirmacao_encerramento_levantamento.dart';
 import '../../estrutura/apresentacao/navegacao_estrutura_dendro.dart';
 import '../../coleta_arvores/apresentacao/tela_coleta_arvores.dart';
 import '../dados/repositorio_parcelas.dart';
@@ -60,8 +59,6 @@ class TelaParcelasTalhao extends ConsumerWidget {
             aoAdicionar: () => _abrirParcelaFormulario(context, ref, dados),
             aoIniciarLevantamento: () =>
                 _iniciarLevantamento(context, ref, dados),
-            aoConcluirLevantamento: () =>
-                _confirmarConcluirLevantamento(context, ref, dados),
             aoAbrirResultados: () => _abrirResultados(context, dados),
             aoAbrirParcela: (resumo) => _abrirParcela(context, ref, resumo),
             aoEditarParcela: (resumo) =>
@@ -76,52 +73,6 @@ class TelaParcelasTalhao extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _confirmarConcluirLevantamento(
-    BuildContext context,
-    WidgetRef ref,
-    EstadoParcelasTalhao estado,
-  ) async {
-    final levantamento = estado.atualLevantamento;
-    if (levantamento == null ||
-        levantamento.situacao != SituacaoLevantamento.emAndamento) {
-      return;
-    }
-
-    final repositorio = ref.read(provedorRepositorioLevantamentos);
-    final resumo = await repositorio.observarPorId(levantamento.id).first;
-    if (resumo == null || !context.mounted) return;
-    final confirmado = await confirmarEncerramentoLevantamento(
-      context: context,
-      repositorio: repositorio,
-      resumo: resumo,
-    );
-
-    if (!confirmado || !context.mounted) return;
-
-    try {
-      await ref
-          .read(provedorRepositorioLevantamentos)
-          .concluirLevantamento(levantamento.id);
-      ref.invalidate(provedorLevantamentosAtivos);
-      ref.invalidate(provedorLevantamentoAtivo);
-      ref.invalidate(provedorLevantamentoDetalhe(levantamento.id));
-      _invalidarParcelas(ref);
-
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Levantamento encerrado.')));
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: Colors.red.shade700,
-          content: const Text('Não foi possível encerrar o levantamento.'),
-        ),
-      );
-    }
   }
 
   Future<void> _iniciarLevantamento(
@@ -303,7 +254,6 @@ class _ParcelasCorpo extends StatelessWidget {
     required this.mostrarIniciarLevantamentoAcao,
     required this.aoAdicionar,
     required this.aoIniciarLevantamento,
-    required this.aoConcluirLevantamento,
     required this.aoAbrirResultados,
     required this.aoAbrirParcela,
     required this.aoEditarParcela,
@@ -314,7 +264,6 @@ class _ParcelasCorpo extends StatelessWidget {
   final bool mostrarIniciarLevantamentoAcao;
   final VoidCallback aoAdicionar;
   final VoidCallback aoIniciarLevantamento;
-  final VoidCallback aoConcluirLevantamento;
   final VoidCallback aoAbrirResultados;
   final ValueChanged<ParcelaResumo> aoAbrirParcela;
   final ValueChanged<ParcelaResumo> aoEditarParcela;
@@ -330,11 +279,6 @@ class _ParcelasCorpo extends StatelessWidget {
         _TalhaoResumoCartao(
           estado: estado,
           aoAbrirResultados: aoAbrirResultados,
-          aoConcluirLevantamento:
-              estado.atualLevantamento?.situacao ==
-                  SituacaoLevantamento.emAndamento
-              ? aoConcluirLevantamento
-              : null,
         ),
         if (mostrarIniciarLevantamentoAcao) ...[
           const SizedBox(height: 12),
@@ -376,12 +320,10 @@ class _TalhaoResumoCartao extends StatelessWidget {
   const _TalhaoResumoCartao({
     required this.estado,
     required this.aoAbrirResultados,
-    this.aoConcluirLevantamento,
   });
 
   final EstadoParcelasTalhao estado;
   final VoidCallback aoAbrirResultados;
-  final VoidCallback? aoConcluirLevantamento;
 
   @override
   Widget build(BuildContext context) {
@@ -416,22 +358,6 @@ class _TalhaoResumoCartao extends StatelessWidget {
                 tooltip: 'Resultados',
                 visualDensity: VisualDensity.compact,
               ),
-              if (aoConcluirLevantamento != null) ...[
-                const SizedBox(width: 10),
-                Tooltip(
-                  message: 'Encerrar levantamento',
-                  child: FilledButton.icon(
-                    onPressed: aoConcluirLevantamento,
-                    icon: const Icon(Icons.check_circle_outline, size: 18),
-                    label: const Text('Encerrar'),
-                    style: FilledButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      minimumSize: const Size(0, 36),
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
           const SizedBox(height: 12),

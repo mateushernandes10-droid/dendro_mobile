@@ -269,6 +269,8 @@ void main() {
 
     expect(find.text('Parcelas'), findsWidgets);
     expect(find.text('Talhões do levantamento'), findsNothing);
+    expect(find.text('Encerrar'), findsNothing);
+    expect(find.byTooltip('Encerrar levantamento'), findsNothing);
 
     await testador.pumpWidget(const SizedBox.shrink());
     await testador.pump(const Duration(milliseconds: 1));

@@ -24,7 +24,7 @@ A exportação bruta CSV mantém uma linha por árvore e inclui campos auxiliare
 
 A tela Novo levantamento reutiliza o formulário de propriedade. Ao salvar, a nova propriedade passa a estar disponível para seleção.
 
-Resultados e suficiência usam somente parcelas explicitamente finalizadas. Se houver parcelas abertas ao encerrar o levantamento, o primeiro aviso explica sua exclusão dos cálculos; depois, um segundo diálogo sempre apresenta parcelas registradas e utilizadas, erro atual, erro desejado, quantidade estimada, parcelas adicionais e situação. O encerramento continua permitido mediante confirmação. O painel de resultados repete esses indicadores em um cartão permanente para cada talhão selecionado, usando a mesma calculadora estatística do encerramento.
+Resultados e suficiência usam somente parcelas explicitamente finalizadas. O levantamento só pode ser encerrado pela tela de detalhe do levantamento. Se houver parcelas abertas, o primeiro aviso explica sua exclusão dos cálculos; depois, um segundo diálogo sempre apresenta parcelas registradas e utilizadas, erro atual, erro desejado, quantidade estimada, parcelas adicionais e situação. O encerramento continua permitido mediante confirmação. O painel de resultados repete esses indicadores em um cartão permanente para cada talhão selecionado, usando a mesma calculadora estatística do encerramento.
 
 ## Banco de dados
 
