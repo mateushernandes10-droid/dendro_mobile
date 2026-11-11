@@ -457,6 +457,10 @@ class RepositorioParcelas {
     return _proximaIdentificacaoParcelaDoTalhao(talhaoLevantamento.talhaoId);
   }
 
+  Future<String> proximaIdentificacaoParcelaDoTalhao(int talhaoId) {
+    return _proximaIdentificacaoParcelaDoTalhao(talhaoId);
+  }
+
   Future<String> _proximaIdentificacaoParcelaDoTalhao(int talhaoId) async {
     final existente = await (_bancoDados.select(_bancoDados.parcelas).join([
       innerJoin(

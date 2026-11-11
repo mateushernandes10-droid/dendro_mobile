@@ -181,8 +181,8 @@ class TelaParcelasTalhao extends ConsumerWidget {
     WidgetRef ref,
     EstadoParcelasTalhao estado, {
     ParcelaResumo? resumo,
-  }) async {
-    final mensagem = await showModalBottomSheet<String>(
+  }) {
+    return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -193,11 +193,6 @@ class TelaParcelasTalhao extends ConsumerWidget {
         resumo: resumo,
       ),
     );
-
-    if (mensagem == null || !context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   Future<void> _confirmarExcluirParcela(
@@ -719,7 +714,8 @@ class _ParcelaFormularioPainelEstado
   late final TextEditingController _identificacaoControlador;
   late final TextEditingController _areaControlador;
   bool _salvando = false;
-  String? _erroSalvar;
+  String? _mensagemAviso;
+  bool _avisoErro = false;
 
   bool get _estaEditando => widget.resumo != null;
 
@@ -776,6 +772,57 @@ class _ParcelaFormularioPainelEstado
                   ),
                 ],
               ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: _mensagemAviso == null
+                    ? const SizedBox.shrink()
+                    : Container(
+                        key: ValueKey('$_avisoErro:$_mensagemAviso'),
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(top: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _avisoErro
+                              ? Theme.of(context).colorScheme.errorContainer
+                              : CoresDendro.principalSuave,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _avisoErro
+                                ? Theme.of(context).colorScheme.error
+                                : CoresDendro.escuroLegivelBorda,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _avisoErro
+                                  ? Icons.error_outline
+                                  : Icons.check_circle_outline,
+                              color: _avisoErro
+                                  ? Theme.of(context).colorScheme.error
+                                  : CoresDendro.principal,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _mensagemAviso!,
+                                style: TextStyle(
+                                  color: _avisoErro
+                                      ? Theme.of(
+                                          context,
+                                        ).colorScheme.onErrorContainer
+                                      : CoresDendro.principal,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _identificacaoControlador,
@@ -800,27 +847,6 @@ class _ParcelaFormularioPainelEstado
                 ),
                 validator: _validarArea,
               ),
-              if (_erroSalvar != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _erroSalvar!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
@@ -849,11 +875,11 @@ class _ParcelaFormularioPainelEstado
 
     setState(() {
       _salvando = true;
-      _erroSalvar = null;
+      _mensagemAviso = null;
     });
     final repositorio = ref.read(provedorRepositorioParcelas);
     final areaHa = _interpretarOpcionalArea(_areaControlador.text);
-    var formularioFechado = false;
+    final identificacaoSalva = _identificacaoControlador.text;
 
     try {
       if (_estaEditando) {
@@ -880,19 +906,34 @@ class _ParcelaFormularioPainelEstado
       } else {
         ref.invalidate(provedorParcelasTalhaoLevantamento(vinculoId));
       }
-      formularioFechado = true;
-      Navigator.of(
-        context,
-      ).pop(_estaEditando ? 'Parcela atualizada.' : 'Parcela cadastrada.');
+
+      String? proximaIdentificacao;
+      if (!_estaEditando) {
+        proximaIdentificacao = vinculoId == null
+            ? await repositorio.proximaIdentificacaoParcelaDoTalhao(
+                widget.talhaoId,
+              )
+            : await repositorio.proximaIdentificacaoParcela(vinculoId);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _salvando = false;
+        _avisoErro = false;
+        _mensagemAviso = _estaEditando
+            ? 'Parcela atualizada.'
+            : 'Parcela $identificacaoSalva cadastrada.';
+        if (proximaIdentificacao != null) {
+          _identificacaoControlador.text = proximaIdentificacao;
+        }
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _erroSalvar = 'Não foi possível salvar a parcela.';
+        _salvando = false;
+        _avisoErro = true;
+        _mensagemAviso = 'Não foi possível salvar a parcela.';
       });
-    } finally {
-      if (mounted && !formularioFechado) {
-        setState(() => _salvando = false);
-      }
     }
   }
 

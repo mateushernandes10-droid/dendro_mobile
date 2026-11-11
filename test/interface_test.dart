@@ -278,8 +278,14 @@ void main() {
 
     await testador.tap(find.widgetWithText(ElevatedButton, 'Cadastrar'));
     await testador.pumpAndSettle();
-    expect(find.text('Cadastrar parcela'), findsNothing);
-    expect(find.text('Parcela cadastrada.'), findsOneWidget);
+    expect(find.text('Cadastrar parcela'), findsOneWidget);
+    expect(find.text('Parcela P02 cadastrada.'), findsOneWidget);
+    expect(find.text('P03'), findsOneWidget);
+
+    await testador.tap(find.widgetWithText(ElevatedButton, 'Cadastrar'));
+    await testador.pumpAndSettle();
+    expect(find.text('Parcela P03 cadastrada.'), findsOneWidget);
+    expect(find.text('P04'), findsOneWidget);
 
     await testador.pumpWidget(const SizedBox.shrink());
     await testador.pump(const Duration(milliseconds: 1));
