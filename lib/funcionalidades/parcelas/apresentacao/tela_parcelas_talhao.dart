@@ -181,8 +181,8 @@ class TelaParcelasTalhao extends ConsumerWidget {
     WidgetRef ref,
     EstadoParcelasTalhao estado, {
     ParcelaResumo? resumo,
-  }) {
-    return showModalBottomSheet<void>(
+  }) async {
+    final mensagem = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -193,6 +193,11 @@ class TelaParcelasTalhao extends ConsumerWidget {
         resumo: resumo,
       ),
     );
+
+    if (mensagem == null || !context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   Future<void> _confirmarExcluirParcela(
@@ -714,6 +719,7 @@ class _ParcelaFormularioPainelEstado
   late final TextEditingController _identificacaoControlador;
   late final TextEditingController _areaControlador;
   bool _salvando = false;
+  String? _erroSalvar;
 
   bool get _estaEditando => widget.resumo != null;
 
@@ -794,6 +800,27 @@ class _ParcelaFormularioPainelEstado
                 ),
                 validator: _validarArea,
               ),
+              if (_erroSalvar != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _erroSalvar!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
@@ -820,9 +847,13 @@ class _ParcelaFormularioPainelEstado
   Future<void> _salvar() async {
     if (!_chaveFormulario.currentState!.validate()) return;
 
-    setState(() => _salvando = true);
+    setState(() {
+      _salvando = true;
+      _erroSalvar = null;
+    });
     final repositorio = ref.read(provedorRepositorioParcelas);
     final areaHa = _interpretarOpcionalArea(_areaControlador.text);
+    var formularioFechado = false;
 
     try {
       if (_estaEditando) {
@@ -849,21 +880,19 @@ class _ParcelaFormularioPainelEstado
       } else {
         ref.invalidate(provedorParcelasTalhaoLevantamento(vinculoId));
       }
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _estaEditando ? 'Parcela atualizada.' : 'Parcela cadastrada.',
-          ),
-        ),
-      );
+      formularioFechado = true;
+      Navigator.of(
+        context,
+      ).pop(_estaEditando ? 'Parcela atualizada.' : 'Parcela cadastrada.');
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível salvar a parcela.')),
-      );
+      setState(() {
+        _erroSalvar = 'Não foi possível salvar a parcela.';
+      });
     } finally {
-      if (mounted) setState(() => _salvando = false);
+      if (mounted && !formularioFechado) {
+        setState(() => _salvando = false);
+      }
     }
   }
 

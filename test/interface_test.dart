@@ -272,6 +272,15 @@ void main() {
     expect(find.text('Encerrar'), findsNothing);
     expect(find.byTooltip('Encerrar levantamento'), findsNothing);
 
+    await testador.tap(find.byTooltip('Nova parcela'));
+    await testador.pumpAndSettle();
+    expect(find.text('Cadastrar parcela'), findsOneWidget);
+
+    await testador.tap(find.widgetWithText(ElevatedButton, 'Cadastrar'));
+    await testador.pumpAndSettle();
+    expect(find.text('Cadastrar parcela'), findsNothing);
+    expect(find.text('Parcela cadastrada.'), findsOneWidget);
+
     await testador.pumpWidget(const SizedBox.shrink());
     await testador.pump(const Duration(milliseconds: 1));
   });
