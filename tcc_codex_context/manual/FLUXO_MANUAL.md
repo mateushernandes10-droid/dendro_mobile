@@ -4,30 +4,31 @@ Verificação original: 15/09/2026. Atualização visual complementar: 12/11/202
 
 ## Situação da validação
 
-O aplicativo foi compilado e executado no emulador Android Dendro_API_36, em orientação vertical, com capturas PNG de 1080 × 1920. Na sessão original de capturas foram cadastrados propriedade, talhão, levantamento, duas parcelas e seis árvores. As parcelas e o levantamento foram concluídos; resultados e salvamento de PDF foram conferidos. O aplicativo também foi reaberto com os dados preservados.
+O aplicativo foi compilado e executado no emulador Android Dendro_Tablet_API_36, em orientação vertical, com capturas PNG de 1080 × 1920. Todas as telas deste roteiro foram recapturadas em 12/11/2026 usando a implementação vigente.
 
 As imagens são capturas reais, sem montagem ou alteração da interface. A numeração identifica as telas; a ordem didática é a das etapas abaixo. Telas extensas têm capturas complementares após rolagem. O índice completo está em [INDICE_CAPTURAS.md](INDICE_CAPTURAS.md). A falha anterior foi separada em `diagnostico/01_abertura_erro.png`.
 
-As imagens 33 a 40 complementam a sessão original e registram as funcionalidades posteriores de suficiência amostral e backup/restauração. Para tornar o cálculo visível, foi carregado temporariamente no emulador um conjunto validado de Pinus com 11 parcelas finalizadas e 405 árvores. O banco e a resolução do tablet foram restaurados exatamente ao estado anterior depois das capturas. Essas oito imagens não devem ser interpretadas como continuação do exemplo fictício de seis árvores descrito abaixo.
+O conjunto atual usa Fazenda esperana, talhao 1 e Pinus. Há um levantamento concluído com 11 parcelas e 405 árvores para demonstrar resultados e suficiência, além de um levantamento em andamento usado nos formulários. Para registrar a coleta, foi criada temporariamente a parcela P13 com uma árvore de DAP 25,0 cm e altura 20,0 m. O banco e a resolução do tablet foram restaurados exatamente ao estado anterior depois das capturas.
 
 GPS: a interface foi capturada, mas a obtenção de coordenada não teve sucesso no emulador utilizado. Ver [SCREENSHOTS_PENDENTES.md](SCREENSHOTS_PENDENTES.md). Formulários opcionais de espécie/fórmula e menus de edição/exclusão foram inspecionados; isso não representa teste de todas as operações disponíveis.
 
 ## Versão vigente e origem das capturas
 
-O projeto utiliza **schema 1, sem migrações legadas**. A alteração temporária para schema 12 foi revertida conforme o combinado. As imagens e o PDF foram preservados da sessão anterior; a interface e os cálculos permanecem iguais, mas uma instalação nova inclui também Fator de Forma no catálogo. O banco de demonstração está em backup e o emulador foi preparado com banco novo. Ver [RELATORIO_VERIFICACAO.md](RELATORIO_VERIFICACAO.md).
+O projeto utiliza **schema 1, sem migrações legadas**. As 47 imagens representam a compilação atual e incluem Fator de Forma, Modelo de Spurr e Schumacher-Hall. Ver [RELATORIO_VERIFICACAO.md](RELATORIO_VERIFICACAO.md).
 
 ## Dados fictícios utilizados
 
-Fazenda Modelo — Frederico Westphalen/RS — 50 ha; **Talhao 01** — Pinus — 10 ha; referência de parcelas de 20 × 20 m. A área foi preenchida explicitamente como **0,04 ha** em cada parcela. Nomes gerados pelo aplicativo: **P01** e **P02**; três árvores em cada uma.
+Fazenda esperana — Frederico/RS — 50 ha; **talhao 1** — Pinus — 23,46 ha; referência de parcelas de 20 × 30 m. O levantamento concluído possui 11 parcelas de **0,06 ha** e 405 árvores.
 
-| Parcela | Árvore 1: DAP/altura | Árvore 2: DAP/altura | Árvore 3: DAP/altura |
-|---|---|---|---|
-| P01 | 25 cm / 20 m | 28 cm / 22 m | 30 cm / 23 m |
-| P02 | 24 cm / 19 m | 27 cm / 21 m | 29 cm / 22 m |
+| Parcela | Árvores | Área | Situação |
+|---|---:|---:|---|
+| P01 | 45 | 0,06 ha | Coletada |
+| P02 | 32 | 0,06 ha | Coletada |
+| P13 temporária | 1 (DAP 25,0 cm; altura 20,0 m) | 0,06 ha | Coletada durante as capturas |
 
-Modelo utilizado: Spurr, com os coeficientes já existentes no catálogo migrado: `a = 0,0175858265880592` e `b = 0,0000329326161133665`. Esses valores servem apenas para reproduzir esta demonstração. Ano de plantio não informado; nenhum ponto GPS salvo.
+Os levantamentos demonstrados usam Spurr e Fator de Forma conforme a configuração salva em cada evento. Os coeficientes existentes servem apenas para reproduzir a demonstração. Nenhum ponto GPS foi salvo.
 
-As imagens registram momentos diferentes da mesma demonstração: parcelas pendentes, coleta parcial e conclusão. A imagem 02 mostra o Início **após a conclusão**, sem coleta aberta; seus indicadores zerados não significam que os dados do levantamento foram apagados. A imagem 04 foi refeita preenchendo o formulário e cancelando, para não duplicar a propriedade já cadastrada.
+As imagens registram momentos diferentes da demonstração: levantamento aberto, cadastro temporário, coleta, conclusão, resultados e backup. A imagem 02 mostra o Início sem coleta aberta; a imagem 02b mostra o estado com levantamento em andamento. Formulários de cadastros adicionais foram fechados sem salvar duplicatas.
 
 ## 1. Abrir o aplicativo
 
@@ -76,14 +77,14 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Tela:** Propriedades.
 - **Screenshot:** `screenshots/03_propriedades.png`.
 - **Ações:** Abrir Propr. Usar busca e Filtros quando necessário.
-- **Resultado esperado:** Localizar Fazenda Modelo.
+- **Resultado esperado:** Localizar Fazenda esperana.
 
 ## 7. Cadastrar propriedade
 
 - **Objetivo:** Cadastrar propriedade.
 - **Tela:** Nova propriedade (painel).
 - **Screenshot:** `screenshots/04_nova_propriedade.png`.
-- **Ações:** Em Propr., tocar em Nova propriedade (+). Informar Fazenda Modelo, Frederico Westphalen, RS e 50 ha; confirmar o cadastro.
+- **Ações:** Em Propr., tocar em Nova propriedade (+) e conferir os campos. Na produção das capturas, o formulário foi fechado sem salvar outra propriedade.
 - **Resultado esperado:** Propriedade aparece na lista.
 
 ## 8. Consultar a propriedade
@@ -91,7 +92,7 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Objetivo:** Consultar a propriedade.
 - **Tela:** Detalhe da propriedade.
 - **Screenshot:** `screenshots/05_detalhe_propriedade.png`.
-- **Ações:** Abrir Fazenda Modelo na lista.
+- **Ações:** Abrir Fazenda esperana na lista.
 - **Resultado esperado:** Consultar os dados da propriedade e seus talhões.
 
 ## 9. Cadastrar talhão
@@ -99,7 +100,7 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Objetivo:** Cadastrar talhão.
 - **Tela:** Novo talhão (painel).
 - **Screenshot:** `screenshots/06_novo_talhao.png`.
-- **Ações:** Na propriedade, tocar em Novo talhão. Informar Talhao 01, Pinus e 10 ha. Preencher dimensões de parcela de 20 × 20 m e salvar. Ano, espaçamento, manejo e observação são opcionais.
+- **Ações:** Na propriedade, tocar em Novo talhão e conferir identificação, espécie, área, ano, dimensões de parcela e observação. O formulário foi fechado sem salvar outro talhão.
 - **Resultado esperado:** Talhão cadastrado na propriedade; dimensões servem de referência para parcelas.
 
 ## 10. Consultar e editar talhões
@@ -107,7 +108,7 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Objetivo:** Consultar e editar talhões.
 - **Tela:** Detalhe da propriedade / ações do talhão.
 - **Screenshot:** `screenshots/07_talhoes.png`.
-- **Ações:** Consultar o cartão de Talhao 01. Usar Ações para editar seu cadastro; abrir o talhão para consultar parcelas.
+- **Ações:** Consultar o cartão de talhao 1. Usar Ações para editar seu cadastro; abrir o talhão para consultar parcelas.
 - **Resultado esperado:** Cadastro permanente consultável; edição disponível em painel.
 
 ## 11. Consultar levantamentos
@@ -123,7 +124,7 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Objetivo:** Iniciar levantamento.
 - **Tela:** Novo levantamento.
 - **Screenshot:** `screenshots/11_novo_levantamento.png`.
-- **Ações:** Em Levant., tocar em Novo levantamento (+). Localizar Fazenda Modelo e Talhao 01; conferir a configuração antes de iniciar.
+- **Ações:** Em Levant., tocar em Novo levantamento (+). Localizar Fazenda esperana e talhao 1; conferir a configuração antes de iniciar.
 - **Resultado esperado:** Selecionar o talhão que será medido.
 
 ## 13. Selecionar modelo e coeficientes
@@ -147,7 +148,7 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Objetivo:** Consultar parcelas.
 - **Tela:** Parcelas.
 - **Screenshot:** `screenshots/14_parcelas.png`.
-- **Ações:** No detalhe do levantamento em andamento, rolar até Talhao 01 e tocar em Abrir parcelas (imagem 13b).
+- **Ações:** No detalhe do levantamento em andamento, rolar até talhao 1 e tocar em Abrir parcelas (imagem 13b).
 - **Resultado esperado:** Listar parcelas do talhão naquele evento.
 
 ## 16. Cadastrar ou editar parcela
@@ -155,8 +156,8 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Objetivo:** Cadastrar ou editar parcela.
 - **Tela:** Cadastrar parcela / Editar área (painel).
 - **Screenshot:** `screenshots/15_nova_parcela.png`.
-- **Ações:** Em Parcelas, tocar em Nova parcela (+). Conferir identificação automática e preencher a área de 0,04 ha; cadastrar. Repetir para a segunda parcela. Para corrigir, usar Ações → Editar área.
-- **Resultado esperado:** Duas parcelas de 400 m²; identificação não é editável no formulário.
+- **Ações:** Em Parcelas, tocar em Nova parcela (+). Conferir identificação automática e a área padrão de 0,06 ha; cadastrar. Para corrigir, usar Ações → Editar área.
+- **Resultado esperado:** Parcela identificada automaticamente; identificação não é editável no formulário.
 
 ## 17. Abrir coleta
 
@@ -171,7 +172,7 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Objetivo:** Registrar árvores.
 - **Tela:** Coleta da parcela.
 - **Screenshot:** `screenshots/17_arvore_registrada.png`.
-- **Ações:** Informar DAP 25 cm e altura 20 m; Salvar. Usar Próxima para salvar e continuar a sequência. Acrescentar 28 cm/22 m e 30 cm/23 m. Na segunda parcela, usar 24 cm/19 m, 27 cm/21 m e 29 cm/22 m.
+- **Ações:** Informar DAP 25,0 cm e altura 20,0 m; Salvar. Usar Próxima quando for necessário salvar e continuar a sequência.
 - **Resultado esperado:** Árvores numeradas automaticamente dentro de cada parcela e medidas exibidas na lista.
 
 ## 19. Capturar coordenada opcional
@@ -195,14 +196,14 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Objetivo:** Encerrar parcela.
 - **Tela:** Coleta da parcela / Parcelas.
 - **Screenshot:** `screenshots/19_parcela_coletada.png`.
-- **Ações:** Conferir árvores, tocar em Encerrar parcela e confirmar Encerrar. Repetir na outra parcela.
-- **Resultado esperado:** Marcar parcela como coletada, atualizar contadores e retornar automaticamente à lista de parcelas. A confirmação aparece na imagem 19a; a imagem 19 mostra as duas parcelas coletadas após concluir também o levantamento.
+- **Ações:** Conferir a árvore, tocar em Encerrar parcela e confirmar Encerrar.
+- **Resultado esperado:** Marcar P13 como coletada e atualizar os contadores. A confirmação aparece na imagem 19a; a imagem 19 mostra o estado concluído da parcela.
 
 ## 22. Concluir levantamento
 
 - **Objetivo:** Concluir levantamento.
 - **Tela:** Encerrar levantamento (diálogo).
-- **Screenshots:** `screenshots/29_encerrar_levantamento.png` (registro histórico) e `screenshots/34_suficiencia_encerramento.png` (fluxo atual).
+- **Screenshots:** `screenshots/29_encerrar_levantamento.png` e `screenshots/34_suficiencia_encerramento.png` (mesmo fluxo atual de validação).
 - **Ações:** Após encerrar as parcelas, abrir o detalhe do levantamento e acionar encerramento; conferir erro atual, erro máximo desejado, parcelas estimadas, recomendação adicional e situação. Confirmar somente após avaliar esses dados.
 - **Resultado esperado:** Sempre apresentar a suficiência amostral antes da decisão final. Parcelas abertas são avisadas e desconsideradas dos cálculos; ainda é possível finalizar mediante confirmação.
 
@@ -219,8 +220,8 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Objetivo:** Consultar resultados.
 - **Tela:** Resultados.
 - **Screenshot:** `screenshots/20_resultados.png`.
-- **Ações:** Abrir Result. e selecionar Fazenda Modelo ou Pinus como filtro base; selecionar Talhao 01.
-- **Resultado esperado:** Exibir indicadores e classes de diâmetro (imagem 20b). Nesta demonstração: 6 árvores, 0,08 ha medidos, DAP médio 27,2 cm, altura média 21,2 m e volume estimado de 405,10 m³ para o talhão de 10 ha.
+- **Ações:** Abrir Result. e selecionar Fazenda esperana ou Pinus como filtro base; selecionar talhao 1.
+- **Resultado esperado:** Exibir indicadores e classes de diâmetro (imagem 20b). Nesta demonstração: 405 árvores, 0,66 ha medidos, DAP médio 27,7 cm, altura média 22,3 m e volume estimado total de 9.943,82 m³.
 
 ## 25. Filtrar resultados
 
@@ -358,7 +359,7 @@ A lista de talhões está incorporada ao detalhe da propriedade e ao detalhe do 
 - Há valores padrão no calculador para Spurr/Schumacher-Hall e estimativa de altura; a coleta exige medidas válidas. Os padrões existentes não comprovam adequação à espécie/região. Não foram alterados coeficientes nem fórmulas.
 - A expressão implementada de Fator de Forma é `(pi / 4) * (D / 100)^2 * H * ff`, usando a área basal circular calculada a partir do DAP. O fator `ff` deve ser tecnicamente definido para o contexto do levantamento.
 - Exportações disponíveis: Relatório PDF; Dados e resultados (CSV); Dados brutos (CSV); Dados brutos (XLSX); Planilha (Excel); Coordenadas (Google Earth/KML). KMZ e estimativa econômica não estão implementados.
-- O catálogo das capturas anteriores contém Spurr e Schumacher-Hall. A instalação nova do schema 1 inclui também Fator de Forma. Não usar essas imagens como lista completa do catálogo inicial atual.
+- O catálogo atual contém Fator de Forma, Modelo de Spurr e Schumacher-Hall.
 - GPS depende de serviço de localização e permissão; pontos são documentação geográfica, não medição topográfica validada. A substituição de referência ocupada exige confirmação.
 - Menus permitem exclusões com confirmação. Excluir parcela remove árvores/coordenadas vinculadas; remover talhão do levantamento remove seus dados naquele evento, preservando o cadastro do talhão na propriedade.
 
@@ -368,6 +369,6 @@ Abertura → Início → conferir espécies/modelos em Ajustes → Propriedade �
 
 Alternativa: Propriedade → Talhão → planejar parcelas → iniciar levantamento e aproveitar planejamento. O atalho Novo Levantamento do Início também permite selecionar propriedade/talhão.
 
-## Atualização das imagens do catálogo
+## Atualização integral das imagens
 
-As capturas `09_modelos_matematicos.png` e `08b_modelos_especie.png` foram substituídas por novas imagens reais do schema 1, em 1080 × 1920. Agora mostram Fator de Forma, Modelo de Spurr e Schumacher-Hall. No cadastro de Pinus, os três aparecem vinculados e Spurr permanece como padrão. Nenhuma configuração ou código foi alterado para a captura. As observações anteriores sobre catálogo incompleto aplicam-se às imagens históricas ainda não substituídas, especialmente a imagem 12 da seleção no levantamento.
+As 47 capturas foram substituídas por imagens reais da compilação vigente, em 1080 × 1920. O cadastro de Pinus e a seleção do levantamento mostram os três modelos disponíveis. Formulários e diálogos foram fechados ou cancelados depois da captura; o banco original foi restaurado ao final com verificação SHA-256.
