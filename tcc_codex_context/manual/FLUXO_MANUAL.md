@@ -8,7 +8,7 @@ O aplicativo foi compilado e executado no emulador Android Dendro_API_36, em ori
 
 As imagens são capturas reais, sem montagem ou alteração da interface. A numeração identifica as telas; a ordem didática é a das etapas abaixo. Telas extensas têm capturas complementares após rolagem. O índice completo está em [INDICE_CAPTURAS.md](INDICE_CAPTURAS.md). A falha anterior foi separada em `diagnostico/01_abertura_erro.png`.
 
-As imagens 33 a 39 complementam a sessão original e registram as funcionalidades posteriores de suficiência amostral e backup/restauração. Para tornar o cálculo visível, foi carregado temporariamente no emulador um conjunto validado de Pinus com 11 parcelas finalizadas e 405 árvores. O banco e a resolução do tablet foram restaurados exatamente ao estado anterior depois das capturas. Essas sete imagens não devem ser interpretadas como continuação do exemplo fictício de seis árvores descrito abaixo.
+As imagens 33 a 40 complementam a sessão original e registram as funcionalidades posteriores de suficiência amostral e backup/restauração. Para tornar o cálculo visível, foi carregado temporariamente no emulador um conjunto validado de Pinus com 11 parcelas finalizadas e 405 árvores. O banco e a resolução do tablet foram restaurados exatamente ao estado anterior depois das capturas. Essas oito imagens não devem ser interpretadas como continuação do exemplo fictício de seis árvores descrito abaixo.
 
 GPS: a interface foi capturada, mas a obtenção de coordenada não teve sucesso no emulador utilizado. Ver [SCREENSHOTS_PENDENTES.md](SCREENSHOTS_PENDENTES.md). Formulários opcionais de espécie/fórmula e menus de edição/exclusão foram inspecionados; isso não representa teste de todas as operações disponíveis.
 
@@ -289,10 +289,10 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 ## 33. Conferir o erro amostral configurado
 
 - **Objetivo:** Identificar o limite usado na avaliação da amostragem.
-- **Tela:** Detalhe do levantamento.
-- **Screenshot:** `screenshots/33_erro_amostral_configuracao.png`.
-- **Ações:** Abrir Levant. → levantamento em andamento e localizar o cartão do talhão.
-- **Resultado esperado:** Exibir espécie, modelo selecionado e erro máximo desejado, inicialmente 3,0%.
+- **Telas:** Cadastro do talhão e detalhe do levantamento.
+- **Screenshots:** `screenshots/40_erro_amostral_cadastro_talhao.png` e `screenshots/33_erro_amostral_configuracao.png`.
+- **Ações:** Em Novo levantamento, tocar em Novo talhão e conferir o campo Erro amostral máximo (%). Depois, abrir o levantamento em andamento e localizar o cartão do talhão.
+- **Resultado esperado:** Preencher inicialmente 3,0% no cadastro e exibir o mesmo limite no cartão do talhão após a configuração.
 
 ## 34. Avaliar a suficiência antes de encerrar
 

@@ -5,7 +5,7 @@ Verificação original: 15/09/2026. Atualização visual complementar: 12/11/202
 ## Entrega
 
 - Aplicativo compilado, instalado e executado no emulador **Dendro_API_36**, Android API 36.
-- **46 screenshots do fluxo**, em PNG, 1080 × 1920, orientação vertical; mais **1 screenshot de diagnóstico** anterior à correção, separado do fluxo.
+- **47 screenshots do fluxo**, em PNG, 1080 × 1920, orientação vertical; mais **1 screenshot de diagnóstico** anterior à correção, separado do fluxo.
 - Todas as 25 telas principais da solicitação estão representadas. Algumas são painéis ou partes de outras telas, conforme explicado no roteiro.
 - Inventário fictício realizado: Fazenda Modelo, Talhao 01, Pinus, duas parcelas de 0,04 ha, seis árvores; parcelas e levantamento concluídos.
 - Relatório PDF salvo pelo seletor nativo do Android, copiado sem alteração para esta pasta e conferido em suas duas páginas.
@@ -98,4 +98,4 @@ Adicionada `screenshots/02b_inicio_levantamento_aberto.png`, captura real no sch
 
 ## Complemento de 12/11/2026: suficiência e backup
 
-Foram adicionadas as imagens 33 a 39, todas reais e em 1080 × 1920. As telas 33 a 35 usam temporariamente um conjunto validado de Pinus com 11 parcelas finalizadas, 405 árvores, erro atual de 5,9% e limite desejado de 3,0%. As telas 36 a 39 documentam Ajustes, Backup e Restauração, confirmação da criação e aviso anterior à restauração. A restauração não foi confirmada. O backup criado apenas para a captura foi removido e o banco do emulador foi devolvido ao estado anterior, com igualdade SHA-256 entre a cópia anterior e o banco restaurado.
+Foram adicionadas as imagens 33 a 40, todas reais e em 1080 × 1920. As telas 33 a 35 usam temporariamente um conjunto validado de Pinus com 11 parcelas finalizadas, 405 árvores, erro atual de 5,9% e limite desejado de 3,0%. A tela 40 registra o campo Erro amostral máximo (%) no cadastro de um novo talhão, preenchido por padrão em 3,0%. As telas 36 a 39 documentam Ajustes, Backup e Restauração, confirmação da criação e aviso anterior à restauração. A restauração não foi confirmada. O formulário do talhão foi fechado sem cadastro, o backup criado apenas para a captura foi removido e o banco do emulador foi devolvido ao estado anterior, com igualdade SHA-256 entre a cópia anterior e o banco restaurado.

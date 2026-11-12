@@ -1,6 +1,6 @@
 # Índice das capturas — DENDRO Mobile
 
-46 imagens PNG reais, 1080 × 1920, em orientação vertical. A numeração acompanha a lista de telas solicitadas; para a sequência didática, seguir [FLUXO_MANUAL.md](FLUXO_MANUAL.md). As letras identificam complementos após rolagem ou estados adicionais.
+47 imagens PNG reais, 1080 × 1920, em orientação vertical. A numeração acompanha a lista de telas solicitadas; para a sequência didática, seguir [FLUXO_MANUAL.md](FLUXO_MANUAL.md). As letras identificam complementos após rolagem ou estados adicionais.
 
 | Arquivo | Tela / estado documentado |
 |---|---|
@@ -50,10 +50,11 @@
 | [37_backup_restauracao.png](screenshots/37_backup_restauracao.png) | Tela de proteção dos dados, criação, restauração e lista de backups locais. |
 | [38_backup_criado.png](screenshots/38_backup_criado.png) | Confirmação de backup criado e opção de compartilhar uma cópia. |
 | [39_confirmacao_restauracao.png](screenshots/39_confirmacao_restauracao.png) | Confirmação anterior à restauração, informando substituição dos dados e cópia preventiva. |
+| [40_erro_amostral_cadastro_talhao.png](screenshots/40_erro_amostral_cadastro_talhao.png) | Cadastro de novo talhão no levantamento, com erro amostral máximo preenchido por padrão em 3,0%. |
 
 ## Versão do material
 
-As imagens 08b e 09 foram recapturadas no schema 1 e mostram os três modelos do catálogo atual. As imagens 33 a 39 foram acrescentadas em 12/11/2026 para documentar erro amostral, suficiência e backup/restauração com a implementação vigente. As demais capturas permanecem da demonstração anterior; a imagem 12 registra a seleção histórica de Spurr, com somente dois modelos naquele catálogo. Ver o relatório de verificação para a origem dos dados.
+As imagens 08b e 09 foram recapturadas no schema 1 e mostram os três modelos do catálogo atual. As imagens 33 a 40 foram acrescentadas em 12/11/2026 para documentar erro amostral, suficiência e backup/restauração com a implementação vigente. As demais capturas permanecem da demonstração anterior; a imagem 12 registra a seleção histórica de Spurr, com somente dois modelos naquele catálogo. Ver o relatório de verificação para a origem dos dados.
 
 ## Evidência separada
 
