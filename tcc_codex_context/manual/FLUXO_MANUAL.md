@@ -1,12 +1,14 @@
 # Roteiro do manual — DENDRO Mobile
 
-Verificação: 15/09/2026. Base: código atual de `lib/`. Material para elaboração posterior do manual acadêmico.
+Verificação original: 15/09/2026. Atualização visual complementar: 12/11/2026. Base: código atual de `lib/`. Material para elaboração posterior do manual acadêmico.
 
 ## Situação da validação
 
 O aplicativo foi compilado e executado no emulador Android Dendro_API_36, em orientação vertical, com capturas PNG de 1080 × 1920. Na sessão original de capturas foram cadastrados propriedade, talhão, levantamento, duas parcelas e seis árvores. As parcelas e o levantamento foram concluídos; resultados e salvamento de PDF foram conferidos. O aplicativo também foi reaberto com os dados preservados.
 
 As imagens são capturas reais, sem montagem ou alteração da interface. A numeração identifica as telas; a ordem didática é a das etapas abaixo. Telas extensas têm capturas complementares após rolagem. O índice completo está em [INDICE_CAPTURAS.md](INDICE_CAPTURAS.md). A falha anterior foi separada em `diagnostico/01_abertura_erro.png`.
+
+As imagens 33 a 39 complementam a sessão original e registram as funcionalidades posteriores de suficiência amostral e backup/restauração. Para tornar o cálculo visível, foi carregado temporariamente no emulador um conjunto validado de Pinus com 11 parcelas finalizadas e 405 árvores. O banco e a resolução do tablet foram restaurados exatamente ao estado anterior depois das capturas. Essas sete imagens não devem ser interpretadas como continuação do exemplo fictício de seis árvores descrito abaixo.
 
 GPS: a interface foi capturada, mas a obtenção de coordenada não teve sucesso no emulador utilizado. Ver [SCREENSHOTS_PENDENTES.md](SCREENSHOTS_PENDENTES.md). Formulários opcionais de espécie/fórmula e menus de edição/exclusão foram inspecionados; isso não representa teste de todas as operações disponíveis.
 
@@ -200,9 +202,9 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 
 - **Objetivo:** Concluir levantamento.
 - **Tela:** Encerrar levantamento (diálogo).
-- **Screenshot:** `screenshots/29_encerrar_levantamento.png`.
-- **Ações:** Após encerrar as duas parcelas, abrir o detalhe do levantamento e acionar encerramento; conferir o aviso e confirmar Encerrar.
-- **Resultado esperado:** Marcar levantamento como concluído. A interface também permite confirmar com parcelas abertas ou nenhuma parcela; isso não deve ser o roteiro normal.
+- **Screenshots:** `screenshots/29_encerrar_levantamento.png` (registro histórico) e `screenshots/34_suficiencia_encerramento.png` (fluxo atual).
+- **Ações:** Após encerrar as parcelas, abrir o detalhe do levantamento e acionar encerramento; conferir erro atual, erro máximo desejado, parcelas estimadas, recomendação adicional e situação. Confirmar somente após avaliar esses dados.
+- **Resultado esperado:** Sempre apresentar a suficiência amostral antes da decisão final. Parcelas abertas são avisadas e desconsideradas dos cálculos; ainda é possível finalizar mediante confirmação.
 
 ## 23. Consultar parcela concluída
 
@@ -284,6 +286,62 @@ As imagens registram momentos diferentes da mesma demonstração: parcelas pende
 - **Ações:** Rolar a tela Exportar para consultar formatos, seleção de talhões e ações. Compartilhar arquivo abre o compartilhamento do sistema.
 - **Resultado esperado:** Disponibilizar arquivo ao seletor de compartilhamento; selecionar destinatário é uma ação posterior do usuário.
 
+## 33. Conferir o erro amostral configurado
+
+- **Objetivo:** Identificar o limite usado na avaliação da amostragem.
+- **Tela:** Detalhe do levantamento.
+- **Screenshot:** `screenshots/33_erro_amostral_configuracao.png`.
+- **Ações:** Abrir Levant. → levantamento em andamento e localizar o cartão do talhão.
+- **Resultado esperado:** Exibir espécie, modelo selecionado e erro máximo desejado, inicialmente 3,0%.
+
+## 34. Avaliar a suficiência antes de encerrar
+
+- **Objetivo:** Conferir se a quantidade de parcelas atende ao erro desejado.
+- **Tela:** Suficiência amostral (diálogo).
+- **Screenshot:** `screenshots/34_suficiencia_encerramento.png`.
+- **Ações:** No detalhe do levantamento, tocar em Encerrar levantamento. Ler todos os indicadores antes de cancelar ou finalizar.
+- **Resultado esperado:** Exibir parcelas registradas e utilizadas, erro atual, erro máximo, confiança de 95%, parcelas estimadas, adicionais e situação.
+
+## 35. Consultar a suficiência nos resultados
+
+- **Objetivo:** Acompanhar a avaliação sem encerrar o levantamento.
+- **Tela:** Resultados, após selecionar propriedade ou espécie e o talhão.
+- **Screenshot:** `screenshots/35_suficiencia_resultados.png`.
+- **Ações:** Abrir Result., selecionar Pinus e rolar até Suficiência amostral.
+- **Resultado esperado:** Repetir os indicadores calculados apenas com parcelas finalizadas e informar se a amostragem é suficiente.
+
+## 36. Abrir Backup e Restauração
+
+- **Objetivo:** Acessar as ferramentas locais de proteção dos dados.
+- **Tela:** Ajustes.
+- **Screenshot:** `screenshots/36_ajustes_backup.png`.
+- **Ações:** Abrir Ajustes e tocar em Backup e Restauração.
+- **Resultado esperado:** Acessar criação, compartilhamento e restauração de cópias completas do banco.
+
+## 37. Consultar backups locais
+
+- **Objetivo:** Conferir as cópias existentes no dispositivo.
+- **Tela:** Backup e Restauração.
+- **Screenshot:** `screenshots/37_backup_restauracao.png`.
+- **Ações:** Ler o aviso sobre desinstalação e consultar a lista de backups salvos.
+- **Resultado esperado:** Mostrar data, tamanho e nome de cada arquivo `.dendrobackup`, além das ações de criar e restaurar.
+
+## 38. Criar e compartilhar um backup
+
+- **Objetivo:** Produzir uma cópia transportável dos dados.
+- **Tela:** Confirmação de backup criado.
+- **Screenshot:** `screenshots/38_backup_criado.png`.
+- **Ações:** Tocar em Criar novo backup; depois escolher Agora não ou Compartilhar.
+- **Resultado esperado:** Salvar a cópia no armazenamento do aplicativo e oferecer compartilhamento para mantê-la fora do app.
+
+## 39. Confirmar uma restauração
+
+- **Objetivo:** Entender o efeito da restauração antes de executá-la.
+- **Tela:** Confirmação de restauração.
+- **Screenshot:** `screenshots/39_confirmacao_restauracao.png`.
+- **Ações:** Selecionar Restaurar de um arquivo e ler a confirmação. No roteiro de captura, a operação foi cancelada.
+- **Resultado esperado:** Avisar que os dados atuais serão substituídos e que o aplicativo criará uma cópia preventiva antes da restauração.
+
 ## Relação entre telas e fluxo real
 
 A lista de talhões está incorporada ao detalhe da propriedade e ao detalhe do levantamento. Cadastro/edição de propriedade, talhão, parcela, espécie e fórmula usam painéis. A edição de parcela altera a área, com identificação somente leitura. GPS usa painel na coleta, sem mapa independente identificado. Confirmações de encerramento e exclusão são diálogos; salvar e compartilhar utilizam também interfaces do Android.
@@ -306,7 +364,7 @@ A lista de talhões está incorporada ao detalhe da propriedade e ao detalhe do 
 
 ## Fluxo resumido
 
-Abertura → Início → conferir espécies/modelos em Ajustes → Propriedade → Talhão → Novo levantamento → ajustar modelo/coeficientes → iniciar e vincular talhão → Parcelas → Coleta de árvores (+ GPS opcional) → conferir/editar registros → encerrar parcelas → encerrar levantamento → consultar Resultados com filtros → Exportar → consultar Histórico.
+Abertura → Início → conferir espécies/modelos em Ajustes → Propriedade → Talhão → Novo levantamento → ajustar modelo/coeficientes e erro máximo → iniciar e vincular talhão → Parcelas → Coleta de árvores (+ GPS opcional) → conferir/editar registros → encerrar parcelas → avaliar suficiência → encerrar levantamento → consultar Resultados com filtros → Exportar → Backup e Restauração → consultar Histórico.
 
 Alternativa: Propriedade → Talhão → planejar parcelas → iniciar levantamento e aproveitar planejamento. O atalho Novo Levantamento do Início também permite selecionar propriedade/talhão.
 

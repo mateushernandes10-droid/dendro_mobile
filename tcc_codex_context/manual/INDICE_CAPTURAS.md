@@ -1,6 +1,6 @@
 # Índice das capturas — DENDRO Mobile
 
-39 imagens PNG reais, 1080 × 1920, em orientação vertical. A numeração acompanha a lista de telas solicitadas; para a sequência didática, seguir [FLUXO_MANUAL.md](FLUXO_MANUAL.md). As letras identificam complementos após rolagem ou estados adicionais.
+46 imagens PNG reais, 1080 × 1920, em orientação vertical. A numeração acompanha a lista de telas solicitadas; para a sequência didática, seguir [FLUXO_MANUAL.md](FLUXO_MANUAL.md). As letras identificam complementos após rolagem ou estados adicionais.
 
 | Arquivo | Tela / estado documentado |
 |---|---|
@@ -43,10 +43,17 @@
 | [30b_arvores_parcela.png](screenshots/30b_arvores_parcela.png) | Painel de P01 rolado: três árvores e ausência de pontos GPS. |
 | [31_atalho_inicio.png](screenshots/31_atalho_inicio.png) | Novo levantamento acessado pelo Início, após o primeiro evento. |
 | [32_opcoes_exportacao.png](screenshots/32_opcoes_exportacao.png) | Exportação após rolagem: KML, seleção e ações de salvar/compartilhar. |
+| [33_erro_amostral_configuracao.png](screenshots/33_erro_amostral_configuracao.png) | Detalhe do levantamento atual: Fator de Forma e erro amostral máximo de 3,0% no cartão do talhão. |
+| [34_suficiencia_encerramento.png](screenshots/34_suficiencia_encerramento.png) | Avaliação obrigatória antes do encerramento: erro atual, limite, estimativa e parcelas adicionais. |
+| [35_suficiencia_resultados.png](screenshots/35_suficiencia_resultados.png) | Cartão permanente de suficiência amostral nos resultados, seguido da distribuição diamétrica. |
+| [36_ajustes_backup.png](screenshots/36_ajustes_backup.png) | Ajustes atualizados com acesso a Backup e Restauração. |
+| [37_backup_restauracao.png](screenshots/37_backup_restauracao.png) | Tela de proteção dos dados, criação, restauração e lista de backups locais. |
+| [38_backup_criado.png](screenshots/38_backup_criado.png) | Confirmação de backup criado e opção de compartilhar uma cópia. |
+| [39_confirmacao_restauracao.png](screenshots/39_confirmacao_restauracao.png) | Confirmação anterior à restauração, informando substituição dos dados e cópia preventiva. |
 
 ## Versão do material
 
-As imagens 08b e 09 foram recapturadas no schema 1 e mostram os três modelos do catálogo atual. As demais capturas permanecem da demonstração anterior; a imagem 12 registra a seleção histórica de Spurr, com somente dois modelos naquele catálogo. Ver o relatório de verificação para a origem dos dados.
+As imagens 08b e 09 foram recapturadas no schema 1 e mostram os três modelos do catálogo atual. As imagens 33 a 39 foram acrescentadas em 12/11/2026 para documentar erro amostral, suficiência e backup/restauração com a implementação vigente. As demais capturas permanecem da demonstração anterior; a imagem 12 registra a seleção histórica de Spurr, com somente dois modelos naquele catálogo. Ver o relatório de verificação para a origem dos dados.
 
 ## Evidência separada
 

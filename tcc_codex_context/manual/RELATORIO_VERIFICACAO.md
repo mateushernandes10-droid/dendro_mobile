@@ -1,11 +1,11 @@
 # Verificação do aplicativo e material para o manual
 
-Data: 15/09/2026.
+Verificação original: 15/09/2026. Atualização visual complementar: 12/11/2026.
 
 ## Entrega
 
 - Aplicativo compilado, instalado e executado no emulador **Dendro_API_36**, Android API 36.
-- **39 screenshots do fluxo**, em PNG, 1080 × 1920, orientação vertical; mais **1 screenshot de diagnóstico** anterior à correção, separado do fluxo.
+- **46 screenshots do fluxo**, em PNG, 1080 × 1920, orientação vertical; mais **1 screenshot de diagnóstico** anterior à correção, separado do fluxo.
 - Todas as 25 telas principais da solicitação estão representadas. Algumas são painéis ou partes de outras telas, conforme explicado no roteiro.
 - Inventário fictício realizado: Fazenda Modelo, Talhao 01, Pinus, duas parcelas de 0,04 ha, seis árvores; parcelas e levantamento concluídos.
 - Relatório PDF salvo pelo seletor nativo do Android, copiado sem alteração para esta pasta e conferido em suas duas páginas.
@@ -20,7 +20,7 @@ Para verificar a instalação atual, o banco de demonstração foi preservado fo
 
 ### Validação após restaurar o combinado
 
-- `flutter test`: **36 testes aprovados**.
+- `flutter test`: **44 testes aprovados** na verificação mais recente.
 - `flutter analyze`: **nenhum problema encontrado**.
 - Compilação e abertura no emulador com um banco novo: conferidas após a restauração do schema 1.
 - A suíte existente verifica criação/integridade do banco, cálculos, exportação e fluxos de interface.
@@ -59,6 +59,8 @@ Os números reproduzem os dados fictícios e os coeficientes já cadastrados; n�
 - Distribuição diamétrica nos resultados.
 - Atalho Novo Levantamento no Início, que abre a mesma tela de criação da aba Levant.
 - Seleção dos talhões exportados e ações Salvar no aparelho / Compartilhar arquivo.
+- Configuração do erro amostral, avaliação de suficiência no encerramento e cartão correspondente nos resultados.
+- Criação, compartilhamento e confirmação de restauração de backup completo.
 
 ## Limitações e cuidados para escrever o manual
 
@@ -67,7 +69,7 @@ Os números reproduzem os dados fictícios e os coeficientes já cadastrados; n�
 3. **Expressões personalizadas:** o cadastro existe, mas não há avaliador genérico. Fórmulas desconhecidas podem seguir a rotina de Spurr; não descrever esse cadastro como garantia de cálculo arbitrário.
 4. **Resultados:** exigem propriedade ou espécie como filtro base e podem agregar medições de mais de um levantamento. Para exportar um levantamento específico, entrar pelo seu detalhe.
 5. **Área:** a lista de parcelas pode somar áreas planejadas; Resultados considera parcelas não pendentes. Preencher e conferir as áreas antes de interpretar extrapolações.
-6. **Conclusão:** encerrar o levantamento não substitui a conferência e conclusão individual das parcelas. A interface permite confirmar mesmo quando há parcelas abertas.
+6. **Conclusão:** encerrar o levantamento não substitui a conferência e conclusão individual das parcelas. Parcelas abertas são avisadas e excluídas dos cálculos; a suficiência é sempre apresentada antes da decisão final.
 7. **Exportações:** PDF foi salvo e conferido. As opções CSV, XLSX/Excel e KML foram identificadas na interface/código, mas seus arquivos não foram validados nesta execução. Nenhum arquivo foi enviado a terceiros.
 8. **Cadastros opcionais e exclusões:** telas/menus foram inspecionados; não se afirma teste completo de todas as combinações de edição/exclusão. Os formulários de espécie e fórmula foram fechados sem criar registros extras.
 9. **PDF:** preservado exatamente como gerado. Sem ano de plantio, idade e IMA ficam ausentes. O relatório tem duas páginas legíveis; a primeira linha de algumas tabelas de identificação usa estilo diferente das demais, comportamento do exportador atual.
@@ -76,8 +78,8 @@ Os números reproduzem os dados fictícios e os coeficientes já cadastrados; n�
 
 ## Arquivos do material
 
-- `FLUXO_MANUAL.md`: roteiro em 32 etapas, dados fictícios, cuidados e fluxo resumido.
-- `INDICE_CAPTURAS.md`: lista completa e links das 39 imagens, com seus estados.
+- `FLUXO_MANUAL.md`: roteiro em 39 etapas, dados fictícios, cuidados e fluxo resumido.
+- `INDICE_CAPTURAS.md`: lista completa e links das 46 imagens, com seus estados.
 - `SCREENSHOTS_PENDENTES.md`: instruções exatas para complementar o GPS.
 - `RELATORIO_VERIFICACAO.md`: este relatório.
 - `screenshots/*.png`: capturas reais do aplicativo e do seletor de salvamento.
@@ -93,3 +95,7 @@ As capturas `09_modelos_matematicos.png` e `08b_modelos_especie.png` foram subst
 ## Complemento: Início com levantamento aberto
 
 Adicionada `screenshots/02b_inicio_levantamento_aberto.png`, captura real no schema 1 em 1080 × 1920. Foram cadastrados pela interface Fazenda Modelo (50 ha), Talhao 01 (Pinus, 10 ha, parcelas de referência 20 × 20 m) e um levantamento em andamento, sem árvores medidas. A imagem mostra Novo Levantamento e Continuar Coleta. A imagem 02 anterior, sem coleta aberta, foi mantida para comparação. Não houve alteração de código ou do esquema do banco.
+
+## Complemento de 12/11/2026: suficiência e backup
+
+Foram adicionadas as imagens 33 a 39, todas reais e em 1080 × 1920. As telas 33 a 35 usam temporariamente um conjunto validado de Pinus com 11 parcelas finalizadas, 405 árvores, erro atual de 5,9% e limite desejado de 3,0%. As telas 36 a 39 documentam Ajustes, Backup e Restauração, confirmação da criação e aviso anterior à restauração. A restauração não foi confirmada. O backup criado apenas para a captura foi removido e o banco do emulador foi devolvido ao estado anterior, com igualdade SHA-256 entre a cópia anterior e o banco restaurado.
