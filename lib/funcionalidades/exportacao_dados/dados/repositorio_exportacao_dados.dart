@@ -2134,7 +2134,7 @@ String _volumeEquacaoComValores(DadosTalhaoExportacao talhao) {
   final codigo = talhao.modeloMatematico?.codigo ?? '';
   if (codigo == CalculadoraVolumeFlorestal.codigoModeloFatorForma ||
       expressao.contains('ff')) {
-    return 'v = (π / 4) * (DAP / 100)² * h * ${_coeficienteValor(talhao, 'ff')}';
+    return 'v = (pi / 4) * (DAP / 100)² * h * ${_coeficienteValor(talhao, 'ff')}';
   }
   if (expressao.contains('exp(') || codigo.contains('schumacher')) {
     return 'v = exp(${_coeficienteValor(talhao, 'a')} + ${_coeficienteValor(talhao, 'b')} * Ln(DAP) + ${_coeficienteValor(talhao, 'c')} * Ln(h))';
