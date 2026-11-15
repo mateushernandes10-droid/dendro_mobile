@@ -185,6 +185,21 @@ class PainelResultados {
       ? 0
       : troncoTortuosoQuantidade / arvoreQuantidade * 100;
 
+  String get descricaoCalculoVolume {
+    final modelos = talhoes
+        .map((talhao) => talhao.modeloMatematicoNome.trim())
+        .where((nome) => nome.isNotEmpty)
+        .toSet();
+    if (modelos.length == 1) {
+      final nome = modelos.single.replaceFirst(
+        RegExp(r'^Modelo de\s+', caseSensitive: false),
+        '',
+      );
+      return 'Calculado por $nome e extrapolado pela área medida das parcelas.';
+    }
+    return 'Calculado pelos modelos configurados em cada talhão e extrapolado pela área medida das parcelas.';
+  }
+
   factory PainelResultados.vazio() {
     return const PainelResultados(
       parcelaQuantidade: 0,
@@ -223,6 +238,7 @@ class ResumoResultadosTalhao {
   const ResumoResultadosTalhao({
     required this.talhao,
     required this.especie,
+    required this.modeloMatematicoNome,
     required this.parcelaQuantidade,
     required this.coletadaParcelaQuantidade,
     required this.medidaParcelaQuantidade,
@@ -243,6 +259,7 @@ class ResumoResultadosTalhao {
 
   final Talhao talhao;
   final Especie especie;
+  final String modeloMatematicoNome;
   final int parcelaQuantidade;
   final int coletadaParcelaQuantidade;
   final int medidaParcelaQuantidade;
@@ -757,6 +774,7 @@ class _TalhaoResultadosAcumulador {
     return ResumoResultadosTalhao(
       talhao: talhao,
       especie: especie,
+      modeloMatematicoNome: modeloMatematico.nome,
       parcelaQuantidade: parcelaQuantidade,
       coletadaParcelaQuantidade: coletadaParcelaQuantidade,
       medidaParcelaQuantidade: medidaParcelaQuantidade,

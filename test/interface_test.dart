@@ -4,6 +4,7 @@ import 'package:dendro_mobile/nucleo/banco/banco_dendro.dart';
 import 'package:dendro_mobile/nucleo/provedores/provedores_banco.dart';
 import 'package:dendro_mobile/funcionalidades/inicio/apresentacao/tela_inicio.dart';
 import 'package:dendro_mobile/funcionalidades/levantamentos/apresentacao/tela_novo_levantamento.dart';
+import 'package:dendro_mobile/funcionalidades/levantamentos/dados/selecao_modelo_levantamento.dart';
 import 'package:dendro_mobile/funcionalidades/parcelas/dados/repositorio_parcelas.dart';
 import 'package:dendro_mobile/funcionalidades/propriedades/dados/repositorio_propriedades.dart';
 import 'package:dendro_mobile/funcionalidades/ajustes/dados/repositorio_ajustes.dart';
@@ -619,8 +620,17 @@ void main() {
         especieId: especie.id,
         areaHa: 10,
       );
+      final fatorForma =
+          (await bancoDados.select(bancoDados.modelosMatematicos).get())
+              .singleWhere((modelo) => modelo.nome == 'Fator de Forma');
       final talhaoLevantamento = await repositorioParcelas
-          .iniciarNovoLevantamentoParaTalhao(talhaoId);
+          .iniciarNovoLevantamentoParaTalhao(
+            talhaoId,
+            modeloMatematicoSelecao: SelecaoModeloLevantamento(
+              modeloMatematicoId: fatorForma.id,
+              coeficienteValoresPorSimbolo: const {'ff': 0.5},
+            ),
+          );
       final parcelaId = await repositorioParcelas
           .criarParcelaParaTalhaoLevantamento(
             talhaoLevantamentoId: talhaoLevantamento.id,
@@ -668,6 +678,12 @@ void main() {
     expect(find.text('Dados insuficientes'), findsOneWidget);
     expect(find.text('Parcelas utilizadas'), findsOneWidget);
     expect(find.text('Erro máximo desejado'), findsOneWidget);
+    expect(
+      find.text(
+        'Calculado por Fator de Forma e extrapolado pela área medida das parcelas.',
+      ),
+      findsOneWidget,
+    );
 
     await testador.pumpWidget(const SizedBox.shrink());
     await testador.pump(const Duration(milliseconds: 1));

@@ -761,7 +761,7 @@ class _VolumeResumoCartao extends StatelessWidget {
             painel.possuiMedicoes
                 ? estimadoVolume == null
                       ? 'Informe a área das parcelas para extrapolar por hectare e talhão.'
-                      : 'Calculado por Spurr e extrapolado pela área medida das parcelas.'
+                      : painel.descricaoCalculoVolume
                 : 'Registre árvores para alimentar os resultados.',
             textAlign: TextAlign.center,
             style: TextStyle(
